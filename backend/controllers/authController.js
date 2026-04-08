@@ -245,6 +245,27 @@ const sendViaResend = async ({ email, name, otp }) => {
   }
 };
 
+const sendViaSmtp = async ({ email, name, otp }) => {
+  const { user } = getEmailAuthConfig();
+  if (!user) {
+    return {
+      delivered: false,
+      message: 'SMTP is not configured. Set EMAIL_USER and EMAIL_PASS.',
+    };
+  }
+
+  const transporter = buildTransporter();
+  await withTimeout(transporter.sendMail({
+    from: `${process.env.EMAIL_FROM_NAME || 'Gita Wisdom'} <${user}>`,
+    to: email,
+    subject: 'Your Gita Wisdom OTP Code',
+    text: `Hare Krishna ${name || ''}, your OTP is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes.`,
+    html: `<div style="font-family:Arial,sans-serif;background:#08111f;color:#fef3c7;padding:24px;border-radius:12px;border:1px solid #d4a12d;max-width:520px;"><h2 style="margin:0 0 12px;color:#f5d06f;">Gita Wisdom Account Verification</h2><p style="margin:0 0 16px;line-height:1.5;">Hare Krishna ${name || ''}, use this OTP to verify your account.</p><div style="font-size:34px;font-weight:700;letter-spacing:8px;color:#ffffff;margin:10px 0 18px;">${otp}</div><p style="margin:0;color:#fcd34d;">This OTP expires in ${OTP_EXPIRY_MINUTES} minutes.</p></div>`,
+  }), SMTP_TIMEOUT_MS, 'SMTP send timed out');
+
+  return { delivered: true, provider: 'smtp' };
+};
+
 const withTimeout = (promise, ms, timeoutMessage) => {
   let timeoutId;
   const timeoutPromise = new Promise((_, reject) => {
@@ -370,6 +391,10 @@ exports.getEmailHealth = async (req, res) => {
 };
 
 const sendOtpEmail = async ({ email, name, otp }) => {
+  if (ALLOW_OTP_PREVIEW) {
+    return { delivered: true, provider: 'preview', previewCode: otp };
+  }
+
   const isConfigured = isEmailTransportConfigured();
   if (!isConfigured) {
     return {
@@ -378,34 +403,42 @@ const sendOtpEmail = async ({ email, name, otp }) => {
     };
   }
 
-  if (ALLOW_OTP_PREVIEW) {
-    return { delivered: true, provider: 'preview', previewCode: otp };
-  }
+  const providerPreference = resolveEmailProvider();
+  const deliveryPlan = providerPreference === 'resend'
+    ? ['resend', 'smtp']
+    : providerPreference === 'smtp'
+      ? ['smtp', 'resend']
+      : ['resend', 'smtp'];
 
-  // Try to send real email
-  try {
-    const provider = resolveEmailProvider();
+  let lastError = null;
 
-    if (provider === 'resend') {
-      return await sendViaResend({ email, name, otp });
+  for (const provider of deliveryPlan) {
+    try {
+      if (provider === 'resend') {
+        const result = await sendViaResend({ email, name, otp });
+        if (result?.delivered) {
+          return result;
+        }
+        lastError = new Error(result?.message || 'Resend delivery failed');
+        lastError.code = 'EFAIL';
+        continue;
+      }
+
+      const result = await sendViaSmtp({ email, name, otp });
+      if (result?.delivered) {
+        return result;
+      }
+      lastError = new Error(result?.message || 'SMTP delivery failed');
+      lastError.code = 'EFAIL';
+    } catch (error) {
+      lastError = error;
     }
-
-    const transporter = buildTransporter();
-    const { user } = getEmailAuthConfig();
-    await withTimeout(transporter.sendMail({
-      from: `${process.env.EMAIL_FROM_NAME || 'Gita Wisdom'} <${user}>`,
-      to: email,
-      subject: 'Your Gita Wisdom OTP Code',
-      text: `Hare Krishna ${name || ''}, your OTP is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes.`,
-      html: `<div style="font-family:Arial,sans-serif;background:#08111f;color:#fef3c7;padding:24px;border-radius:12px;border:1px solid #d4a12d;max-width:520px;"><h2 style="margin:0 0 12px;color:#f5d06f;">Gita Wisdom Account Verification</h2><p style="margin:0 0 16px;line-height:1.5;">Hare Krishna ${name || ''}, use this OTP to verify your account.</p><div style="font-size:34px;font-weight:700;letter-spacing:8px;color:#ffffff;margin:10px 0 18px;">${otp}</div><p style="margin:0;color:#fcd34d;">This OTP expires in ${OTP_EXPIRY_MINUTES} minutes.</p></div>`,
-    }), SMTP_TIMEOUT_MS, 'SMTP send timed out');
-    return { delivered: true, provider: 'smtp' };
-  } catch (error) {
-    return {
-      delivered: false,
-      message: getEmailFailureMessage(error),
-    };
   }
+
+  return {
+    delivered: false,
+    message: getEmailFailureMessage(lastError),
+  };
 };
 
 const ensureMockAdminUser = () => {
@@ -544,8 +577,9 @@ exports.registerUser = async (req, res) => {
       resendAvailableAt: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
     });
 
+    let deliveryResult;
     try {
-      const deliveryResult = await sendOtpEmail({ email: safeEmail, name, otp });
+      deliveryResult = await sendOtpEmail({ email: safeEmail, name, otp });
 
       if (!deliveryResult?.delivered) {
         pendingRegistrations.delete(safeEmail);
@@ -605,8 +639,9 @@ exports.resendRegistrationOtp = async (req, res) => {
     pending.resendAvailableAt = now + OTP_RESEND_COOLDOWN_SECONDS * 1000;
     pendingRegistrations.set(safeEmail, pending);
 
+    let deliveryResult;
     try {
-      const deliveryResult = await sendOtpEmail({ email: safeEmail, name: pending.name, otp });
+      deliveryResult = await sendOtpEmail({ email: safeEmail, name: pending.name, otp });
 
       if (!deliveryResult?.delivered) {
         return res.status(503).json({ message: deliveryResult?.message || 'Failed to deliver OTP email. Please try again later.' });
