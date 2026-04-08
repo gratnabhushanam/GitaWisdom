@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("USER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MentorSloka {
+  id               String   @id @default(cuid())
+  type             String   @unique
+  slokaText        String
+  meaningSimple    String
+  teluguExplanation String
+  realLifeGuidance String
+  createdAt        DateTime @default(now())
+}
+
+model Video {
+  id        String   @id @default(cuid())
+  title     String
+  thumbnail String
+  videoUrl  String
+  language  String
+  category  String
+  type      String?
+  duration  String?
+  createdAt DateTime @default(now())
+}
+
+model Chapter {
+  id              String   @id @default(cuid())
+  chapterNumber   Int      @unique
+  title           String
+  description     String
+  backgroundImage String
+  createdAt       DateTime @default(now())
+}
+
+model DailySloka {
+  id        String   @id @default(cuid())
+  date      DateTime @unique
+  slokaText String
+  meaning   String
+  audioUrl  String
+  createdAt DateTime @default(now())
+}

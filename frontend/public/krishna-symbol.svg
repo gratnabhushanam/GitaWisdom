@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="krishnaGlow" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE08A"/>
+      <stop offset="1" stop-color="#FFB74A"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="198" stroke="url(#krishnaGlow)" stroke-opacity="0.85" stroke-width="10"/>
+  <circle cx="256" cy="256" r="156" stroke="#F8D77A" stroke-opacity="0.28" stroke-width="6" stroke-dasharray="16 20"/>
+  <path d="M154 290c45-19 87-31 122-31 53 0 94 18 145 45" stroke="url(#krishnaGlow)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M182 228c28-43 68-68 115-71 49-3 88 11 119 41" stroke="#FFF0C4" stroke-opacity="0.9" stroke-width="12" stroke-linecap="round"/>
+  <path d="M243 176c18 15 27 33 27 55 0 22-8 38-22 49" stroke="#F6F0FF" stroke-opacity="0.9" stroke-width="12" stroke-linecap="round"/>
+  <path d="M300 164l52-22" stroke="#FFD35C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M313 151l24 31" stroke="#FFD35C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M201 340l122-62" stroke="#FFE9A8" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="257" cy="255" r="20" fill="#FFD66B" fill-opacity="0.18"/>
+</svg>

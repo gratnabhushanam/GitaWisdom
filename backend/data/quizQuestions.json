@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "questionText": "Bhagavad Gita was spoken by Lord Krishna to whom?",
+    "category": "Gita Basics",
+    "videoUrl": "",
+    "options": [
+      { "answerText": "Bhishma", "isCorrect": false },
+      { "answerText": "Arjuna", "isCorrect": true },
+      { "answerText": "Yudhishthira", "isCorrect": false },
+      { "answerText": "Karna", "isCorrect": false }
+    ],
+    "createdAt": "2026-04-08T00:00:00.000Z",
+    "updatedAt": "2026-04-08T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "questionText": "How many chapters are there in the Bhagavad Gita?",
+    "category": "Gita Basics",
+    "videoUrl": "",
+    "options": [
+      { "answerText": "12", "isCorrect": false },
+      { "answerText": "18", "isCorrect": true },
+      { "answerText": "24", "isCorrect": false },
+      { "answerText": "108", "isCorrect": false }
+    ],
+    "createdAt": "2026-04-08T00:00:00.000Z",
+    "updatedAt": "2026-04-08T00:00:00.000Z"
+  }
+]

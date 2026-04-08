@@ -1,0 +1,8 @@
+.vercel
+node_modules
+.env
+server.log
+uploads/
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal

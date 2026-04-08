@@ -1,0 +1,676 @@
+{
+	"info": {
+		"_postman_id": "c7a8b9d0-e1f2-4a5b-8c9d-0e1f2a3b4c5d",
+		"name": "Gita Wisdom API",
+		"description": "Comprehensive collection for Gita Wisdom App APIs with automated tests and token handling.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test(\"Response body is valid JSON\", function () {",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Arjuna\",\n    \"email\": \"arjuna@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Token exists in response\", function () {",
+									"    pm.expect(jsonData.token).to.not.be.undefined;",
+									"});",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set(\"token\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"arjuna@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Arjuna Updated\",\n    \"bio\": \"Seeker of eternal truth\",\n    \"profilePicture\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Toggle Bookmark",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"slokaId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/bookmarks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"bookmarks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Streak",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/streak",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"streak"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Slokas",
+			"item": [
+				{
+					"name": "Get All Slokas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/slokas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"slokas"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Daily Sloka",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Daily sloka has key fields\", function () {",
+									"    pm.expect(jsonData).to.have.property('sanskrit');",
+									"    pm.expect(jsonData).to.have.property('dailyKey');",
+									"    pm.expect(jsonData).to.have.property('localizedMeaning');",
+									"    pm.expect(jsonData.localizedMeaning).to.have.property('english');",
+									"    pm.expect(jsonData.localizedMeaning).to.have.property('telugu');",
+									"    pm.expect(jsonData.localizedMeaning).to.have.property('hindi');",
+									"    pm.expect(jsonData).to.have.property('audioByLanguage');",
+									"    pm.expect(jsonData.audioByLanguage).to.have.property('english');",
+									"    pm.expect(jsonData.audioByLanguage).to.have.property('telugu');",
+									"    pm.expect(jsonData.audioByLanguage).to.have.property('hindi');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/slokas/daily?date={{dailyDate}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"slokas",
+								"daily"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{dailyDate}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Mentor Sloka",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Mentor sloka has key fields\", function () {",
+									"    pm.expect(jsonData).to.have.property('sanskrit');",
+									"    pm.expect(jsonData).to.have.property('englishMeaning');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/slokas/mentor?problem={{mentorProblem}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"slokas",
+								"mentor"
+							],
+							"query": [
+								{
+									"key": "problem",
+									"value": "{{mentorProblem}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Sloka (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"chapter\": 1,\n    \"verse\": 1,\n    \"sanskrit\": \"धर्मक्षेत्रे कुरुक्षेत्रे...\",\n    \"teluguMeaning\": \"ధర్మక్షేత్రమైన కురుక్షేత్రంలో...\",\n    \"hindiMeaning\": \"धर्मभूमि कुरुक्षेत्र में...\",\n    \"englishMeaning\": \"In the field of righteousness...\",\n    \"audioUrl\": \"https://cdn.example.com/sloka/common.mp3\",\n    \"audioUrlEnglish\": \"https://cdn.example.com/sloka/english.mp3\",\n    \"audioUrlTelugu\": \"https://cdn.example.com/sloka/telugu.mp3\",\n    \"audioUrlHindi\": \"https://cdn.example.com/sloka/hindi.mp3\",\n    \"tags\": [\"duty\", \"righteousness\"],\n    \"isDaily\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/slokas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"slokas"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Videos & Reels",
+			"item": [
+				{
+					"name": "Get All Videos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/videos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Wisdom Reels",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/videos/reels?category=motivation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"reels"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "motivation"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Kids Videos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/videos/kids",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"kids"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload User Reel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+								"raw": "{\n    \"title\": \"Morning Wisdom\",\n    \"videoUrl\": \"https://youtube.com/shorts/...\",\n    \"description\": \"Stay positive\",\n    \"tags\": [\"motivation\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/videos/user-reels",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"user-reels"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Stories & Chapters",
+			"item": [
+				{
+					"name": "Get All Stories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Kids Stories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stories/kids",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"stories",
+								"kids"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Story",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Gita Chapter 1\",\n    \"content\": \"Full content of the chapter here...\",\n    \"chapter\": 1,\n    \"tags\": [\"philosophy\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/stories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"stories"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. Search & Movies",
+			"item": [
+				{
+					"name": "Search Content",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/search?q=karma",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "karma"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Movies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/movies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"movies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Movie (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+								"raw": "{\n    \"title\": \"Shri Krishna\",\n    \"description\": \"Divine movie about Krishna\",\n    \"videoUrl\": \"https://youtube.com/...\",\n    \"releaseYear\": 2024\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/movies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"movies"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8888",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dailyDate",
+			"value": "2026-04-06",
+			"type": "string"
+		},
+		{
+			"key": "mentorProblem",
+			"value": "stress",
+			"type": "string"
+		}
+	]
+}

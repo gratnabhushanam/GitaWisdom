@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" fill="none">
+  <defs>
+    <linearGradient id="kbg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07111E"/>
+      <stop offset="0.45" stop-color="#17263E"/>
+      <stop offset="1" stop-color="#050A12"/>
+    </linearGradient>
+    <radialGradient id="ksun" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 270) rotate(90) scale(260 420)">
+      <stop stop-color="#FFD66B" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFD66B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="kmoon" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1470 220) rotate(90) scale(180 260)">
+      <stop stop-color="#F6F0FF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#F6F0FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#kbg)"/>
+  <circle cx="980" cy="270" r="250" fill="url(#ksun)"/>
+  <circle cx="1470" cy="220" r="180" fill="url(#kmoon)"/>
+  <path d="M0 826C180 762 314 742 482 780C622 812 744 898 900 892C1088 884 1204 762 1382 744C1542 728 1696 774 1920 842V1080H0V826Z" fill="#06101A"/>
+  <path d="M140 814C292 760 430 742 560 752C702 764 832 826 980 816C1138 806 1260 706 1418 700C1576 694 1716 746 1812 780" stroke="#FFD66B" stroke-opacity="0.22" stroke-width="6"/>
+  <path d="M540 722C682 564 846 478 1018 478C1180 478 1328 548 1468 684" stroke="#F8D77A" stroke-opacity="0.88" stroke-width="18" stroke-linecap="round"/>
+  <path d="M726 720C822 612 914 556 1020 556C1122 556 1208 604 1292 694" stroke="#FFF1C8" stroke-opacity="0.2" stroke-width="10" stroke-linecap="round"/>
+  <path d="M922 250c34 6 66 26 94 58 18 20 28 41 31 64 3 25-1 49-13 72" stroke="#FFE9A8" stroke-width="16" stroke-linecap="round"/>
+  <path d="M986 238l78-40" stroke="#FFD66B" stroke-width="16" stroke-linecap="round"/>
+  <path d="M985 246l44 56" stroke="#FFD66B" stroke-width="16" stroke-linecap="round"/>
+  <path d="M804 420c62-52 126-76 190-76s126 24 188 76" stroke="#F8D77A" stroke-opacity="0.28" stroke-width="14" stroke-linecap="round"/>
+  <path d="M860 390c34-64 76-110 118-134 20-12 58-12 78 0 42 24 84 70 118 134" stroke="#FFD66B" stroke-opacity="0.3" stroke-width="12" stroke-linecap="round"/>
+  <path d="M998 390v188" stroke="#FFE9A8" stroke-width="15" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" fill="none">
+  <defs>
+    <linearGradient id="hbg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07111A"/>
+      <stop offset="0.5" stop-color="#113443"/>
+      <stop offset="1" stop-color="#05090F"/>
+    </linearGradient>
+    <radialGradient id="hfire" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(500 840) rotate(90) scale(300 440)">
+      <stop stop-color="#8B5CF6" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hsun" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1440 260) rotate(90) scale(220 320)">
+      <stop stop-color="#FFC65A" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#FFC65A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#hbg)"/>
+  <circle cx="500" cy="840" r="280" fill="url(#hfire)"/>
+  <circle cx="1440" cy="260" r="210" fill="url(#hsun)"/>
+  <path d="M0 918C228 820 386 788 568 840C708 880 824 974 980 976C1148 978 1246 858 1410 818C1576 778 1730 800 1920 884V1080H0V918Z" fill="#05090F"/>
+  <path d="M188 908C338 842 482 822 620 836C786 854 906 932 1022 934C1162 936 1280 846 1418 804C1560 760 1714 784 1818 824" stroke="#D8B4FE" stroke-opacity="0.2" stroke-width="6"/>
+  <path d="M748 650c70-140 168-218 280-218s210 78 280 218" stroke="#D8B4FE" stroke-opacity="0.92" stroke-width="18" stroke-linecap="round"/>
+  <path d="M790 662c56-100 128-150 238-150s182 50 238 150" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="10" stroke-linecap="round"/>
+  <path d="M860 500c26-76 84-130 150-146 84-20 152 6 204 66 44 50 56 118 34 180-28 82-98 134-188 134-98 0-182-62-204-162-6-26-6-52 4-72Z" fill="#8B5CF6" fill-opacity="0.12"/>
+  <path d="M960 314c38 34 56 76 56 126 0 52-18 94-56 130" stroke="#FFC65A" stroke-width="16" stroke-linecap="round"/>
+  <path d="M940 318l74-42" stroke="#FFC65A" stroke-width="16" stroke-linecap="round"/>
+  <path d="M960 316l36 58" stroke="#FFC65A" stroke-width="16" stroke-linecap="round"/>
+  <path d="M1040 274c80 16 132 56 156 120" stroke="#FFD66B" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round"/>
+  <path d="M842 674c80 0 146 30 198 90 52-60 118-90 198-90" stroke="#F8D77A" stroke-opacity="0.3" stroke-width="12" stroke-linecap="round"/>
+</svg>

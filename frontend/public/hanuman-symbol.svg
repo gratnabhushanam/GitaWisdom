@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="hanumanGlow" x1="106" y1="98" x2="406" y2="414" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="198" stroke="url(#hanumanGlow)" stroke-opacity="0.82" stroke-width="10"/>
+  <path d="M255 146c35 0 61 27 61 61 0 14-4 28-12 39" stroke="#F8D77A" stroke-opacity="0.9" stroke-width="12" stroke-linecap="round"/>
+  <path d="M231 192c-29 19-47 48-47 82 0 55 42 96 98 96 49 0 90-31 103-74" stroke="url(#hanumanGlow)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M282 216c26 15 45 42 45 71" stroke="#FFF1C8" stroke-opacity="0.92" stroke-width="12" stroke-linecap="round"/>
+  <path d="M322 284c28 20 36 51 24 86" stroke="#FFD66B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M198 342c17-15 39-25 62-28" stroke="#F6F0FF" stroke-opacity="0.7" stroke-width="10" stroke-linecap="round"/>
+  <path d="M326 174l20-46" stroke="#D8B4FE" stroke-width="12" stroke-linecap="round"/>
+  <path d="M346 128l-4 44" stroke="#D8B4FE" stroke-width="12" stroke-linecap="round"/>
+  <path d="M240 132c14 10 25 22 32 38" stroke="#F6F0FF" stroke-opacity="0.56" stroke-width="10" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="ramGlow" x1="112" y1="112" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD66B"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="196" stroke="url(#ramGlow)" stroke-opacity="0.85" stroke-width="10"/>
+  <path d="M144 320c42-90 112-154 186-172 46-11 80 3 104 34" stroke="url(#ramGlow)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M349 146c24 24 31 59 23 96-11 49-41 97-90 140" stroke="#FFF1C8" stroke-opacity="0.92" stroke-width="12" stroke-linecap="round"/>
+  <path d="M178 325c50-18 92-15 130 8" stroke="#F8D77A" stroke-opacity="0.92" stroke-width="12" stroke-linecap="round"/>
+  <path d="M275 261l84-84" stroke="#FFD66B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M341 177l18 44" stroke="#FFD66B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M341 177l-42 18" stroke="#FFD66B" stroke-width="12" stroke-linecap="round"/>
+  <path d="M224 222c-17 19-28 37-34 57" stroke="#F6F0FF" stroke-opacity="0.58" stroke-width="10" stroke-linecap="round"/>
+  <path d="M250 200c11 7 19 19 24 36" stroke="#F6F0FF" stroke-opacity="0.58" stroke-width="10" stroke-linecap="round"/>
+</svg>
