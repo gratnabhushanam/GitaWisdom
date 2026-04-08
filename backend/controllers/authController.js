@@ -144,6 +144,7 @@ const createOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 const getOtpExpiryTime = () => Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000;
 
 const EMAIL_PROVIDER = String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+const ALLOW_OTP_PREVIEW = String(process.env.ALLOW_OTP_PREVIEW || 'false').toLowerCase() === 'true';
 const RESEND_API_KEY = String(process.env.RESEND_API_KEY || '').trim();
 const RESEND_FROM_EMAIL = String(process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').trim();
 const RESEND_FROM_NAME = String(process.env.RESEND_FROM_NAME || process.env.EMAIL_FROM_NAME || 'Gita Wisdom').trim();
@@ -162,6 +163,10 @@ const isEmailTransportConfigured = () => {
 };
 
 const resolveEmailProvider = () => {
+  if (ALLOW_OTP_PREVIEW) {
+    return 'preview';
+  }
+
   if (EMAIL_PROVIDER === 'resend' || EMAIL_PROVIDER === 'smtp') {
     return EMAIL_PROVIDER;
   }
@@ -254,6 +259,10 @@ const withTimeout = (promise, ms, timeoutMessage) => {
 };
 
 const getEmailFailureMessage = (error) => {
+  if (ALLOW_OTP_PREVIEW) {
+    return 'Preview OTP mode is enabled.';
+  }
+
   const authRejected = error && (error.code === 'EAUTH' || error.responseCode === 535);
   const smtpNetworkBlocked = error && (
     error.code === 'ESOCKET' ||
@@ -281,6 +290,17 @@ const getEmailFailureMessage = (error) => {
 exports.getEmailHealth = async (req, res) => {
   const provider = resolveEmailProvider();
   const { user } = getEmailAuthConfig();
+
+  if (provider === 'preview') {
+    return res.status(200).json({
+      configured: true,
+      reachable: true,
+      mode: 'preview',
+      provider: 'preview',
+      smtpUser: user || null,
+      message: 'Preview OTP mode is enabled. Codes will be returned in the response.',
+    });
+  }
 
   if (!isEmailTransportConfigured()) {
     return res.status(200).json({
@@ -356,6 +376,10 @@ const sendOtpEmail = async ({ email, name, otp }) => {
       delivered: false,
       message: 'Email service is not configured. Set RESEND_API_KEY or EMAIL_USER and EMAIL_PASS.',
     };
+  }
+
+  if (ALLOW_OTP_PREVIEW) {
+    return { delivered: true, provider: 'preview', previewCode: otp };
   }
 
   // Try to send real email
@@ -541,6 +565,11 @@ exports.registerUser = async (req, res) => {
       retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
     };
 
+    if (deliveryResult?.provider === 'preview' && deliveryResult?.previewCode) {
+      response.previewCode = deliveryResult.previewCode;
+      response.message = 'Preview OTP generated. Use the returned code to verify your account.';
+    }
+
     return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -594,6 +623,11 @@ exports.resendRegistrationOtp = async (req, res) => {
       email: safeEmail,
       retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
     };
+
+    if (deliveryResult?.provider === 'preview' && deliveryResult?.previewCode) {
+      response.previewCode = deliveryResult.previewCode;
+      response.message = 'Preview OTP generated. Use the returned code to verify your account.';
+    }
 
     return res.status(200).json(response);
   } catch (error) {
@@ -732,11 +766,18 @@ exports.requestPasswordResetOtp = async (req, res) => {
       return res.status(503).json({ message: deliveryResult?.message || 'Failed to deliver OTP email. Please try again later.' });
     }
 
-    return res.status(200).json({
+    const response = {
       message: 'OTP sent to your email',
       email: safeEmail,
       retryAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
-    });
+    };
+
+    if (deliveryResult?.provider === 'preview' && deliveryResult?.previewCode) {
+      response.previewCode = deliveryResult.previewCode;
+      response.message = 'Preview OTP generated. Use the returned code to reset your password.';
+    }
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
