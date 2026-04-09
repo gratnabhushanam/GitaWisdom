@@ -1,3 +1,39 @@
+import { resumableUpload } from '../utils/resumableUpload';
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoUploadFile, setVideoUploadFile] = useState(null);
+  // Handle resumable video file upload
+  const handleVideoFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setVideoUploadFile(file);
+    setVideoUploadProgress(0);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        'video-title': videoForm.title,
+        'video-description': videoForm.description,
+        'video-tags': videoForm.tags,
+        'video-kids': videoForm.isKids ? 'true' : 'false',
+        'video-collection': videoForm.collectionTitle,
+        'video-category': videoForm.category,
+      };
+      const result = await resumableUpload({
+        file,
+        url: '/api/videos/upload/resumable',
+        headers,
+        onProgress: setVideoUploadProgress,
+      });
+      if (result && result.videoUrl) {
+        setVideoForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
+      } else if (result && result.fileName) {
+        // fallback: set videoUrl to assembled file
+        setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
+      }
+    } catch (err) {
+      alert('Video upload failed: ' + err.message);
+    }
+  };
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
@@ -1068,7 +1104,22 @@ function AdminDashboardContent() {
                       </div>
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video URL</label>
-                         <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="https://cloudinary.com/... or https://example.com/video.mp4" value={videoForm.videoUrl} onChange={e => setVideoForm({...videoForm, videoUrl: e.target.value})} />
+                         <input
+                           type="file"
+                           accept="video/*"
+                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none"
+                           onChange={handleVideoFileChange}
+                         />
+                         {videoUploadProgress > 0 && videoUploadProgress < 100 && (
+                           <div className="mt-2 text-xs text-devotion-gold">Uploading: {videoUploadProgress}%</div>
+                         )}
+                         <input
+                           required
+                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none mt-2"
+                           placeholder="https://cloudinary.com/... or https://example.com/video.mp4"
+                           value={videoForm.videoUrl}
+                           onChange={e => setVideoForm({...videoForm, videoUrl: e.target.value})}
+                         />
                          {videoForm.videoUrl && (
                            <div className="mt-3 rounded-xl overflow-hidden border border-devotion-gold/30 aspect-video bg-black">
                              <MediaPlayerHLS

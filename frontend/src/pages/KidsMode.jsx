@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link, useLocation } from 'react-router-dom';
 import { Play, Star, Award, BookOpen, X, Sparkles } from 'lucide-react';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 const KRISHNA_MODAL_BACKGROUNDS = [
   '/scene-krishna.svg',
@@ -174,8 +174,9 @@ export default function KidsMode() {
 
               {/* Video Player */}
               <div className="relative aspect-video w-full rounded-[2.5rem] overflow-hidden border border-devotion-gold/20 shadow-2xl mb-12 bg-black">
-                <MediaPlayer
+                <MediaPlayerHLS
                   url={selectedVideo.videoUrl || selectedVideo.youtubeUrl || selectedVideo.url}
+                  hlsUrl={selectedVideo.hlsUrl}
                   title={selectedVideo.title}
                   className="w-full h-full object-cover"
                   youtubeParams="autoplay=1&rel=0"

@@ -6,6 +6,8 @@ const mockContentStore = require('../utils/mockContentStore');
 const { isMockMode } = require('./authController');
 const fs = require('fs');
 const { getVideoDurationSeconds } = require('../utils/videoMetadata');
+const { transcodeToHLS } = require('../utils/hlsTranscoder');
+const path = require('path');
 
 const MAX_REEL_DURATION_SECONDS = 90;
 
@@ -209,12 +211,35 @@ exports.uploadUserReel = async (req, res) => {
     const normalizedTags = normalizeTags(tags);
     const uploadedFile = req.file;
     const videoUrl = uploadedFile?.filename ? buildUploadedVideoUrl(req, uploadedFile.filename) : '';
+    let hlsUrl = '';
+
+    // HLS transcoding (async, non-blocking for now)
+    if (uploadedFile?.path) {
+      const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(uploadedFile.filename).name);
+      const baseName = 'playlist';
+      transcodeToHLS(
+        uploadedFile.path,
+        hlsOutputDir,
+        baseName,
+        (err, masterPlaylistPath) => {
+          if (!err && masterPlaylistPath) {
+            console.log('Multi-res HLS transcoded:', masterPlaylistPath);
+          } else if (err) {
+            console.error('HLS transcoding failed:', err);
+          }
+        }
+      );
+      // HLS master playlist URL for client
+      hlsUrl = `${getPublicBaseUrl(req)}/uploads/hls/${path.parse(uploadedFile.filename).name}/playlist_master.m3u8`;
+    }
+
 
     if (!title || !videoUrl) {
       return res.status(400).json({ message: 'Title and video file are required' });
     }
 
     const duration = await getVideoDurationSeconds(uploadedFile.path);
+
     if (duration > MAX_REEL_DURATION_SECONDS) {
       fs.unlink(uploadedFile.path, () => {});
       return res.status(400).json({ message: `Reel must be ${MAX_REEL_DURATION_SECONDS} seconds or less` });
@@ -233,10 +258,12 @@ exports.uploadUserReel = async (req, res) => {
 
     const moderationStatus = isAdminUploader ? 'approved' : 'pending';
 
+
     if (isMockMode()) {
       const newReel = mockContentStore.addVideo({
         title,
         videoUrl,
+        hlsUrl,
         description,
         tags: normalizedTags,
         category: 'reels',
@@ -254,10 +281,12 @@ exports.uploadUserReel = async (req, res) => {
       return res.status(201).json(mapVideo(newReel));
     }
 
+
     if (useMongoStore()) {
       const newReel = await VideoMongo.create({
         title,
         videoUrl,
+        hlsUrl,
         description,
         tags: normalizedTags,
         category: 'reels',
@@ -283,6 +312,7 @@ exports.uploadUserReel = async (req, res) => {
     const newReel = await Video.create({
       title,
       videoUrl,
+      hlsUrl,
       description,
       tags: normalizedTags,
       category: 'reels',
