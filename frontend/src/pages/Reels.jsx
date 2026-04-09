@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useAuth } from '../context/AuthContext';
 
 const REELS_BACKGROUND_SCENES = [
@@ -520,9 +520,10 @@ export default function Reels() {
             {/* Background Video (single active playback only) */}
             <div className="absolute inset-0 z-0">
                <div className="w-full h-full bg-gradient-to-t from-black/80 via-transparent to-black/20 absolute z-10 pointer-events-none"></div>
-               <MediaPlayer
+               <MediaPlayerHLS
                  key={`${reelId}-${isActive ? 'active' : 'inactive'}-${shouldPlay ? 'play' : 'pause'}-${soundEnabled ? 'sound' : 'mute'}`}
                  url={reel.videoUrl || reel.youtubeUrl || reel.url}
+                 hlsUrl={reel.hlsUrl}
                  title={reel.title}
                  className="w-full h-full object-cover"
                  youtubeParams={`autoplay=${shouldPlay ? 1 : 0}&mute=${shouldPlay && soundEnabled ? 0 : 1}&controls=1&loop=1&playsinline=1`}

@@ -1,3 +1,5 @@
+// Serve HLS playlists and segments
+app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
