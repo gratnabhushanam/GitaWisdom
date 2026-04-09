@@ -1,5 +1,4 @@
-// Serve HLS playlists and segments
-app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -12,6 +11,8 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 let initializePromise = null;
+// Serve HLS playlists and segments
+app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
 
 // Honor x-forwarded-proto so generated absolute URLs use https in production behind proxies.
 app.set('trust proxy', 1);
