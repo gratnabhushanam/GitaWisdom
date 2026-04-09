@@ -472,6 +472,11 @@ const sendOtpEmail = async ({ email, name, otp }) => {
       if (result?.delivered) {
         return result;
       }
+      // Keep the richer previous provider error (usually Resend) when SMTP fallback
+      // is unavailable, so callers get actionable upstream diagnostics.
+      if (provider === 'smtp' && result?.message && /not configured/i.test(result.message) && lastError) {
+        continue;
+      }
       lastError = new Error(result?.message || 'SMTP delivery failed');
       lastError.code = 'EFAIL';
     } catch (error) {
