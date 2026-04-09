@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getYoutubeEmbedUrl, getYoutubeVideoId, isYoutubeUrl, resolveMediaUrl } from '../utils/media';
 
+<<<<<<< HEAD
 // Helper to extract videoId from HLS or CDN URL (assuming /videos/:videoId/ or ?videoId=...)
 function extractVideoId(url) {
   if (!url) return null;
@@ -12,6 +13,8 @@ function extractVideoId(url) {
   return params.get('videoId');
 }
 
+=======
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
 // Dynamically load hls.js only if needed
 let Hls = null;
 if (typeof window !== 'undefined') {
@@ -34,6 +37,7 @@ export default function MediaPlayer({
   playsInline = true,
   fallbackLabel = 'Open video in a new tab',
 }) {
+<<<<<<< HEAD
 
 
   const [failed, setFailed] = useState(false);
@@ -89,6 +93,19 @@ export default function MediaPlayer({
   if (isYoutubeUrl(cdnVideoUrl)) {
     const embedUrl = getYoutubeEmbedUrl(cdnVideoUrl);
     const videoId = getYoutubeVideoId(cdnVideoUrl);
+=======
+  const [failed, setFailed] = useState(false);
+  const videoRef = useRef(null);
+  const resolvedUrl = resolveMediaUrl(url);
+  const effectiveShouldPlay = typeof shouldPlay === 'boolean' ? shouldPlay : autoPlay;
+  const hlsSource = hlsUrl || '';
+
+  if (!resolvedUrl && !hlsSource) return null;
+
+  if (isYoutubeUrl(resolvedUrl)) {
+    const embedUrl = getYoutubeEmbedUrl(resolvedUrl);
+    const videoId = getYoutubeVideoId(resolvedUrl);
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
     const params = new URLSearchParams(youtubeParams);
     if (loop && videoId && !params.has('playlist')) {
       params.set('playlist', videoId);
@@ -99,7 +116,11 @@ export default function MediaPlayer({
       <iframe
         className={className}
         src={src}
+<<<<<<< HEAD
         title={title || 'YouTube player'}
+=======
+        title={title || 'Video player'}
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
@@ -107,6 +128,7 @@ export default function MediaPlayer({
     );
   }
 
+<<<<<<< HEAD
 
 
   // HLS playback logic
@@ -116,6 +138,12 @@ export default function MediaPlayer({
     if (!hlsSource || loadingToken) return;
     const video = videoRef.current;
     if (!video) return;
+=======
+  // HLS playback logic
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hlsSource) return;
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsSource;
     } else if (Hls && Hls.isSupported()) {
@@ -127,6 +155,7 @@ export default function MediaPlayer({
     } else {
       setFailed(true);
     }
+<<<<<<< HEAD
   }, [hlsSource, loadingToken]);
 
 
@@ -177,10 +206,21 @@ export default function MediaPlayer({
         </a>
         <button onClick={() => setShowTools(v => !v)} className="absolute top-2 left-2 bg-devotion-gold/20 text-devotion-gold rounded-full px-2 py-1 text-xs font-bold">⋮</button>
         {showTools && <AdvancedTools />}
+=======
+  }, [hlsSource]);
+
+  if (failed) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-black/70 text-white text-center px-4`}>
+        <a href={hlsSource || resolvedUrl} target="_blank" rel="noreferrer" className="underline text-devotion-gold font-black">
+          {fallbackLabel}
+        </a>
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
       </div>
     );
   }
 
+<<<<<<< HEAD
   // HLS or fallback player with advanced controls
   return (
     <div className={`relative group ${className}`}>
@@ -188,12 +228,21 @@ export default function MediaPlayer({
         ref={videoRef}
         className="w-full h-auto rounded-xl shadow-lg"
         src={hlsSource || resolvedUrl}
+=======
+  // Fallback to MP4 if no HLS or HLS fails
+  if (hlsSource) {
+    return (
+      <video
+        ref={videoRef}
+        className={className}
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
         autoPlay={effectiveShouldPlay}
         muted={muted}
         loop={loop}
         controls={controls}
         playsInline={playsInline}
         onError={() => setFailed(true)}
+<<<<<<< HEAD
         title={title}
       />
       <button
@@ -210,5 +259,24 @@ export default function MediaPlayer({
         </div>
       )}
     </div>
+=======
+      />
+    );
+  }
+
+  // Default MP4 playback
+  return (
+    <video
+      ref={videoRef}
+      className={className}
+      src={resolvedUrl}
+      autoPlay={effectiveShouldPlay}
+      muted={muted}
+      loop={loop}
+      controls={controls}
+      playsInline={playsInline}
+      onError={() => setFailed(true)}
+    />
+>>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
   );
 }

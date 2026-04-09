@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
 
@@ -521,7 +521,7 @@ function AdminDashboardContent() {
       )}
 
       {/* Admin Content Area */}
-      <div className="flex-1 flex flex-col pt-24 px-10 pb-10 overflow-y-auto">
+      <div className="flex-1 flex flex-col pt-24 px-4 md:px-10 pb-10 overflow-y-auto">
          
          {message.text && (
            <div className={`fixed top-28 right-10 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl border backdrop-blur-xl animate-shake shadow-2xl ${message.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
@@ -655,13 +655,14 @@ function AdminDashboardContent() {
                   {data.movies.length === 0 ? (
                     <p className="text-gray-500 text-center py-12">No movies uploaded yet.</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 overflow-x-auto">
                       {data.movies.map((movie) => (
                         <div key={movie._id || movie.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
                           {movie.videoUrl && (
                             <div className="mb-4 rounded-xl overflow-hidden border border-devotion-gold/20 aspect-video bg-black">
-                              <MediaPlayer
+                              <MediaPlayerHLS
                                 url={movie.videoUrl}
+                                hlsUrl={movie.hlsUrl}
                                 title={movie.title}
                                 className="w-full h-full object-cover"
                                 youtubeParams="autoplay=0&rel=0&modestbranding=1"
@@ -868,8 +869,9 @@ function AdminDashboardContent() {
                         <div key={video._id || video.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
                           {video.videoUrl && (
                             <div className="mb-4 rounded-xl overflow-hidden border border-devotion-gold/20 aspect-video bg-black">
-                              <MediaPlayer
+                              <MediaPlayerHLS
                                 url={video.videoUrl}
+                                hlsUrl={video.hlsUrl}
                                 title={video.title}
                                 className="w-full h-full object-cover"
                                 youtubeParams="autoplay=0&rel=0&modestbranding=1"
@@ -912,7 +914,7 @@ function AdminDashboardContent() {
                     {data.quizQuestions.length === 0 ? (
                       <p className="text-gray-500 text-center py-8">No quiz questions uploaded yet.</p>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
                         {data.quizQuestions.map((question) => (
                           <div key={question.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
                             <p className="text-[10px] uppercase tracking-widest text-devotion-gold mb-2">{question.category || 'Gita Challenge'}</p>
@@ -942,8 +944,8 @@ function AdminDashboardContent() {
 
       {/* Universal Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
-           <div className="bg-[#0B1F3A] w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[3.5rem] border border-devotion-gold/30 p-10 md:p-20 relative shadow-[0_0_150px_rgba(255,215,0,0.2)]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/95 backdrop-blur-xl">
+           <div className="bg-[#0B1F3A] w-full max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-5xl max-h-[90vh] overflow-y-auto rounded-[2rem] md:rounded-[3.5rem] border border-devotion-gold/30 p-4 sm:p-10 md:p-20 relative shadow-[0_0_150px_rgba(255,215,0,0.2)]">
               <button 
                 onClick={() => {
                   setShowAddModal(false);
@@ -962,7 +964,7 @@ function AdminDashboardContent() {
                  
                  {/* MOVIE FORM */}
                  {activeTab === 'movies' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
                       <div className="space-y-4">
                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><FileText className="w-3 h-3"/> Movie Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. Shri Krishna" value={movieForm.title} onChange={e => setMovieForm({...movieForm, title: e.target.value})} />
@@ -988,7 +990,7 @@ function AdminDashboardContent() {
 
                  {/* STORY FORM */}
                  {activeTab === 'stories' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Story Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={storyForm.title} onChange={e => setStoryForm({...storyForm, title: e.target.value})} />
@@ -1059,7 +1061,7 @@ function AdminDashboardContent() {
                  {/* VIDEO FORM */}
                  {activeTab === 'videos' && videosUploadType === 'video' && (
                    <>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video Title</label>
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={videoForm.title} onChange={e => setVideoForm({...videoForm, title: e.target.value})} />
@@ -1069,8 +1071,9 @@ function AdminDashboardContent() {
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="https://cloudinary.com/... or https://example.com/video.mp4" value={videoForm.videoUrl} onChange={e => setVideoForm({...videoForm, videoUrl: e.target.value})} />
                          {videoForm.videoUrl && (
                            <div className="mt-3 rounded-xl overflow-hidden border border-devotion-gold/30 aspect-video bg-black">
-                             <MediaPlayer
+                             <MediaPlayerHLS
                                url={videoForm.videoUrl}
+                               hlsUrl={videoForm.hlsUrl}
                                title={videoForm.title}
                                className="w-full h-full object-cover"
                                youtubeParams="autoplay=0&rel=0&modestbranding=1"
@@ -1135,7 +1138,7 @@ function AdminDashboardContent() {
                    {/* Embedded Quiz Builder for Video */}
                    <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">
                      <h3 className="text-lg font-black text-devotion-gold mb-2">Related Quizzes (Optional)</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Question</label>
                          <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.questionText} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, questionText: e.target.value })} />
@@ -1195,7 +1198,7 @@ function AdminDashboardContent() {
 
                   {/* QUIZ FORM */}
                   {activeTab === 'videos' && videosUploadType === 'quiz' && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10 overflow-x-auto">
                      <div className="md:col-span-2 space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Question</label>
                        <textarea required rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizForm.questionText} onChange={e => setQuizForm({...quizForm, questionText: e.target.value})} />
