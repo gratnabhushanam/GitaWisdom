@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { transcodeToHLS } = require('../utils/hlsTranscoder');
+const { uploadToVercelBlob } = require('../utils/vercelBlob');
 const { getVideoDurationSeconds } = require('../utils/videoMetadata');
 const VideoMongo = require('../models/mongo/VideoMongo');
 const { mapVideo } = require('../utils/responseMappers');
@@ -19,24 +20,37 @@ async function handleResumableUpload(req, res) {
   const moderationStatus = user && user.role === 'admin' ? 'approved' : 'pending';
   const uploadSource = user && user.role === 'admin' ? 'admin' : 'user';
 
+
   // HLS transcoding
   const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(fileName).name);
   const baseName = 'playlist';
   let hlsUrl = '';
   await new Promise((resolve) => {
     transcodeToHLS(filePath, hlsOutputDir, baseName, (err, masterPlaylistPath) => {
-      if (!err && masterPlaylistPath) {
-        hlsUrl = `/uploads/hls/${path.parse(fileName).name}/playlist_master.m3u8`;
-      }
       resolve();
     });
   });
 
+  // Upload HLS master playlist and segments to Vercel Blob
+  const hlsFiles = fs.readdirSync(hlsOutputDir).filter(f => f.endsWith('.m3u8') || f.endsWith('.ts'));
+  const blobBase = `videos/${path.parse(fileName).name}/`;
+  let masterPlaylistCdnUrl = '';
+  for (const f of hlsFiles) {
+    const localPath = path.join(hlsOutputDir, f);
+    const blobPath = `${blobBase}${f}`;
+    const cdnUrl = await uploadToVercelBlob(localPath, blobPath);
+    if (f.endsWith('_master.m3u8')) masterPlaylistCdnUrl = cdnUrl;
+  }
+
+  // Upload original video file to Vercel Blob
+  const videoBlobPath = `videos/${fileName}`;
+  const videoCdnUrl = await uploadToVercelBlob(filePath, videoBlobPath);
+
   // Save to DB (Mongo only for now)
   const newVideo = await VideoMongo.create({
     title,
-    videoUrl: `/uploads/reels/${fileName}`,
-    hlsUrl,
+    videoUrl: videoCdnUrl,
+    hlsUrl: masterPlaylistCdnUrl,
     description,
     tags,
     category,
@@ -53,7 +67,7 @@ async function handleResumableUpload(req, res) {
     likedBy: [],
     comments: [],
   });
-  res.status(201).json({ ...mapVideo(newVideo), message: 'Video uploaded and processed' });
+  res.status(201).json({ ...mapVideo(newVideo), message: 'Video uploaded and processed (CDN-backed)' });
 }
 
 module.exports = { handleResumableUpload };

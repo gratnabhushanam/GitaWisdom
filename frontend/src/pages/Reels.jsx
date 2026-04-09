@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+// Krishna-themed SVG asset for floating animation
+const FLOATING_KRISHNA = '/krishna-floating.svg';
 import axios from 'axios';
 import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -286,7 +288,6 @@ export default function Reels() {
         prev.map((item) => {
           const itemId = item._id || item.id;
           if (itemId !== reelId) return item;
-
           const nextComments = [
             {
               id: Date.now(),
@@ -298,7 +299,6 @@ export default function Reels() {
             },
             ...(Array.isArray(item.comments) ? item.comments : []),
           ];
-
           return {
             ...item,
             comments: nextComments,
@@ -514,6 +514,22 @@ export default function Reels() {
           const isPausedByTap = pausedReelId === reelId;
           const shouldPlay = isActive && !isPausedByTap;
 
+
+          // Handler for auto-play next reel
+          const handleVideoEnd = () => {
+            const idx = reels.findIndex(r => String(r._id || r.id) === reelId);
+            if (idx !== -1 && idx < reels.length - 1) {
+              const nextId = String(reels[idx + 1]._id || reels[idx + 1].id);
+              setActiveReelId(nextId);
+              setPausedReelId('');
+              // Scroll to next reel
+              const container = reelsFeedRef.current;
+              if (container && container.children[idx + 1]) {
+                container.children[idx + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+          };
+
           return (
           <div key={reel._id || reel.id} className="h-screen w-full relative snap-center flex flex-col pt-20 pb-4 justify-end">
 
@@ -530,8 +546,9 @@ export default function Reels() {
                  autoPlay={shouldPlay}
                  shouldPlay={shouldPlay}
                  muted={!shouldPlay || !soundEnabled}
-                 loop
+                 loop={false}
                  controls={isActive}
+                 onEnded={handleVideoEnd}
                />
             </div>
 
@@ -547,6 +564,8 @@ export default function Reels() {
               onClick={() => setSoundEnabled((prev) => !prev)}
               className={`absolute top-24 right-4 z-[25] w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md border transition-transform hover:scale-105 ${soundEnabled ? 'bg-[#D39A4A]/35 border-[#E6C38A]/60 text-[#E6C38A]' : 'bg-black/45 border-white/30 text-white'}`}
               aria-label={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setSoundEnabled((prev) => !prev); }}
             >
               {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </button>
