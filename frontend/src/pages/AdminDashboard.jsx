@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, CircleHelp } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MediaPlayer from '../components/MediaPlayer';
@@ -42,6 +42,7 @@ export default function AdminDashboard() {
     tags: '',
   });
   const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '' });
+  const [videosUploadType, setVideosUploadType] = useState('video');
   const [quizForm, setQuizForm] = useState({
     questionText: '',
     category: 'Gita Challenge',
@@ -58,7 +59,6 @@ export default function AdminDashboard() {
     movies: 'Movie',
     stories: 'Story',
     videos: 'Video',
-    quiz: 'Quiz Question',
   };
 
   const currentContentLabel = contentLabels[activeTab] || 'Content';
@@ -100,15 +100,17 @@ export default function AdminDashboard() {
         const { data: stories } = await axios.get('/api/stories', { headers });
         setData(prev => ({ ...prev, stories }));
       } else if (activeTab === 'videos') {
-        const [videosResponse, pendingResponse] = await Promise.all([
+        const [videosResponse, pendingResponse, quizResponse] = await Promise.all([
           axios.get('/api/videos', { headers }),
           axios.get(`/api/videos/user-reels/moderation?status=pending&contentType=${pendingContentFilter}`, { headers }),
+          axios.get('/api/quiz/questions', { headers }),
         ]);
-        setData(prev => ({ ...prev, videos: videosResponse.data }));
+        setData(prev => ({
+          ...prev,
+          videos: Array.isArray(videosResponse.data) ? videosResponse.data : [],
+          quizQuestions: Array.isArray(quizResponse.data) ? quizResponse.data : [],
+        }));
         setPendingUserReels(Array.isArray(pendingResponse.data) ? pendingResponse.data : []);
-      } else if (activeTab === 'quiz') {
-        const { data: quizQuestions } = await axios.get('/api/quiz/questions', { headers });
-        setData(prev => ({ ...prev, quizQuestions: Array.isArray(quizQuestions) ? quizQuestions : [] }));
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -139,6 +141,7 @@ export default function AdminDashboard() {
     setLoading(true);
     let endpoint = '';
     let payload = {};
+    const publishLabel = activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : currentContentLabel;
 
     try {
       const token = localStorage.getItem('token');
@@ -157,28 +160,30 @@ export default function AdminDashboard() {
           content: storyForm.content || storyForm[`content${languageKey}`] || '',
         };
       } else if (activeTab === 'videos') {
-        endpoint = '/api/videos';
-        payload = {
-          ...videoForm,
-          collectionTitle: String(videoForm.collectionTitle || '').trim() || 'Bhagavad Gita',
-          tags: videoForm.tags.split(',').map(tag => tag.trim()),
-        };
-      } else if (activeTab === 'quiz') {
-        endpoint = '/api/quiz/questions';
-        const optionMap = {
-          A: quizForm.optionA,
-          B: quizForm.optionB,
-          C: quizForm.optionC,
-          D: quizForm.optionD,
-        };
-        payload = {
-          questionText: quizForm.questionText,
-          category: quizForm.category,
-          videoUrl: quizForm.videoUrl,
-          options: ['A', 'B', 'C', 'D']
-            .map((key) => ({ answerText: String(optionMap[key] || '').trim(), isCorrect: quizForm.correctOption === key }))
-            .filter((item) => item.answerText),
-        };
+        if (videosUploadType === 'quiz') {
+          endpoint = '/api/quiz/questions';
+          const optionMap = {
+            A: quizForm.optionA,
+            B: quizForm.optionB,
+            C: quizForm.optionC,
+            D: quizForm.optionD,
+          };
+          payload = {
+            questionText: quizForm.questionText,
+            category: quizForm.category,
+            videoUrl: quizForm.videoUrl,
+            options: ['A', 'B', 'C', 'D']
+              .map((key) => ({ answerText: String(optionMap[key] || '').trim(), isCorrect: quizForm.correctOption === key }))
+              .filter((item) => item.answerText),
+          };
+        } else {
+          endpoint = '/api/videos';
+          payload = {
+            ...videoForm,
+            collectionTitle: String(videoForm.collectionTitle || '').trim() || 'Bhagavad Gita',
+            tags: videoForm.tags.split(',').map(tag => tag.trim()),
+          };
+        }
       }
 
       if (activeTab === 'stories' && editingStoryId) {
@@ -191,7 +196,7 @@ export default function AdminDashboard() {
         });
       }
 
-      setMessage({ type: 'success', text: activeTab === 'stories' && editingStoryId ? 'Story updated successfully!' : `${currentContentLabel} published successfully!` });
+      setMessage({ type: 'success', text: activeTab === 'stories' && editingStoryId ? 'Story updated successfully!' : `${publishLabel} published successfully!` });
       setShowAddModal(false);
       resetForms();
       await fetchAdminData();
@@ -282,6 +287,7 @@ export default function AdminDashboard() {
       optionD: '',
       correctOption: 'B',
     });
+    setVideosUploadType('video');
     setEditingStoryId(null);
   };
 
@@ -396,7 +402,6 @@ export default function AdminDashboard() {
             { id: 'movies', name: 'Movies', icon: <Film className="w-5 h-5" /> },
             { id: 'stories', name: 'Stories', icon: <BookOpen className="w-5 h-5" /> },
             { id: 'videos', name: 'Videos', icon: <Video className="w-5 h-5" /> },
-            { id: 'quiz', name: 'Quiz', icon: <CircleHelp className="w-5 h-5" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
           ].map(item => (
             <button
@@ -437,16 +442,31 @@ export default function AdminDashboard() {
                <p className="text-gray-500 text-sm font-serif italic">Managing the divine knowledge base.</p>
             </div>
             
-            {['movies', 'stories', 'videos', 'quiz'].includes(activeTab) && (
-              <button 
-                onClick={() => {
-                  resetForms();
-                  setShowAddModal(true);
-                }}
-                className="bg-devotion-gold text-devotion-darkBlue px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-yellow-400 transition-all flex items-center gap-3 shadow-2xl shadow-devotion-gold/20 transform hover:-translate-y-1 active:scale-95"
-              >
-                <Plus className="w-5 h-5" /> Add New {currentContentLabel}
-              </button>
+            {['movies', 'stories', 'videos'].includes(activeTab) && (
+              <div className="flex flex-wrap gap-3 justify-end">
+                {activeTab === 'videos' && (
+                  <button
+                    onClick={() => {
+                      resetForms();
+                      setVideosUploadType('quiz');
+                      setShowAddModal(true);
+                    }}
+                    className="bg-white/10 border border-white/20 text-white px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-white/15 transition-all flex items-center gap-3"
+                  >
+                    <Plus className="w-5 h-5" /> Add Quiz Question
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    resetForms();
+                    setVideosUploadType('video');
+                    setShowAddModal(true);
+                  }}
+                  className="bg-devotion-gold text-devotion-darkBlue px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-yellow-400 transition-all flex items-center gap-3 shadow-2xl shadow-devotion-gold/20 transform hover:-translate-y-1 active:scale-95"
+                >
+                  <Plus className="w-5 h-5" /> Add New {activeTab === 'videos' ? 'Video' : currentContentLabel}
+                </button>
+              </div>
             )}
          </div>
 
@@ -786,41 +806,39 @@ export default function AdminDashboard() {
                       ))}
                     </div>
                   )}
-               </div>
-            )}
 
-            {activeTab === 'quiz' && (
-               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
-                  <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Quiz <span className="text-devotion-gold">Library</span></h3>
-                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.quizQuestions.length}</span>
-                  </div>
-
-                  {data.quizQuestions.length === 0 ? (
-                    <p className="text-gray-500 text-center py-12">No quiz questions uploaded yet.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {data.quizQuestions.map((question) => (
-                        <div key={question.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
-                          <p className="text-[10px] uppercase tracking-widest text-devotion-gold mb-2">{question.category || 'Gita Challenge'}</p>
-                          <h4 className="text-white font-bold text-lg mb-4">{question.questionText}</h4>
-                          <ul className="space-y-2 mb-5">
-                            {(question.options || []).map((option, idx) => (
-                              <li key={`${question.id}-${idx}`} className={`text-sm px-3 py-2 rounded-lg border ${option.isCorrect ? 'border-green-500/40 bg-green-500/10 text-green-300' : 'border-white/10 text-gray-300'}`}>
-                                {option.answerText}
-                              </li>
-                            ))}
-                          </ul>
-                          <button
-                            onClick={() => handleDeleteContent('quiz/questions', question.id, question.questionText || 'Question')}
-                            className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                          >
-                            <Trash2 className="w-4 h-4" /> Delete
-                          </button>
-                        </div>
-                      ))}
+                  <div className="mt-12 border-t border-white/10 pt-10">
+                    <div className="flex justify-between items-center mb-8">
+                      <h3 className="text-2xl font-serif font-black text-white uppercase tracking-tighter">Quiz <span className="text-devotion-gold">Library</span></h3>
+                      <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.quizQuestions.length}</span>
                     </div>
-                  )}
+
+                    {data.quizQuestions.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">No quiz questions uploaded yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {data.quizQuestions.map((question) => (
+                          <div key={question.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
+                            <p className="text-[10px] uppercase tracking-widest text-devotion-gold mb-2">{question.category || 'Gita Challenge'}</p>
+                            <h4 className="text-white font-bold text-lg mb-4">{question.questionText}</h4>
+                            <ul className="space-y-2 mb-5">
+                              {(question.options || []).map((option, idx) => (
+                                <li key={`${question.id}-${idx}`} className={`text-sm px-3 py-2 rounded-lg border ${option.isCorrect ? 'border-green-500/40 bg-green-500/10 text-green-300' : 'border-white/10 text-gray-300'}`}>
+                                  {option.answerText}
+                                </li>
+                              ))}
+                            </ul>
+                            <button
+                              onClick={() => handleDeleteContent('quiz/questions', question.id, question.questionText || 'Question')}
+                              className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                </div>
             )}
          </div>
@@ -841,7 +859,7 @@ export default function AdminDashboard() {
               </button>
 
               <h2 className="text-5xl font-serif font-black text-white mb-12 text-center uppercase tracking-tighter">
-                {activeTab === 'stories' && editingStoryId ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : currentContentLabel}</span>
+                {activeTab === 'stories' && editingStoryId ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : currentContentLabel)}</span>
               </h2>
 
               <form onSubmit={handleAddContent} className="space-y-10">
@@ -943,7 +961,7 @@ export default function AdminDashboard() {
                  )}
 
                  {/* VIDEO FORM */}
-                 {activeTab === 'videos' && (
+                 {activeTab === 'videos' && videosUploadType === 'video' && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video Title</label>
@@ -1020,7 +1038,7 @@ export default function AdminDashboard() {
                  )}
 
                   {/* QUIZ FORM */}
-                  {activeTab === 'quiz' && (
+                  {activeTab === 'videos' && videosUploadType === 'quiz' && (
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                      <div className="md:col-span-2 space-y-4">
                        <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Question</label>
@@ -1062,7 +1080,7 @@ export default function AdminDashboard() {
                    </div>
                   )}
 
-                 {['movies', 'stories', 'videos'].includes(activeTab) && (
+                 {['movies', 'stories'].includes(activeTab) || (activeTab === 'videos' && videosUploadType === 'video') ? (
                  <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Tags (comma separated)</label>
                     <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="Motivation, Karma, Peace" 
@@ -1074,7 +1092,7 @@ export default function AdminDashboard() {
                       }} 
                     />
                  </div>
-                 )}
+                 ) : null}
 
                  <button 
                    type="submit"
@@ -1084,7 +1102,7 @@ export default function AdminDashboard() {
                     {loading ? <div className="w-6 h-6 border-2 border-devotion-darkBlue border-t-transparent rounded-full animate-spin"></div> : (
                       <>
                         <Upload className="w-6 h-6 group-hover:scale-125 transition-transform" />
-                        {activeTab === 'stories' && editingStoryId ? 'UPDATE STORY' : 'PUBLISH TO DIVINE LIBRARY'}
+                        {activeTab === 'stories' && editingStoryId ? 'UPDATE STORY' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : 'PUBLISH TO DIVINE LIBRARY')}
                       </>
                     )}
                  </button>
