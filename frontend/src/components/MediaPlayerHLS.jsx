@@ -96,16 +96,24 @@ export default function MediaPlayer({
 =======
   const [failed, setFailed] = useState(false);
   const videoRef = useRef(null);
-  const resolvedUrl = resolveMediaUrl(url);
+
+  // Prefer CDN-backed URLs for HLS and video
+  const cdnHlsUrl = hlsUrl || '';
+  const cdnVideoUrl = url || '';
   const effectiveShouldPlay = typeof shouldPlay === 'boolean' ? shouldPlay : autoPlay;
-  const hlsSource = hlsUrl || '';
 
-  if (!resolvedUrl && !hlsSource) return null;
+  if (!cdnVideoUrl && !cdnHlsUrl) return null;
 
+<<<<<<< HEAD
   if (isYoutubeUrl(resolvedUrl)) {
     const embedUrl = getYoutubeEmbedUrl(resolvedUrl);
     const videoId = getYoutubeVideoId(resolvedUrl);
 >>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
+=======
+  if (isYoutubeUrl(cdnVideoUrl)) {
+    const embedUrl = getYoutubeEmbedUrl(cdnVideoUrl);
+    const videoId = getYoutubeVideoId(cdnVideoUrl);
+>>>>>>> 19fa313 (chore: update all files and sync with GitHub)
     const params = new URLSearchParams(youtubeParams);
     if (loop && videoId && !params.has('playlist')) {
       params.set('playlist', videoId);
@@ -117,10 +125,14 @@ export default function MediaPlayer({
         className={className}
         src={src}
 <<<<<<< HEAD
+<<<<<<< HEAD
         title={title || 'YouTube player'}
 =======
         title={title || 'Video player'}
 >>>>>>> 7531fa8 (feat: admin dashboard adaptive HLS streaming for all video playback)
+=======
+        title={title || 'YouTube player'}
+>>>>>>> 19fa313 (chore: update all files and sync with GitHub)
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
