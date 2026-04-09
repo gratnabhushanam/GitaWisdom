@@ -99,7 +99,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add CORS headers specifically for video files served from /uploads/reels
-app.use('/uploads/reels', cors({ origin: 'https://gitawisdom.vercel.app' }));
+app.use('/uploads/reels', cors({ 
+  origin: 'https://gitawisdom.vercel.app',
+  credentials: true,
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
