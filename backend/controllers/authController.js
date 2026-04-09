@@ -235,9 +235,19 @@ const sendViaResend = async ({ email, name, otp }) => {
       signal: controller.signal,
     });
 
-    const responseBody = await response.json().catch(() => ({}));
+    const responseText = await response.text();
+    const responseBody = responseText ? (() => {
+      try {
+        return JSON.parse(responseText);
+      } catch {
+        return { raw: responseText };
+      }
+    })() : {};
     if (!response.ok) {
       const error = new Error(responseBody.message || `Resend request failed with status ${response.status}`);
+      error.status = response.status;
+      error.responseBody = responseBody;
+      error.responseText = responseText;
       error.code = response.status === 401 || response.status === 403 ? 'EAUTH' : 'EFAIL';
       throw error;
     }
@@ -306,7 +316,13 @@ const getEmailFailureMessage = (error) => {
   }
 
   if (resendRejected) {
-    return 'Resend API rejected the request. Check RESEND_API_KEY and RESEND_FROM_EMAIL.';
+    const details = error?.responseText
+      ? ` Details: ${error.responseText}`
+      : error?.responseBody && Object.keys(error.responseBody).length
+        ? ` Details: ${JSON.stringify(error.responseBody)}`
+        : '';
+    const status = error?.status ? ` (status ${error.status})` : '';
+    return `Resend API rejected the request${status}. Check RESEND_API_KEY and RESEND_FROM_EMAIL.${details}`;
   }
 
   if (smtpNetworkBlocked) {
@@ -356,7 +372,18 @@ exports.getEmailHealth = async (req, res) => {
         });
 
         if (!response.ok) {
-          const error = new Error(`Resend health check failed with status ${response.status}`);
+          const responseText = await response.text();
+          const responseBody = responseText ? (() => {
+            try {
+              return JSON.parse(responseText);
+            } catch {
+              return { raw: responseText };
+            }
+          })() : {};
+          const error = new Error(responseBody.message || `Resend health check failed with status ${response.status}`);
+          error.status = response.status;
+          error.responseBody = responseBody;
+          error.responseText = responseText;
           error.code = response.status === 401 || response.status === 403 ? 'EAUTH' : 'EFAIL';
           throw error;
         }
@@ -393,6 +420,7 @@ exports.getEmailHealth = async (req, res) => {
       provider,
       smtpUser: user,
       errorCode: error.code || null,
+      details: error.responseBody || null,
       message: getEmailFailureMessage(error),
     });
   }
