@@ -514,14 +514,7 @@ export default function Profile() {
                            className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                          >
                             <Camera className="w-8 h-8 text-white" />
-                        <button
-                          className="bg-devotion-gold text-white px-4 py-2 rounded-lg shadow-md hover:bg-yellow-500 transition btn-ripple btn-glow btn-scale min-h-[44px] min-w-[44px]"
-                          onClick={handleLogout}
-                        >
-                          Logout
-                        </button>
-                           onChange={handleFileUpload}
-                         />
+                         </button>
                        </>
                      )}
                   </div>

@@ -1,25 +1,25 @@
-// HLS DRM token endpoint
-router.get('/hls-token', protect, require('../controllers/videoController').getHlsToken);
 const express = require('express');
 const router = express.Router();
-const {
-	getVideos,
-	addVideo,
-	getReels,
-	getKidsVideos,
-	uploadUserReel,
-	getUserReels,
-	getMyReels,
-	getUserReelModerationQueue,
-	moderateUserReel,
-	toggleUserReelLike,
-	shareUserReel,
-	addUserReelComment,
-	updateMyReel,
-	deleteMyReel,
-	deleteVideo,
-} = require('../controllers/videoController');
 const { protect, admin } = require('../middleware/authMiddleware');
+// HLS DRM token endpoint
+router.get('/hls-token', protect, require('../controllers/videoController').getHlsToken);
+const {
+  getVideos,
+  addVideo,
+  getReels,
+  getKidsVideos,
+  uploadUserReel,
+  getUserReels,
+  getMyReels,
+  getUserReelModerationQueue,
+  moderateUserReel,
+  toggleUserReelLike,
+  shareUserReel,
+  addUserReelComment,
+  updateMyReel,
+  deleteMyReel,
+  deleteVideo,
+} = require('../controllers/videoController');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
 const resumableUploadMiddleware = require('../middleware/resumableUploadMiddleware');
 const { handleResumableUpload } = require('../controllers/resumableUploadController');

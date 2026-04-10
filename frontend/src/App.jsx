@@ -99,62 +99,41 @@ function AppShell() {
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-spiritual-gold border-t-transparent"></div>
           <p className="text-sm uppercase tracking-[0.2em] text-spiritual-textMuted">Loading...</p>
         </div>
-      return (
-        <>
-          <Navbar />
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={location.pathname}
-              initial={pageTransition.initial}
-              animate={pageTransition.animate}
-              exit={pageTransition.exit}
-              style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
-            >
-              <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#06101E]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-devotion-gold"></div></div>}>
-                <Routes location={location} key={location.pathname}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/stories" element={<Stories />} />
-                  <Route path="/videos" element={<Videos />} />
-                  <Route path="/sloka" element={<Sloka />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/quiz" element={<Quiz />} />
-                  <Route path="/student" element={<StudentGuide />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/register/verify-otp" element={<RegisterVerifyOtp />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/mentor" element={<Mentor />} />
-                  <Route path="/daily-sloka" element={<DailySloka />} />
-                  <Route path="/reels" element={<Reels />} />
-                  <Route path="/kids" element={<KidsMode />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/movies" element={<Movies />} />
-                  <Route path="/upload-reel" element={<UploadReel />} />
-                  <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
-              </Suspense>
-              <Footer />
-            </motion.div>
-          </AnimatePresence>
-        </>
-      );
-            <Routes>
-              <Route path="/" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
+      </div>
+    );
+  }
+
+  // Protect homepage and other routes
+  const hideNavFooter = isAuthRoute;
+  return (
+    <>
+      {!hideNavFooter && <Navbar />}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location.pathname}
+          initial={pageTransition.initial}
+          animate={pageTransition.animate}
+          exit={pageTransition.exit}
+          style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
+        >
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#06101E]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-devotion-gold"></div></div>}>
+            <Routes location={location} key={location.pathname}>
+              {/* Auth routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/register/verify-otp" element={<RegisterVerifyOtp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+
+              {/* Protected routes */}
+              <Route path="/" element={user ? <Home /> : <Navigate to="/login" replace />} />
               <Route path="/home" element={user ? <Home /> : <Navigate to="/login" replace />} />
               <Route path="/stories" element={user ? <Stories /> : <Navigate to="/login" replace />} />
-              <Route path="/chapters" element={user ? <Stories /> : <Navigate to="/login" replace />} />
               <Route path="/videos" element={user ? <Videos /> : <Navigate to="/login" replace />} />
               <Route path="/sloka" element={user ? <Sloka /> : <Navigate to="/login" replace />} />
               <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
               <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
               <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
+              <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
               <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />
               <Route path="/daily-sloka" element={user ? <DailySloka /> : <Navigate to="/login" replace />} />
               <Route path="/reels" element={user ? <Reels /> : <Navigate to="/login" replace />} />
@@ -163,14 +142,14 @@ function AppShell() {
               <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
               <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
               <Route path="/upload-reel" element={user ? <UploadReel /> : <Navigate to="/login" replace />} />
-              <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
-              <Route path="*" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
+              <Route path="/chapters" element={user ? <Chapters /> : <Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
             </Routes>
           </Suspense>
-        </main>
-        {!isAuthRoute && <Footer />}
-      </div>
-    </div>
+          {!hideNavFooter && <Footer />}
+        </motion.div>
+      </AnimatePresence>
+    </>
   );
 }
 

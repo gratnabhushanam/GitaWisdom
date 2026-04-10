@@ -19,6 +19,6 @@ module.exports = {
   Video,
   Story,
   Movie,
-  Category
+  Category,
   Notification,
 };
