@@ -1,13 +1,13 @@
-dotenv.config({ path: path.join(__dirname, '.env') });
-const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
-const helmet = require('helmet');
 const path = require('path');
-const { connectDB } = require('./config/db');
-const { initializeAdminCredentials } = require('./controllers/authController');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const { connectDB } = require('./config/db');
+const { initializeAdminCredentials } = require('./controllers/authController');
 
 const app = express();
 let initializePromise = null;
