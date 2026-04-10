@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link, useLocation } from 'react-router-dom';
-import { Play, Star, Award, BookOpen, X, Sparkles } from 'lucide-react';
+import { Play, Star, Award, BookOpen, X, Sparkles, Heart } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 const FLOATING_KRISHNA = '/krishna-floating.svg';
@@ -186,6 +186,89 @@ export default function KidsMode() {
         )}
       </>
     );
+}
+
+function VideoModal({ video, onClose, modalBgIndex, setShowQuiz, setQuizResult, isFavorite, toggleFavorite }) {
+  if (!video) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-10 bg-black/80 backdrop-blur-md">
+      <div className="bg-[#06101E] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-devotion-gold/30 p-6 md:p-10 relative animate-fade-in-up shadow-[0_0_80px_rgba(255,215,0,0.12)]">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 md:top-6 md:right-6 bg-devotion-gold/10 text-devotion-gold w-12 h-12 rounded-2xl flex items-center justify-center text-2xl border border-devotion-gold/20 hover:bg-devotion-gold/20 transition-all hover:-translate-y-1 active:translate-y-1 z-10"
+        >
+          <X />
+        </button>
+
+        {/* Video Player */}
+        <div className="rounded-2xl overflow-hidden border border-devotion-gold/20 mb-8">
+          <MediaPlayerHLS
+            url={video.videoUrl || video.youtubeUrl || video.url}
+            hlsUrl={video.hlsUrl}
+            title={video.title}
+            className="w-full aspect-video"
+            autoPlay={true}
+            shouldPlay={true}
+            muted={false}
+            loop={false}
+            controls={true}
+          />
+        </div>
+
+        {/* Title & Info */}
+        <div className="mb-6">
+          <h2 className="text-3xl md:text-4xl font-serif font-black text-devotion-gold mb-3">
+            {video.chapter ? `Chapter ${video.chapter}: ` : ''}{video.title}
+          </h2>
+          <p className="text-gray-300 text-lg font-light leading-relaxed">
+            {video.description || "Join Krishna for a fun adventure!"}
+          </p>
+        </div>
+
+        {/* Moral of the Story */}
+        {video.moral && (
+          <div className="bg-devotion-gold/10 border border-devotion-gold/30 rounded-2xl p-6 mb-8">
+            <div className="flex items-center gap-3 mb-3">
+              <Star className="w-6 h-6 text-devotion-gold fill-devotion-gold" />
+              <h4 className="text-lg font-black text-devotion-gold uppercase tracking-[0.2em]">Moral</h4>
+            </div>
+            <p className="text-white text-lg font-serif italic">{video.moral}</p>
+          </div>
+        )}
+
+        {/* Read Along Section */}
+        {video.script && <ReadAlong script={video.script} />}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-4 items-center">
+          <button
+            onClick={() => {
+              setQuizResult(null);
+              setShowQuiz(true);
+            }}
+            className="bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-3 rounded-full font-black text-sm uppercase tracking-[0.2em] flex items-center gap-3 shadow-[0_10px_30px_rgba(255,215,0,0.18)] hover:shadow-[0_14px_34px_rgba(255,215,0,0.24)] transition-all active:translate-y-1"
+          >
+            <Award className="w-5 h-5" /> Take Quiz
+          </button>
+          <button
+            className={`flex items-center gap-2 px-6 py-3 rounded-full border-2 font-black text-sm uppercase tracking-widest transition-all hover:scale-105 ${isFavorite(video) ? 'border-devotion-gold bg-devotion-gold/20 text-devotion-gold' : 'border-white/20 bg-white/5 text-white/60'}`}
+            onClick={() => toggleFavorite(video)}
+          >
+            <Heart className={`w-5 h-5 ${isFavorite(video) ? 'fill-devotion-gold' : 'fill-none'}`} />
+            {isFavorite(video) ? 'Favorited' : 'Favorite'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 rounded-full border border-white/20 text-white/60 font-black text-sm uppercase tracking-widest hover:bg-white/5 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ReadAlong({ script }) {
