@@ -1,43 +1,8 @@
-import { resumableUpload } from '../utils/resumableUpload';
-  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
-  const [videoUploadFile, setVideoUploadFile] = useState(null);
-  // Handle resumable video file upload
-  const handleVideoFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setVideoUploadFile(file);
-    setVideoUploadProgress(0);
-    try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        'video-title': videoForm.title,
-        'video-description': videoForm.description,
-        'video-tags': videoForm.tags,
-        'video-kids': videoForm.isKids ? 'true' : 'false',
-        'video-collection': videoForm.collectionTitle,
-        'video-category': videoForm.category,
-      };
-      const result = await resumableUpload({
-        file,
-        url: '/api/videos/upload/resumable',
-        headers,
-        onProgress: setVideoUploadProgress,
-      });
-      if (result && result.videoUrl) {
-        setVideoForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
-      } else if (result && result.fileName) {
-        // fallback: set videoUrl to assembled file
-        setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
-      }
-    } catch (err) {
-      alert('Video upload failed: ' + err.message);
-    }
-  };
 import React, { useState, useEffect } from 'react';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import axios from 'axios';
-import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil } from 'lucide-react';
+import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus, X, Check, AlertCircle, Image as ImageIcon, Link as LinkIcon, FileText, Flame, Trash2, Pencil, Menu } from 'lucide-react';
+import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
@@ -45,7 +10,10 @@ import MediaPlayerHLS from '../components/MediaPlayerHLS';
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
 
 function AdminDashboardContent() {
-    const [showAuthError, setShowAuthError] = useState(false);
+  const [showAuthError, setShowAuthError] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoUploadFile, setVideoUploadFile] = useState(null);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -102,6 +70,39 @@ function AdminDashboardContent() {
     correctOption: 'B',
   });
   const [editingStoryId, setEditingStoryId] = useState(null);
+
+  // Handle resumable video file upload
+  const handleVideoFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setVideoUploadFile(file);
+    setVideoUploadProgress(0);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        'video-title': videoForm.title,
+        'video-description': videoForm.description,
+        'video-tags': videoForm.tags,
+        'video-kids': videoForm.isKids ? 'true' : 'false',
+        'video-collection': videoForm.collectionTitle,
+        'video-category': videoForm.category,
+      };
+      const result = await resumableUpload({
+        file,
+        url: '/api/videos/upload/resumable',
+        headers,
+        onProgress: setVideoUploadProgress,
+      });
+      if (result && result.videoUrl) {
+        setVideoForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
+      } else if (result && result.fileName) {
+        setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
+      }
+    } catch (err) {
+      alert('Video upload failed: ' + err.message);
+    }
+  };
 
   const contentLabels = {
     movies: 'Movie',
@@ -516,13 +517,13 @@ function AdminDashboardContent() {
         </div>
         <div className="relative">
           <button
-            onClick={() => setShowAddModal(false) || setShowMobileMenu((v) => !v)}
+            onClick={() => { setShowAddModal(false); setShowMobileMenu((v) => !v); }}
             className="p-2 rounded-full bg-devotion-gold/10 border border-devotion-gold/30 text-devotion-gold focus:outline-none focus:ring-2 focus:ring-devotion-gold"
             aria-label="Open admin menu"
           >
             <Menu className="w-6 h-6" />
           </button>
-          {typeof showMobileMenu !== 'undefined' && showMobileMenu && (
+          {showMobileMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-devotion-darkBlue border border-devotion-gold/20 rounded-2xl shadow-2xl z-50">
               {[
                 { id: 'dashboard', name: 'Analytics', icon: <Database className="w-4 h-4" /> },
@@ -549,12 +550,6 @@ function AdminDashboardContent() {
           )}
         </div>
       </div>
-
-      {/* Add state for mobile menu */}
-      {typeof showMobileMenu === 'undefined' && (
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        (() => { const [showMobileMenu, setShowMobileMenu] = useState(false); return null; })()
-      )}
 
       {/* Admin Content Area */}
       <div className="flex-1 flex flex-col pt-24 px-4 md:px-10 pb-10 overflow-y-auto">

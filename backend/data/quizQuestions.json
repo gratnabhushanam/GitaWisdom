@@ -5,10 +5,22 @@
     "category": "Gita Basics",
     "videoUrl": "",
     "options": [
-      { "answerText": "Bhishma", "isCorrect": false },
-      { "answerText": "Arjuna", "isCorrect": true },
-      { "answerText": "Yudhishthira", "isCorrect": false },
-      { "answerText": "Karna", "isCorrect": false }
+      {
+        "answerText": "Bhishma",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Arjuna",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Yudhishthira",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Karna",
+        "isCorrect": false
+      }
     ],
     "createdAt": "2026-04-08T00:00:00.000Z",
     "updatedAt": "2026-04-08T00:00:00.000Z"
@@ -19,12 +31,232 @@
     "category": "Gita Basics",
     "videoUrl": "",
     "options": [
-      { "answerText": "12", "isCorrect": false },
-      { "answerText": "18", "isCorrect": true },
-      { "answerText": "24", "isCorrect": false },
-      { "answerText": "108", "isCorrect": false }
+      {
+        "answerText": "12",
+        "isCorrect": false
+      },
+      {
+        "answerText": "18",
+        "isCorrect": true
+      },
+      {
+        "answerText": "24",
+        "isCorrect": false
+      },
+      {
+        "answerText": "108",
+        "isCorrect": false
+      }
     ],
     "createdAt": "2026-04-08T00:00:00.000Z",
     "updatedAt": "2026-04-08T00:00:00.000Z"
+  },
+  {
+    "questionText": "What is the main teaching of Karma Yoga?",
+    "category": "Gita Teachings",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Renounce all work",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Act without attachment to results",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Only meditate",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Pursue wealth",
+        "isCorrect": false
+      }
+    ],
+    "id": 3,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "Where was the Bhagavad Gita spoken?",
+    "category": "Gita Basics",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Ayodhya",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Kurukshetra battlefield",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Vrindavan",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Dwarka",
+        "isCorrect": false
+      }
+    ],
+    "id": 4,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "What does \"Yoga\" mean in the Bhagavad Gita?",
+    "category": "Gita Teachings",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Physical exercise",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Union with the Divine",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Breathing technique",
+        "isCorrect": false
+      },
+      {
+        "answerText": "A type of dance",
+        "isCorrect": false
+      }
+    ],
+    "id": 5,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "Who narrated the Bhagavad Gita to King Dhritarashtra?",
+    "category": "Gita Basics",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Vidura",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Bhishma",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Sanjaya",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Drona",
+        "isCorrect": false
+      }
+    ],
+    "id": 6,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "What is the last chapter of Bhagavad Gita called?",
+    "category": "Gita Chapters",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Karma Yoga",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Bhakti Yoga",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Moksha Sannyasa Yoga",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Dhyana Yoga",
+        "isCorrect": false
+      }
+    ],
+    "id": 7,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "What is \"Dharma\" according to the Gita?",
+    "category": "Gita Teachings",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Earning money",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Righteous duty",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Physical strength",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Royal power",
+        "isCorrect": false
+      }
+    ],
+    "id": 8,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "Which form did Krishna show Arjuna in Chapter 11?",
+    "category": "Gita Chapters",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "Child form",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Vishwarupa (Universal form)",
+        "isCorrect": true
+      },
+      {
+        "answerText": "Warrior form",
+        "isCorrect": false
+      },
+      {
+        "answerText": "Sage form",
+        "isCorrect": false
+      }
+    ],
+    "id": 9,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
+  },
+  {
+    "questionText": "How many slokas are there in Bhagavad Gita?",
+    "category": "Gita Basics",
+    "videoUrl": "",
+    "options": [
+      {
+        "answerText": "500",
+        "isCorrect": false
+      },
+      {
+        "answerText": "700",
+        "isCorrect": true
+      },
+      {
+        "answerText": "1000",
+        "isCorrect": false
+      },
+      {
+        "answerText": "108",
+        "isCorrect": false
+      }
+    ],
+    "id": 10,
+    "createdAt": "2026-04-10T15:17:28.586Z",
+    "updatedAt": "2026-04-10T15:17:28.586Z"
   }
 ]
