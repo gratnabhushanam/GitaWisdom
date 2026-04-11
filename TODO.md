@@ -13,14 +13,16 @@
 - ✅ Admin credentials working (gitawisdom143@gmail.com / Ratnapavan@7896)
 - ✅ Reels user upload functional (button + route present)
 
-**Next User Actions:**
-1. Add real RESEND_API_KEY to backend/.env
-2. Set Gmail App Password for EMAIL_PASS 
-3. Test: http://localhost:8888/api/auth/email-health
-4. Login frontend: gitawisdom143@gmail.com / Ratnapavan@7896 → /admin
-5. Test reels upload as normal user
-6. Deploy: Copy env vars to Vercel dashboard
+**Next Steps:**
+1. **MongoDB Compass:** Connect to `mongodb://localhost:27017/gita_wisdom`
+2. **Real OTP:** 
+   - Get Gmail App Password: https://myaccount.google.com/apppasswords
+   - Add to backend/.env: `EMAIL_PASS=your_16char_app_password`
+3. **RESEND:** Add real API key to backend/.env
+4. **Restart:** `cd backend && npm start`
+5. **Test:** localhost:8888/api/auth/email-health (should show "configured")
+6. **Admin login:** gitawisdom143@gmail.com / Ratnapavan@7896
 
-All issues resolved!
+PR #2 ready for merge!
 
 
