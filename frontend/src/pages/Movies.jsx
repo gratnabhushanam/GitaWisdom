@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Film, Calendar, History, Play, X, ArrowRight, Star, Sparkles } from 'lucide-react';
-import MediaPlayer from '../components/MediaPlayer';
+import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function Movies() {
   const location = useLocation();
@@ -172,13 +172,13 @@ export default function Movies() {
               
               <div className="absolute inset-0 bg-gold-glow opacity-10 pointer-events-none"></div>
 
-              <MediaPlayer
+              <MediaPlayerHLS
                 url={selectedMovie.videoUrl || selectedMovie.youtubeUrl || selectedMovie.url}
+                hlsUrl={selectedMovie.hlsUrl}
                 title={selectedMovie.title}
-                className="w-full h-full relative z-10 object-cover bg-black"
+                className="w-full h-full relative z-10 object-contain bg-black"
                 youtubeParams="autoplay=1&rel=0&modestbranding=1"
                 autoPlay
-                muted
                 controls
               />
            </div>
