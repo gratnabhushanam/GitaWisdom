@@ -19,26 +19,27 @@ async function handleResumableUpload(req, res) {
     const collectionTitle = req.headers['video-collection'] || 'Bhagavad Gita';
     const category = req.headers['video-category'] || 'reels';
     const contentType = req.headers['video-content-type'] || 'short';
-    const moderationStatus = user && user.role === 'admin' ? 'approved' : 'pending';
-    const uploadSource = user && user.role === 'admin' ? 'admin' : 'user';
+    const explicitSource = req.headers['video-source'];
+    const moderationStatus = user && user.role === 'admin' && explicitSource !== 'user' ? 'approved' : 'pending';
+    const uploadSource = user && user.role === 'admin' && explicitSource !== 'user' ? 'admin' : 'user';
     let duration = req.headers['video-duration'];
     let orientation = req.headers['video-orientation'];
 
     // Always probe duration if possible
     try {
       duration = await getVideoDurationSeconds(filePath);
-    } catch {}
+    } catch { }
 
     // Validate for short-form reels
     if (contentType === 'short') {
       const stats = fs.statSync(filePath);
       const fileSizeMB = stats.size / (1024 * 1024);
       if (fileSizeMB > 100) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Short-form reels must be <= 100MB.' });
       }
       if (duration < 3 || duration > 90) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Short-form reels must be between 3 and 90 seconds.' });
       }
       let aspect = 0;
@@ -52,9 +53,9 @@ async function handleResumableUpload(req, res) {
             resolve();
           });
         });
-      } catch {}
+      } catch { }
       if (aspect && !(Math.abs(aspect - 0.56) < 0.1 || Math.abs(aspect - 1.0) < 0.1)) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Short-form reels must be 9:16 (vertical) or 1:1 (square) aspect ratio.' });
       }
     }
@@ -64,11 +65,11 @@ async function handleResumableUpload(req, res) {
       const stats = fs.statSync(filePath);
       const fileSizeMB = stats.size / (1024 * 1024);
       if (fileSizeMB > 5120) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Long-form videos must be <= 5GB.' });
       }
       if (duration < 91 || duration > 14400) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Long-form videos must be between 91 seconds and 4 hours.' });
       }
       let aspect = 0;
@@ -82,9 +83,9 @@ async function handleResumableUpload(req, res) {
             resolve();
           });
         });
-      } catch {}
+      } catch { }
       if (aspect && !(Math.abs(aspect - 1.78) < 0.1 || Math.abs(aspect - 1.33) < 0.1)) {
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => { });
         return res.status(400).json({ message: 'Long-form videos must be 16:9 (landscape) or 4:3 aspect ratio.' });
       }
     }
@@ -95,17 +96,29 @@ async function handleResumableUpload(req, res) {
       transcodeToHLS(filePath, hlsOutputDir, 'playlist', () => resolve());
     });
 
-    // Upload HLS files to Vercel Blob
+    // Upload HLS files to Vercel Blob or Fallback to local
     const hlsFiles = fs.readdirSync(hlsOutputDir).filter(f => f.endsWith('.m3u8') || f.endsWith('.ts'));
     const blobBase = `videos/${path.parse(fileName).name}/`;
     let masterPlaylistCdnUrl = '';
-    for (const f of hlsFiles) {
-      const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `${blobBase}${f}`);
-      if (f.endsWith('_master.m3u8')) masterPlaylistCdnUrl = cdnUrl;
-    }
+    let videoCdnUrl = '';
 
-    // Upload original video file to Vercel Blob
-    const videoCdnUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      try {
+        for (const f of hlsFiles) {
+          const cdnUrl = await uploadToVercelBlob(path.join(hlsOutputDir, f), `${blobBase}${f}`);
+          if (f.endsWith('_master.m3u8')) masterPlaylistCdnUrl = cdnUrl;
+        }
+        videoCdnUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
+      } catch (uploadErr) {
+        console.warn('Vercel Blob upload failed, falling back to local storage:', uploadErr.message);
+        masterPlaylistCdnUrl = `/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+        videoCdnUrl = `/uploads/reels/${fileName}`;
+      }
+    } else {
+      console.warn('BLOB_READ_WRITE_TOKEN not found, falling back to local storage.');
+      masterPlaylistCdnUrl = `/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+      videoCdnUrl = `/uploads/reels/${fileName}`;
+    }
 
     // Save to MongoDB
     const newVideo = await VideoMongo.create({
@@ -118,7 +131,7 @@ async function handleResumableUpload(req, res) {
       isKids,
       collectionTitle,
       isUserReel: uploadSource === 'user',
-      uploadedBy: user ? user.id : undefined,
+      uploadedBy: user ? String(user._id || user.id) : undefined,
       uploadSource,
       moderationStatus,
       contentType,

@@ -3,18 +3,13 @@ const mongoose = require('mongoose');
 const StoryMongo = require('../models/mongo/StoryMongo');
 const { Op } = require('sequelize');
 const { mapStory } = require('../utils/responseMappers');
-const mockContentStore = require('../utils/mockContentStore');
-const { isMockMode } = require('./authController');
 
-const isMongoEnabled = String(process.env.USE_MONGODB || 'false').toLowerCase() === 'true';
-const isMongoConnected = () => mongoose.connection && mongoose.connection.readyState === 1;
-const useMongoStore = () => isMongoEnabled && isMongoConnected();
+
+const { isMongoEnabled, isMongoConnected, useMongoStore } = require('../utils/mongoStore');
 
 exports.getStories = async (req, res) => {
   try {
-    if (isMockMode()) {
-      return res.json(mockContentStore.listStories().map(mapStory));
-    }
+
 
     if (useMongoStore()) {
       const stories = await StoryMongo.find({}).sort({ createdAt: -1 });
@@ -44,10 +39,7 @@ exports.addStory = async (req, res) => {
       bgmPreset: req.body.bgmPreset || 'temple',
     };
 
-    if (isMockMode()) {
-      const newStory = mockContentStore.addStory(payload);
-      return res.status(201).json(mapStory(newStory));
-    }
+
 
     if (useMongoStore()) {
       const newStory = await StoryMongo.create(payload);
@@ -63,12 +55,7 @@ exports.addStory = async (req, res) => {
 
 exports.getKidsStories = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const stories = mockContentStore
-        .listStories()
-        .filter((story) => Array.isArray(story.tags) && story.tags.some((tag) => String(tag).toLowerCase().includes('kids')));
-      return res.json(stories.map(mapStory));
-    }
+
 
     if (useMongoStore()) {
       const stories = await StoryMongo.find({ tags: { $regex: 'kids', $options: 'i' } });
@@ -92,13 +79,7 @@ exports.deleteStory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (isMockMode()) {
-      const removedStory = mockContentStore.deleteStory(id);
-      if (!removedStory) {
-        return res.status(404).json({ message: 'Story not found' });
-      }
-      return res.json({ message: 'Story deleted successfully', id: removedStory.id });
-    }
+
 
     if (useMongoStore()) {
       const story = await StoryMongo.findById(String(id));

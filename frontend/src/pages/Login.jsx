@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Eye, EyeOff, Sparkles, Shield, BookOpen, Heart } from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, BookOpen, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
@@ -10,31 +10,20 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const handleEmailChange = (event) => {
-    const email = event.target.value;
-    setFormData((current) => ({ ...current, email }));
-    setEmailError(email && !validateEmail(email) ? 'Please enter a valid email address' : '');
-  };
-
-  const handleSubmit = async (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     setError('');
 
-    if (!validateEmail(formData.email)) {
-      setEmailError('Please enter a valid email address');
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
       return;
     }
 
     setLoading(true);
-
     try {
       await login(formData.email, formData.password);
       navigate('/kids', { replace: true });
@@ -97,7 +86,7 @@ export default function Login() {
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.32em] text-[#f7d77d]/85">Welcome back</p>
-                <h2 className="mt-2 text-3xl font-serif font-black uppercase tracking-tight text-white">Sign in</h2>
+                <h2 className="mt-2 text-3xl font-serif font-black uppercase tracking-tight text-white">Sign In</h2>
               </div>
               <Link to="/home" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-[#f7d77d]">
                 Home
@@ -111,7 +100,7 @@ export default function Login() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label htmlFor="email" className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
                   Email Address
@@ -121,40 +110,29 @@ export default function Login() {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={handleEmailChange}
+                  onChange={(event) => setFormData((current) => ({ ...current, email: event.target.value }))}
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                   placeholder="arjuna@example.com"
-                  className={`auth-input ${focusedField === 'email' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''} ${emailError ? 'border-red-400/60' : ''}`}
+                  className={`auth-input ${focusedField === 'email' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
                 />
-                {emailError && <p className="mt-2 text-xs text-red-300">{emailError}</p>}
               </div>
 
               <div>
                 <label htmlFor="password" className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
                   Password
                 </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={formData.password}
-                    onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="••••••••"
-                    className={`auth-input pr-12 ${focusedField === 'password' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-white/55 transition-colors hover:text-[#f7d77d]"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="Enter your password"
+                  className={`auth-input ${focusedField === 'password' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                />
               </div>
 
               <div className="flex items-center justify-between gap-3 pt-1 text-sm text-white/65">
@@ -162,9 +140,6 @@ export default function Login() {
                   <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-white/10 text-[#f7d77d] focus:ring-[#f7d77d]" />
                   Remember me
                 </label>
-                <Link to="/forgot-password" className="text-xs uppercase tracking-[0.16em] text-[#f7d77d]/80 hover:text-[#f7d77d]">
-                  Forgot password?
-                </Link>
               </div>
 
               <button type="submit" disabled={loading} className="auth-button mt-2 w-full px-5 py-3.5">
@@ -185,7 +160,6 @@ export default function Login() {
           </div>
         </section>
       </div>
-
     </div>
   );
 }

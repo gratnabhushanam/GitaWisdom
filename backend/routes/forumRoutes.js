@@ -1,0 +1,18 @@
+const express = require('express');
+const router = express.Router();
+const {
+  getGroups,
+  createGroup,
+  getPostsByGroup,
+  createPost,
+  likePost,
+  commentOnPost
+} = require('../controllers/forumController');
+const { protect } = require('../middleware/authMiddleware');
+
+router.route('/groups').get(getGroups).post(protect, createGroup);
+router.route('/groups/:groupId/posts').get(getPostsByGroup).post(protect, createPost);
+router.patch('/posts/:postId/like', protect, likePost);
+router.post('/posts/:postId/comment', protect, commentOnPost);
+
+module.exports = router;

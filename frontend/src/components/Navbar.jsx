@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const fetchNotifications = async () => {
+        try {
+          const { data } = await axios.get('/api/notifications', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+          setNotifications(Array.isArray(data) ? data : []);
+        } catch (error) {
+           // Silent catch
+        }
+      };
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length || notifications.filter(n => !n.read).length;
+
+  const handleMarkAsRead = async () => {
+    try {
+      await axios.post('/api/notifications/read-all', {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setNotifications(notifications.map(n => ({...n, isRead: true, read: true})));
+    } catch {}
+  };
 
   const getInitials = (name) => {
     if (!name) return 'S';
@@ -19,6 +51,7 @@ export default function Navbar() {
     { name: 'Reels', path: '/reels', icon: <Zap className="w-4 h-4 mr-1.5" /> },
     { name: 'Kids', path: '/kids', icon: <Star className="w-4 h-4 mr-1.5" /> },
     { name: 'Movies', path: '/movies', icon: <Film className="w-4 h-4 mr-1.5" /> },
+    { name: 'Satsangs', path: '/satsangs', icon: <Users className="w-4 h-4 mr-1.5" /> },
     { name: 'Search', path: '/search', icon: <Search className="w-4 h-4 mr-1.5" /> },
     { name: 'Chapters', path: '/chapters', icon: <Book className="w-4 h-4 mr-1.5" /> },
       { name: 'Daily Sloka', path: '/daily-sloka', icon: <BrainCircuit className="w-4 h-4 mr-1.5" /> },
@@ -56,6 +89,49 @@ export default function Navbar() {
               ))}
               
               <div className="h-5 w-px bg-devotion-gold/20 mx-2"></div>
+              
+              {user && (
+                 <div className="relative">
+                    <button 
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      className="group flex items-center justify-center w-8 h-8 rounded-lg hover:bg-devotion-gold/10 transition-colors mr-2 relative"
+                    >
+                       <Bell className="w-4 h-4 text-gray-400 group-hover:text-devotion-gold transition-colors" />
+                       {unreadCount > 0 && (
+                         <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#06101E] animate-pulse"></span>
+                       )}
+                    </button>
+
+                    {showNotifications && (
+                      <div className="absolute right-0 mt-3 w-80 bg-[#081426] border border-devotion-gold/30 rounded-2xl shadow-2xl overflow-hidden py-2 z-50">
+                         <div className="px-4 py-2 flex justify-between items-center border-b border-white/5 mb-2">
+                            <span className="text-xs font-bold text-white uppercase tracking-widest">Notifications</span>
+                            {unreadCount > 0 && (
+                               <button onClick={handleMarkAsRead} className="text-[10px] text-devotion-gold hover:text-white uppercase tracking-[0.1em] font-bold">Mark all read</button>
+                            )}
+                         </div>
+                         <div className="max-h-[300px] overflow-y-auto px-2">
+                            {notifications.length === 0 ? (
+                               <div className="text-center py-6 text-gray-500">
+                                  <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                  <p className="text-xs font-medium uppercase tracking-[0.1em]">All caught up!</p>
+                               </div>
+                            ) : (
+                               notifications.map((n) => (
+                                 <div key={n._id} className={`p-3 rounded-xl mb-1 flex items-start gap-3 transition-colors ${!n.isRead && !n.read ? 'bg-devotion-gold/10 border border-devotion-gold/20' : 'hover:bg-white/5 border border-transparent'}`}>
+                                    <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.isRead && !n.read ? 'bg-devotion-gold' : 'bg-gray-600'}`}></div>
+                                    <div className="flex-1 min-w-0">
+                                       {n.title && <p className="text-xs font-bold text-white mb-0.5 truncate">{n.title}</p>}
+                                       <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{n.message || n.text}</p>
+                                    </div>
+                                 </div>
+                               ))
+                            )}
+                         </div>
+                      </div>
+                    )}
+                 </div>
+              )}
               
               {user ? (
                 <Link to="/profile" className="group flex items-center px-2.5 py-1.5 bg-devotion-gold/10 border border-devotion-gold/20 rounded-lg transition-all hover:border-devotion-gold/40 hover:bg-devotion-gold/20">

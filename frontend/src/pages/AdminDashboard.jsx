@@ -595,7 +595,7 @@ function AdminDashboardContent() {
                      { label: 'Wisdom Stories', value: data.stats.totalStories, icon: <BookOpen />, color: 'text-orange-400' },
                      { label: 'Library Videos', value: data.stats.totalVideos, icon: <Video />, color: 'text-green-400' },
                    ].map((stat, i) => (
-                     <div key={i} className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-3xl shadow-2xl">
+                     <div key={stat.label} className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-3xl shadow-2xl">
                         <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 ${stat.color}`}>
                            {stat.icon}
                         </div>
@@ -611,7 +611,7 @@ function AdminDashboardContent() {
                    </h3>
                    <div className="space-y-4">
                       {data.stats.recentUsers.map(user => (
-                        <div key={user.id} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-devotion-gold/30 transition-all">
+                        <div key={user.id || user._id || user.email} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 hover:border-devotion-gold/30 transition-all">
                            <div className="flex items-center gap-6">
                               <div className="w-12 h-12 rounded-full bg-devotion-gold/20 flex items-center justify-center text-devotion-gold font-black">
                                  {user.name[0].toUpperCase()}
@@ -639,7 +639,7 @@ function AdminDashboardContent() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                      {data.users.map(u => (
-                       <div key={u._id || u.id} className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 hover:border-devotion-gold/30 transition-all shadow-xl group">
+                       <div key={u._id || u.id || u.email} className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5 hover:border-devotion-gold/30 transition-all shadow-xl group">
                           <div className="flex items-center gap-6 mb-6">
                              <div className="w-16 h-16 rounded-2xl overflow-hidden bg-devotion-maroon flex items-center justify-center border-2 border-devotion-gold/20">
                                 {u.profilePicture ? <img src={u.profilePicture} className="w-full h-full object-cover" /> : <span className="text-2xl font-black text-devotion-gold">{u.name[0]}</span>}
@@ -851,7 +851,18 @@ function AdminDashboardContent() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {pendingUserReels.map((reel) => (
-                          <div key={reel._id || reel.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                          <div key={reel._id || reel.id} className="rounded-2xl border border-white/10 bg-black/20 p-4 flex flex-col">
+                            {reel.videoUrl && (
+                              <div className="mb-4 rounded-xl overflow-hidden border border-devotion-gold/20 aspect-[9/16] bg-black max-h-[300px] mx-auto">
+                                <MediaPlayerHLS
+                                  url={reel.videoUrl}
+                                  hlsUrl={reel.hlsUrl}
+                                  title={reel.title}
+                                  className="w-full h-full object-cover"
+                                  controls
+                                />
+                              </div>
+                            )}
                             <p className="text-white font-bold mb-1 line-clamp-1">{reel.title}</p>
                             <p className="text-xs text-gray-300 mb-2 line-clamp-2">{reel.description || 'No description'}</p>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
@@ -1099,15 +1110,6 @@ function AdminDashboardContent() {
                       </div>
                       <div className="space-y-4">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video URL</label>
-                         <input
-                           type="file"
-                           accept="video/*"
-                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none"
-                           onChange={handleVideoFileChange}
-                         />
-                         {videoUploadProgress > 0 && videoUploadProgress < 100 && (
-                           <div className="mt-2 text-xs text-devotion-gold">Uploading: {videoUploadProgress}%</div>
-                         )}
                          <input
                            required
                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none mt-2"

@@ -1,161 +1,126 @@
-const fs = require('fs');
-const path = require('path');
+const QuizMongo = require('../models/mongo/QuizMongo');
+const UserMongo = require('../models/mongo/UserMongo');
 
-const STORE_FILE = path.join(__dirname, '..', 'data', 'quizQuestions.json');
-
-const defaultQuestions = [
-  {
-    id: 1,
-    questionText: 'Bhagavad Gita was spoken by Lord Krishna to whom?',
-    category: 'Gita Basics',
-    videoUrl: '',
-    options: [
-      { answerText: 'Bhishma', isCorrect: false },
-      { answerText: 'Arjuna', isCorrect: true },
-      { answerText: 'Yudhishthira', isCorrect: false },
-      { answerText: 'Karna', isCorrect: false },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    questionText: 'How many chapters are there in the Bhagavad Gita?',
-    category: 'Gita Basics',
-    videoUrl: '',
-    options: [
-      { answerText: '12', isCorrect: false },
-      { answerText: '18', isCorrect: true },
-      { answerText: '24', isCorrect: false },
-      { answerText: '108', isCorrect: false },
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-const loadStore = () => {
+exports.getAllQuestions = async (req, res) => {
   try {
-    if (!fs.existsSync(STORE_FILE)) {
-      fs.writeFileSync(STORE_FILE, JSON.stringify(defaultQuestions, null, 2), 'utf8');
-      return [...defaultQuestions];
-    }
-
-    const raw = fs.readFileSync(STORE_FILE, 'utf8');
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed) && parsed.length) {
-      return parsed;
-    }
-
-    fs.writeFileSync(STORE_FILE, JSON.stringify(defaultQuestions, null, 2), 'utf8');
-    return [...defaultQuestions];
+    const quizzes = await QuizMongo.find();
+    return res.status(200).json(quizzes);
   } catch (error) {
-    return [...defaultQuestions];
+    console.error('Error fetching all quizzes:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
-const saveStore = (questions) => {
-  // Backup before writing
+exports.getQuizByVideoId = async (req, res) => {
   try {
-    const backupPath = STORE_FILE.replace('.json', `_backup_${Date.now()}.json`);
-    if (fs.existsSync(STORE_FILE)) {
-      fs.copyFileSync(STORE_FILE, backupPath);
+    const { videoId } = req.params;
+    
+    // Safety check because sometimes string videoId fails object validation
+    if (!videoId || videoId === 'questions') {
+      return res.status(400).json({ message: 'Invalid videoId' });
     }
-  } catch (e) {
-    // Ignore backup errors
-  }
-  fs.writeFileSync(STORE_FILE, JSON.stringify(questions, null, 2), 'utf8');
-};
 
-const sanitizeOption = (option) => {
-  if (!option || typeof option !== 'object') return null;
-  const answerText = String(option.answerText || '').trim();
-  if (!answerText) return null;
-  return {
-    answerText,
-    isCorrect: Boolean(option.isCorrect),
-  };
-};
+    // Find quizzes for the specific video
+    const quizzes = await QuizMongo.find({ videoId });
+    
+    // We omit 'correct_answer' on get to prevent cheating
+    const safeQuizzes = quizzes.map(q => {
+      const qObj = q.toObject();
+      delete qObj.correct_answer;
+      return qObj;
+    });
 
-const normalizeOptions = (options) => {
-  const list = Array.isArray(options) ? options.map(sanitizeOption).filter(Boolean) : [];
-  return list;
-};
-
-exports.getQuizQuestions = (req, res) => {
-  try {
-    const questions = loadStore();
-    return res.json(questions);
+    return res.status(200).json(safeQuizzes);
   } catch (error) {
-    return res.status(500).json({ message: 'Failed to load quiz questions' });
+    console.error('Error fetching quiz:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
-exports.addQuizQuestion = (req, res) => {
+exports.submitQuiz = async (req, res) => {
   try {
-    console.log('[QUIZ][UPLOAD] Incoming body:', req.body);
-    const questionText = String(req.body?.questionText || '').trim();
-    const category = String(req.body?.category || 'Gita Challenge').trim();
-    const videoUrl = String(req.body?.videoUrl || '').trim();
-    const videoId = req.body?.videoId || null;
-    const options = normalizeOptions(req.body?.options);
+    const { videoId, answers } = req.body; // answers: { quizId: "selected_option" }
+    const userId = req.user?.id;
 
-    if (!questionText) {
-      console.warn('[QUIZ][UPLOAD] Missing questionText');
-      return res.status(400).json({ message: 'questionText is required' });
-    }
-    if (options.length < 2) {
-      console.warn('[QUIZ][UPLOAD] Less than 2 options');
-      return res.status(400).json({ message: 'At least 2 options are required' });
-    }
-    if (!options.some((item) => item.isCorrect)) {
-      console.warn('[QUIZ][UPLOAD] No correct option');
-      return res.status(400).json({ message: 'At least one correct option is required' });
+    if (!videoId || !answers) {
+      return res.status(400).json({ message: 'Missing videoId or answers' });
     }
 
-    const questions = loadStore();
-    const maxId = questions.reduce((acc, item) => Math.max(acc, Number(item.id) || 0), 0);
-    const now = new Date().toISOString();
+    const quizzes = await QuizMongo.find({ videoId });
+    if (!quizzes.length) {
+      return res.status(404).json({ message: 'No quiz found for this video' });
+    }
 
-    const created = {
-      id: maxId + 1,
-      questionText,
-      category,
-      videoUrl,
+    let score = 0;
+    const results = [];
+
+    quizzes.forEach(quiz => {
+      const selectedOption = answers[quiz._id];
+      const isCorrect = selectedOption === quiz.correct_answer;
+      if (isCorrect) score += 1;
+
+      results.push({
+        quizId: quiz._id,
+        question: quiz.question,
+        isCorrect,
+        correct_answer: quiz.correct_answer,
+        explanation: quiz.explanation
+      });
+    });
+
+    // Update user benefits/streak if passed
+    if (score > 0 && userId) {
+      const user = await UserMongo.findById(userId);
+      if (user) {
+        if (!user.benefits) {
+          user.benefits = { points: 0, badges: [] };
+        }
+        user.benefits.points += score * 10;
+        await user.save();
+      }
+    }
+
+    return res.status(200).json({
+      message: 'Quiz submitted successfully',
+      score,
+      total: quizzes.length,
+      results
+    });
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+exports.addQuizQuestion = async (req, res) => {
+  try {
+    const { videoId, question, options, correct_answer, explanation, difficulty } = req.body;
+
+    if (!videoId || !question || !options || !correct_answer) {
+      return res.status(400).json({ message: 'Missing required quiz fields' });
+    }
+
+    const newQuiz = await QuizMongo.create({
       videoId,
+      question,
       options,
-      createdAt: now,
-      updatedAt: now,
-    };
+      correct_answer,
+      explanation,
+      difficulty
+    });
 
-    questions.push(created);
-    saveStore(questions);
-    console.log('[QUIZ][UPLOAD] Saved new quiz question:', created);
-
-    return res.status(201).json(created);
+    return res.status(201).json(newQuiz);
   } catch (error) {
-    console.error('[QUIZ][UPLOAD] Error:', error);
     return res.status(500).json({ message: 'Failed to add quiz question' });
   }
 };
 
-exports.deleteQuizQuestion = (req, res) => {
+exports.deleteQuizQuestion = async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (!id) {
-      return res.status(400).json({ message: 'Valid question id is required' });
-    }
-
-    const questions = loadStore();
-    const index = questions.findIndex((item) => Number(item.id) === id);
-    if (index === -1) {
-      return res.status(404).json({ message: 'Quiz question not found' });
-    }
-
-    const [removed] = questions.splice(index, 1);
-    saveStore(questions);
-    return res.json({ message: 'Quiz question deleted', question: removed });
+    const { id } = req.params;
+    await QuizMongo.findByIdAndDelete(id);
+    return res.status(200).json({ message: 'Question deleted' });
   } catch (error) {
-    return res.status(500).json({ message: 'Failed to delete quiz question' });
+    return res.status(500).json({ message: 'Failed to delete' });
   }
 };

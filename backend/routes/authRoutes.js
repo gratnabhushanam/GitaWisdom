@@ -21,6 +21,11 @@ const { protect, admin } = require('../middleware/authMiddleware');
 router.post('/register', registerUser);
 router.post('/register/verify-otp', verifyRegistrationOtp);
 router.post('/register/resend-otp', resendRegistrationOtp);
+
+// Unified OTP Auth Endpoints
+router.post('/send-otp', require('../controllers/authController').sendOtp);
+router.post('/verify-otp', require('../controllers/authController').verifyOtp);
+
 router.post('/forgot-password/request-otp', requestPasswordResetOtp);
 router.post('/forgot-password/verify-otp', verifyPasswordResetOtp);
 router.get('/email-health', getEmailHealth);
@@ -28,6 +33,7 @@ router.post('/login', loginUser);
 router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
 router.get('/community', protect, getCommunityProfiles);
 router.post('/bookmarks', protect, toggleBookmark);
+router.post('/profile/japa', protect, require('../controllers/authController').updateJapaCounter);
 router.post('/streak', protect, require('../controllers/authController').updateStreak);
 
 // Admin Routes

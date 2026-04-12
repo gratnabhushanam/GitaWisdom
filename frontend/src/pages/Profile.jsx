@@ -4,6 +4,7 @@ import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camer
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
+import JapaCounter from '../components/JapaCounter';
 
 const MAX_REEL_DURATION_SECONDS = 90;
 const INTEREST_OPTIONS = ['Karma Yoga', 'Bhakti Yoga', 'Meditation', 'Stress Relief', 'Motivation', 'Leadership'];
@@ -561,6 +562,10 @@ export default function Profile() {
                   </div>
                </div>
 
+               <div className="mb-8">
+                 <JapaCounter />
+               </div>
+
                <div className="space-y-3">
                   {isEditing ? (
                     <button 
@@ -840,7 +845,7 @@ export default function Profile() {
                      )}
                      {reel.moderationStatus === 'approved' && (
                        <p className="text-xs text-green-200 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                         Approved: Your reel is now visible in public spiritual reels.
+                         Approved: Your reel is now visible in public spiritual reels. {reel.moderationNote ? `Admin note: ${reel.moderationNote}` : ''}
                        </p>
                      )}
                      {reel.moderationStatus === 'rejected' && reel.moderationNote && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MediaPlayer from '../components/MediaPlayer';
 
 export default function Mentor() {
@@ -25,8 +25,22 @@ export default function Mentor() {
   const [voices, setVoices] = useState([]);
   const [savedVerses, setSavedVerses] = useState([]);
   const [saveStatus, setSaveStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('curated'); // 'curated' | 'ai'
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
+  const handleNavigateToContent = (item, type) => {
+    if (type === 'story') {
+      navigate('/stories', { state: { openStoryId: item._id || item.id } });
+    } else if (type === 'video') {
+      navigate('/videos', { state: { openVideoId: item._id || item.id } });
+    } else if (type === 'sloka') {
+      navigate('/daily-sloka', { state: { savedVerse: item } });
+    }
+  };
   const problems = [
     { id: 'stress', name: 'Stress', icon: <Wind className="w-8 h-8" />, color: 'from-blue-500 to-cyan-400' },
     { id: 'fear', name: 'Fear', icon: <AlertTriangle className="w-8 h-8" />, color: 'from-orange-500 to-red-400' },
@@ -77,6 +91,32 @@ export default function Mentor() {
       setMentorHistory(next);
     } catch (error) {
       console.error('Failed to save mentor history:', error);
+    }
+  };
+
+  const handleSendAiMessage = async () => {
+    if (!chatInput.trim() || isAiLoading) return;
+    
+    const userMsg = { role: 'user', content: chatInput.trim() };
+    const updatedMessages = [...chatMessages, userMsg];
+    
+    setChatMessages(updatedMessages);
+    setChatInput('');
+    setIsAiLoading(true);
+    
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/ai/chat`, {
+        messages: updatedMessages
+      }, API_REQUEST_CONFIG);
+      
+      const aiReply = { role: 'ai', content: response.data.reply || 'Divine connectivity interrupted.' };
+      setChatMessages((prev) => [...prev, aiReply]);
+    } catch (error) {
+      console.error('AI Chat Error:', error);
+      const aiError = { role: 'ai', content: 'Forgive me, the spiritual connection is currently disrupted. Please try again or verify your API key.' };
+      setChatMessages((prev) => [...prev, aiError]);
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -285,112 +325,89 @@ export default function Mentor() {
     setPlaybackType(null);
   };
 
-  const startPlayback = (selectedLanguage = language) => {
+  const startPlayback = async (selectedLanguage = language) => {
     stopPlayback();
 
-    const currentAudioUrl = resolveAudioUrl(getAudioByLanguage(solution, selectedLanguage));
-    if (currentAudioUrl) {
-      const newAudio = new Audio(currentAudioUrl);
-      setAudio(newAudio);
-      setPlaybackType('file');
-      setIsPlaying(true);
+    const speechText = getSpeechText(solution, selectedLanguage);
+    if (!speechText) {
+      setSaveStatus('Audio unavailable for this verse');
+      window.setTimeout(() => setSaveStatus(''), 2000);
+      return;
+    }
 
-      newAudio.play().catch((e) => {
-        console.error('Audio playback failed, falling back to speech synthesis:', e);
-        setAudio(null);
-        setIsPlaying(false);
-        setPlaybackType(null);
-        const speechText = getSpeechText(solution, selectedLanguage);
-        if (!speechText || !isSpeechSupported) {
-          return;
-        }
-        const utterance = new SpeechSynthesisUtterance(speechText);
-        utterance.lang = getSpeechLang(selectedLanguage);
-        const selectedVoice = getVoiceByCharacter(selectedLanguage);
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        const characterVoiceTraits = {
-          ram: { pitch: 0.95, rate: 0.9 },
-          krishna: { pitch: 0.9, rate: 0.85 },
-          hanuman: { pitch: 1.0, rate: 0.92 },
-          arjuna: { pitch: 0.98, rate: 0.88 },
-        };
-        const traits = characterVoiceTraits[voiceCharacter] || characterVoiceTraits.krishna;
-        utterance.pitch = traits.pitch;
-        utterance.rate = traits.rate;
-        utterance.onend = () => {
-          setIsPlaying(false);
-          setPlaybackType(null);
-        };
-        utterance.onerror = () => {
-          setIsPlaying(false);
-          setPlaybackType(null);
-        };
-        setPlaybackType('speech');
-        setIsPlaying(true);
-        window.speechSynthesis.speak(utterance);
+    setPlaybackType('loading');
+
+    try {
+      // 1. Attempt High-Quality Divine TTS Generation via backend Proxy
+      const ttsResponse = await axios.post(`${API_BASE_URL}/api/ai/tts`, {
+        text: speechText,
+        voiceType: voiceCharacter
+      }, {
+        ...API_REQUEST_CONFIG,
+        responseType: 'arraybuffer' // Crucial for receiving raw audio bytes
+      });
+
+      // Valid response with audio buffer
+      const blob = new Blob([ttsResponse.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(blob);
+      const newAudio = new Audio(audioUrl);
+      
+      setAudio(newAudio);
+      setPlaybackType('api');
+      setIsPlaying(true);
+      
+      newAudio.play().catch(e => {
+        console.error('Audio api playback failed:', e);
+        fallbackToSpeechSynthesis(speechText, selectedLanguage);
       });
 
       newAudio.onended = () => {
         setIsPlaying(false);
         setPlaybackType(null);
+        URL.revokeObjectURL(audioUrl);
       };
-
+      
       newAudio.onerror = () => {
-        const speechText = getSpeechText(solution, selectedLanguage);
-        if (!speechText || !isSpeechSupported) {
-          setIsPlaying(false);
-          setPlaybackType(null);
-          setSaveStatus('Audio unavailable for this verse on this browser');
-          window.setTimeout(() => setSaveStatus(''), 2000);
-          return;
-        }
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(speechText);
-        utterance.lang = getSpeechLang(selectedLanguage);
-        const selectedVoice = getVoiceByCharacter(selectedLanguage);
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        const characterVoiceTraits = {
-          ram: { pitch: 0.95, rate: 0.9 },
-          krishna: { pitch: 0.9, rate: 0.85 },
-          hanuman: { pitch: 1.0, rate: 0.92 },
-          arjuna: { pitch: 0.98, rate: 0.88 },
-        };
-        const traits = characterVoiceTraits[voiceCharacter] || characterVoiceTraits.krishna;
-        utterance.pitch = traits.pitch;
-        utterance.rate = traits.rate;
-        utterance.onend = () => {
-          setIsPlaying(false);
-          setPlaybackType(null);
-        };
-        utterance.onerror = () => {
-          setIsPlaying(false);
-          setPlaybackType(null);
-        };
-        setPlaybackType('speech');
-        setIsPlaying(true);
-        window.speechSynthesis.speak(utterance);
+        URL.revokeObjectURL(audioUrl);
+        fallbackToSpeechSynthesis(speechText, selectedLanguage);
       };
 
-      return;
+    } catch (apiError) {
+      // API Key missing or TTS failed -> gracefully fallback
+      if (apiError.response && apiError.response.status === 501) {
+         console.log('ElevenLabs API key not configured. Falling back to OS Speech Synthesis.');
+      } else {
+         console.warn('TTS API Error:', apiError);
+      }
+      fallbackToSpeechSynthesis(speechText, selectedLanguage);
     }
+  };
 
+  const fallbackToSpeechSynthesis = (speechText, selectedLanguage) => {
     if (!isSpeechSupported) {
+      setIsPlaying(false);
+      setPlaybackType(null);
       setSaveStatus('Audio unavailable for this verse on this browser');
       window.setTimeout(() => setSaveStatus(''), 2000);
       return;
     }
 
-    const speechText = getSpeechText(solution, selectedLanguage);
-    if (!speechText) {
-      setSaveStatus('Audio unavailable for this verse on this browser');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-      return;
+    const currentAudioUrl = resolveAudioUrl(getAudioByLanguage(solution, selectedLanguage));
+    if (currentAudioUrl) {
+        const newAudio = new Audio(currentAudioUrl);
+        setAudio(newAudio);
+        setPlaybackType('file');
+        setIsPlaying(true);
+        newAudio.play().catch(() => launchSpeechUtterance(speechText, selectedLanguage));
+        newAudio.onended = () => { setIsPlaying(false); setPlaybackType(null); };
+        newAudio.onerror = () => launchSpeechUtterance(speechText, selectedLanguage);
+        return;
     }
+    
+    launchSpeechUtterance(speechText, selectedLanguage);
+  };
 
+  const launchSpeechUtterance = (speechText, selectedLanguage) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(speechText);
     utterance.lang = getSpeechLang(selectedLanguage);
@@ -398,8 +415,7 @@ export default function Mentor() {
     if (selectedVoice) {
       utterance.voice = selectedVoice;
     }
-    
-    // Apply voice character traits
+
     const characterVoiceTraits = {
       ram: { pitch: 0.95, rate: 0.9 },
       krishna: { pitch: 0.9, rate: 0.85 },
@@ -410,14 +426,9 @@ export default function Mentor() {
     utterance.pitch = traits.pitch;
     utterance.rate = traits.rate;
     
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setPlaybackType(null);
-    };
-    utterance.onerror = () => {
-      setIsPlaying(false);
-      setPlaybackType(null);
-    };
+    utterance.onend = () => { setIsPlaying(false); setPlaybackType(null); };
+    utterance.onerror = () => { setIsPlaying(false); setPlaybackType(null); };
+
     setPlaybackType('speech');
     setIsPlaying(true);
     window.speechSynthesis.speak(utterance);
@@ -496,7 +507,99 @@ export default function Mentor() {
           <p className="text-lg md:text-xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto">Seeking guidance in Lord Krishna's eternal words.</p>
         </div>
 
-        {/* Problem Selection */}
+        {/* Tab Switcher */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-1 rounded-full border border-devotion-gold/20 flex w-full max-w-md shadow-2xl">
+            <button
+              onClick={() => setActiveTab('curated')}
+              className={`flex-1 py-3 px-6 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+                activeTab === 'curated' 
+                  ? 'bg-gradient-to-r from-[#B66A2A] to-[#E6C38A] text-[#06101E] shadow-[0_0_20px_rgba(230,195,138,0.4)]' 
+                  : 'text-gray-400 hover:text-devotion-gold'
+              }`}
+            >
+              Curated Verses
+            </button>
+            <button
+              onClick={() => setActiveTab('ai')}
+              className={`flex-1 py-3 px-6 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+                activeTab === 'ai' 
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-400 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]' 
+                  : 'text-gray-400 hover:text-cyan-400'
+              }`}
+            >
+              Talk to Krishna
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'ai' ? (
+          <div className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] p-6 md:p-10 border border-cyan-500/30 shadow-[0_0_80px_rgba(34,211,238,0.15)] animate-fade-in-up flex flex-col h-[600px]">
+            <div className="flex-1 overflow-y-auto w-full pr-4 space-y-6 no-scrollbar">
+              {chatMessages.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-center opacity-70">
+                  <div className="text-[6rem] mb-4 drop-shadow-[0_0_30px_rgba(34,211,238,0.8)] filter">🦚</div>
+                  <h3 className="text-2xl font-serif text-cyan-300 mb-2">Speak your heart...</h3>
+                  <p className="text-sm font-light text-gray-300 max-w-sm">I am here to guide you through the ancient wisdom of the Bhagavad Gita. What troubles your mind today?</p>
+                </div>
+              )}
+              {chatMessages.map((msg, index) => (
+                <div key={index} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'ai' && (
+                    <div className="w-10 h-10 rounded-full border border-cyan-400/50 bg-cyan-900/40 flex items-center justify-center mr-3 mt-1 shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+                      🦚
+                    </div>
+                  )}
+                  <div className={`max-w-[75%] p-5 rounded-3xl ${
+                    msg.role === 'user' 
+                      ? 'bg-devotion-darkBlue border border-blue-500/30 text-white rounded-br-sm' 
+                      : 'bg-black/40 border border-cyan-500/20 text-cyan-50 font-serif leading-relaxed text-[15px] rounded-bl-sm shadow-xl'
+                  }`}>
+                    {/* Render markdown roughly by splitting double asterisks/newlines */}
+                    {msg.content.split('\n').map((line, i) => (
+                      <p key={i} className="mb-2 last:mb-0">
+                        {line.split('**').map((part, j) => j % 2 === 1 ? <strong key={j} className="text-cyan-300">{part}</strong> : part)}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {isAiLoading && (
+                <div className="flex w-full justify-start mt-4">
+                  <div className="w-10 h-10 rounded-full border border-cyan-400/50 bg-cyan-900/40 flex items-center justify-center mr-3 shadow-[0_0_15px_rgba(34,211,238,0.3)] animate-pulse">🦚</div>
+                  <div className="bg-black/40 border border-cyan-500/20 px-6 py-4 rounded-3xl rounded-bl-sm flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce"></span>
+                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce delay-100"></span>
+                     <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce delay-200"></span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="relative flex items-center bg-devotion-darkBlue/80 backdrop-blur-md rounded-full border border-cyan-500/40 focus-within:border-cyan-400/80 shadow-[0_0_20px_rgba(0,100,200,0.2)] transition-colors">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendAiMessage()}
+                  placeholder="Ask Krishna for guidance..."
+                  disabled={isAiLoading}
+                  className="w-full bg-transparent border-none focus:outline-none text-white placeholder:text-gray-500 px-8 py-5"
+                />
+                <button
+                  onClick={handleSendAiMessage}
+                  disabled={isAiLoading || !chatInput.trim()}
+                  className="absolute right-3 bg-gradient-to-r from-blue-500 to-cyan-400 text-white p-3 rounded-full hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all font-black uppercase text-[10px] tracking-widest"
+                >
+                  Seek
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Problem Selection */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-16">
           {problems.map(problem => (
             <button
@@ -683,10 +786,7 @@ export default function Mentor() {
                   {relatedContent.slokas.map((sloka) => (
                     <div
                       key={sloka.id}
-                      onClick={() => {
-                        setSolution(sloka);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
+                      onClick={() => handleNavigateToContent(sloka, 'sloka')}
                       className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
                     >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-devotion-gold mb-3 opacity-70 group-hover:opacity-100">
@@ -711,7 +811,11 @@ export default function Mentor() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {relatedContent.stories.map((story) => (
-                    <div key={story.id} className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl">
+                    <div 
+                      key={story.id} 
+                      onClick={() => handleNavigateToContent(story, 'story')}
+                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
+                    >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400 mb-3">Story</p>
                       <h4 className="text-lg font-serif font-black text-white mb-3 line-clamp-2">{story.title}</h4>
                       <p className="text-sm text-gray-400 mb-4 line-clamp-2">{story.summary || story.description}</p>
@@ -732,7 +836,11 @@ export default function Mentor() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {relatedContent.videos.map((video) => (
-                    <div key={video.id} className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl">
+                    <div 
+                      key={video.id} 
+                      onClick={() => handleNavigateToContent(video, 'video')}
+                      className="bg-devotion-darkBlue/40 backdrop-blur-md p-6 rounded-2xl border border-white/5 hover:border-devotion-gold/40 transition-all cursor-pointer hover:scale-105 group shadow-xl"
+                    >
                       <p className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-400 mb-3">Video</p>
                       <h4 className="text-lg font-serif font-black text-white mb-3 line-clamp-2">{video.title}</h4>
                       <p className="text-sm text-gray-400 mb-4 line-clamp-2">{video.description}</p>
@@ -764,6 +872,8 @@ export default function Mentor() {
           <div className="h-64 flex items-center justify-center border-2 border-dashed border-white/10 rounded-3xl backdrop-blur-sm bg-white/5">
             <p className="text-gray-400 font-serif italic text-lg">Select a problem above to seek divine guidance.</p>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

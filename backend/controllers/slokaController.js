@@ -1,15 +1,12 @@
 const { Sloka, Video } = require('../models');
 const mongoose = require('mongoose');
+const { isMongoEnabled, isMongoConnected, useMongoStore } = require('../utils/mongoStore');
 const SlokaMongo = require('../models/mongo/SlokaMongo');
 const VideoMongo = require('../models/mongo/VideoMongo');
 const StoryMongo = require('../models/mongo/StoryMongo');
 const { sequelize } = require('../config/db');
 const { Op } = require('sequelize');
 const { mapSloka, mapVideo } = require('../utils/responseMappers');
-
-const isMongoEnabled = String(process.env.USE_MONGODB || 'false').toLowerCase() === 'true';
-const isMongoConnected = () => mongoose.connection && mongoose.connection.readyState === 1;
-const useMongoStore = () => isMongoEnabled && isMongoConnected();
 
 let mockSlokas = [
   {

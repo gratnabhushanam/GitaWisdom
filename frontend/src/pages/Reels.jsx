@@ -71,14 +71,17 @@ export default function Reels() {
           return;
         }
 
-        const safeUserReels = (userReelsResponse.data || []).filter(
+        const curatedData = Array.isArray(curatedResponse.data) ? curatedResponse.data : [];
+        const userReelsData = Array.isArray(userReelsResponse.data) ? userReelsResponse.data : [];
+
+        const safeUserReels = userReelsData.filter(
           (reel) =>
             reel.isUserReel &&
             reel.moderationStatus === 'approved' &&
             String(reel.contentType || 'other') === 'spiritual'
         );
 
-        const mergedReels = [...safeUserReels, ...(curatedResponse.data || [])];
+        const mergedReels = [...safeUserReels, ...curatedData];
         setReels(mergedReels);
         if (mergedReels.length === 0) {
           setError('No reels found. Please check back later or upload new content.');
@@ -454,8 +457,9 @@ export default function Reels() {
   }
 
   return (
-    <div className="min-h-screen text-white flex justify-center overflow-hidden relative">
-      {REELS_BACKGROUND_SCENES.map((image, index) => (
+    <div className="h-[100dvh] w-full bg-black relative overflow-hidden">
+      
+      {/* Background Decor */}{REELS_BACKGROUND_SCENES.map((image, index) => (
         <div
           key={image}
           className={`fixed inset-0 bg-cover bg-center transition-opacity duration-1000 ${index === bgIndex ? 'opacity-100' : 'opacity-0'}`}
@@ -498,15 +502,12 @@ export default function Reels() {
         </div>
       )}
       
-      {/* Upload Button Overlay */}
-      <div className="fixed bottom-10 right-10 z-50">
-        <Link to="/upload-reel" className="flex items-center gap-2 bg-gradient-to-r from-[#B66A2A] via-[#D39A4A] to-[#E6C38A] text-[#111827] px-6 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-[0_16px_40px_rgba(182,106,42,0.35)] hover:scale-105 transition-transform">
-            <PlusCircle className="w-5 h-5" /> Upload Reel
-         </Link>
-      </div>
+      <div className="w-full h-full relative z-10">
+        <Link to="/upload-reel" className="fixed bottom-8 right-8 z-[100] flex items-center gap-2 bg-gradient-to-r from-devotion-gold to-yellow-600 text-black px-6 py-4 rounded-full shadow-[0_0_30px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform font-black uppercase text-xs tracking-widest">
+           <PlusCircle className="w-5 h-5" /> Upload Reel
+        </Link>
 
-      {/* Mobile-sized container for Reels */}
-      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full max-w-md h-screen relative z-10 bg-black/35 border-x border-[#D39A4A]/35 backdrop-blur-md snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth" onScroll={handleScroll}>
+      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] mx-auto h-[100dvh] relative z-10 bg-black sm:border-x sm:border-white/10 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth" onScroll={handleScroll}>
         
         {reels.length > 0 ? reels.map((reel) => {
           const reelId = String(reel._id || reel.id || '');
@@ -515,23 +516,15 @@ export default function Reels() {
           const shouldPlay = isActive && !isPausedByTap;
 
 
-          // Handler for auto-play next reel
+          // Handler for auto-play next reel or launch quiz
           const handleVideoEnd = () => {
-            const idx = reels.findIndex(r => String(r._id || r.id) === reelId);
-            if (idx !== -1 && idx < reels.length - 1) {
-              const nextId = String(reels[idx + 1]._id || reels[idx + 1].id);
-              setActiveReelId(nextId);
-              setPausedReelId('');
-              // Scroll to next reel
-              const container = reelsFeedRef.current;
-              if (container && container.children[idx + 1]) {
-                container.children[idx + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }
+            const currentVideoId = String(reel._id || reel.id);
+            // Navigate to quiz instead of auto-scrolling
+            window.location.href = `/quiz?videoId=${currentVideoId}`;
           };
 
           return (
-          <div key={reel._id || reel.id} className="h-screen w-full relative snap-center flex flex-col pt-20 pb-4 justify-end">
+          <div key={reel._id || reel.id} className="h-[100dvh] w-full relative snap-center flex flex-col justify-end bg-black">
 
             {/* Background Video (single active playback only) */}
             <div className="absolute inset-0 z-0">
@@ -599,7 +592,7 @@ export default function Reels() {
                     <marquee className="text-xs font-bold w-40">Lord Krishna Wisdom • Original Audio • Gita Mentor</marquee>
                  </div>
                  <div className="flex gap-2 mt-3">
-                    {reel.tags && reel.tags.slice(0, 3).map(tag => (
+                    {Array.isArray(reel.tags) && reel.tags.slice(0, 3).map(tag => (
                       <span key={tag} className="bg-[#1A3552]/65 border border-[#65B4D6]/30 backdrop-blur-md text-[#9FD9F0] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">
                         #{tag}
                       </span>
@@ -731,6 +724,7 @@ export default function Reels() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }

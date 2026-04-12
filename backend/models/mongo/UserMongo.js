@@ -15,6 +15,8 @@ const UserMongoSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    phone: { type: String, trim: true },
+    verified: { type: Boolean, default: false },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     language: { type: String, default: 'telugu' },
@@ -25,6 +27,8 @@ const UserMongoSchema = new mongoose.Schema(
     settings: { type: Object, default: defaultSettings },
     benefits: { type: Object, default: defaultBenefits },
     bookmarkedSlokas: { type: [Number], default: [] },
+    japaCount: { type: Number, default: 0 },
+    japaMalas: { type: Number, default: 0 },
   },
   {
     timestamps: true,

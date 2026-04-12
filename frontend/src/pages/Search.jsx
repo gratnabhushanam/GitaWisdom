@@ -10,7 +10,7 @@ const MAX_RECENT_SEARCHES = 8;
 export default function Search() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ slokas: [], stories: [], videos: [], movies: [] });
+  const [results, setResults] = useState({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
 
@@ -43,6 +43,7 @@ export default function Search() {
         slokas: Array.isArray(response.data?.slokas) ? response.data.slokas : [],
         stories: Array.isArray(response.data?.stories) ? response.data.stories : [],
         videos: Array.isArray(response.data?.videos) ? response.data.videos : [],
+        reels: Array.isArray(response.data?.reels) ? response.data.reels : [],
         movies: Array.isArray(response.data?.movies) ? response.data.movies : [],
       });
 
@@ -57,7 +58,7 @@ export default function Search() {
       }
     } catch (error) {
       console.error('Search error:', error);
-      setResults({ slokas: [], stories: [], videos: [], movies: [] });
+      setResults({ slokas: [], stories: [], videos: [], movies: [], reels: [] });
     } finally {
       setLoading(false);
     }
@@ -75,7 +76,9 @@ export default function Search() {
         ? <Book className="text-blue-400" />
         : type === 'video'
           ? <Video className="text-red-400" />
-          : <Film className="text-yellow-300" />;
+          : type === 'reel'
+            ? <Film className="text-purple-400" />
+            : <Film className="text-yellow-300" />;
     
     return (
       <button
@@ -108,6 +111,11 @@ export default function Search() {
   const openResult = (item, type) => {
     if (type === 'story') {
       navigate('/stories', { state: { openStoryId: item._id || item.id } });
+      return;
+    }
+
+    if (type === 'reel') {
+      navigate('/reels', { state: { focusReelId: item._id || item.id } });
       return;
     }
 
@@ -163,7 +171,7 @@ export default function Search() {
              <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-devotion-gold"></div>
              </div>
-          ) : (results.slokas.length > 0 || results.stories.length > 0 || results.videos.length > 0 || results.movies.length > 0) ? (
+           ) : (results.slokas.length > 0 || results.stories.length > 0 || results.videos.length > 0 || results.movies.length > 0 || results.reels.length > 0) ? (
             <div className="space-y-12 animate-fade-in-up">
                {results.slokas.length > 0 && (
                  <section>
@@ -198,6 +206,17 @@ export default function Search() {
                  </section>
                )}
 
+                {results.reels.length > 0 && (
+                  <section>
+                       <h3 className="text-purple-400 font-black uppercase tracking-widest text-xs mb-6 flex items-center gap-4">
+                         <span className="w-8 h-px bg-purple-400/30"></span> Reels ({results.reels.length})
+                     </h3>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {results.reels.map(r => <ResultCard key={r._id} item={r} type="reel" onOpen={() => openResult(r, 'reel')} />)}
+                     </div>
+                  </section>
+                )}
+
                 {results.movies.length > 0 && (
                   <section>
                      <h3 className="text-yellow-300 font-black uppercase tracking-widest text-xs mb-6 flex items-center gap-4">
@@ -209,7 +228,7 @@ export default function Search() {
                   </section>
                 )}
 
-                {results.slokas.length === 0 && results.stories.length === 0 && results.videos.length === 0 && results.movies.length === 0 && (
+                {results.slokas.length === 0 && results.stories.length === 0 && results.videos.length === 0 && results.movies.length === 0 && results.reels.length === 0 && (
                  <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-3xl">
                     <div className="text-4xl mb-4 opacity-20">🔍</div>
                     <p className="text-gray-500 font-medium">No results found for "{query}"</p>

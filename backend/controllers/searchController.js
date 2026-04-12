@@ -1,17 +1,13 @@
 const { Sloka, Story, Video, Movie } = require('../models');
 const mongoose = require('mongoose');
+const { isMongoEnabled, isMongoConnected, useMongoStore } = require('../utils/mongoStore');
 const SlokaMongo = require('../models/mongo/SlokaMongo');
 const StoryMongo = require('../models/mongo/StoryMongo');
 const VideoMongo = require('../models/mongo/VideoMongo');
 const MovieMongo = require('../models/mongo/MovieMongo');
 const { Op } = require('sequelize');
 const { mapSloka, mapStory, mapVideo, mapMovie } = require('../utils/responseMappers');
-const mockContentStore = require('../utils/mockContentStore');
-const { isMockMode } = require('./authController');
 
-const isMongoEnabled = String(process.env.USE_MONGODB || 'false').toLowerCase() === 'true';
-const isMongoConnected = () => mongoose.connection && mongoose.connection.readyState === 1;
-const useMongoStore = () => isMongoEnabled && isMongoConnected();
 
 const mongoRegex = (value) => new RegExp(String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
@@ -49,22 +45,25 @@ const movieMatches = (movie, query) => (
   || (Array.isArray(movie.tags) && movie.tags.some((tag) => containsQuery(tag, query)))
 );
 
-const isSearchableVideo = (video) => {
-  const isUserReel = Boolean(video?.isUserReel);
-  const category = String(video?.category || '').trim().toLowerCase();
-  return !isUserReel && category !== 'reels';
+const separateVideos = (allVideos) => {
+  const normalVideos = [];
+  const reels = [];
+  for (const v of allVideos) {
+    if (v.isUserReel && v.moderationStatus && v.moderationStatus !== 'approved') continue;
+    
+    const isUserReel = Boolean(v?.isUserReel);
+    const category = String(v?.category || '').trim().toLowerCase();
+    
+    if (isUserReel || category === 'reels') {
+      reels.push(mapVideo(v));
+    } else {
+      normalVideos.push(mapVideo(v));
+    }
+  }
+  return { videos: normalVideos, reels };
 };
 
-const searchMockContent = (query) => ({
-  slokas: [],
-  stories: mockContentStore.listStories().filter((story) => storyMatches(story, query)).map(mapStory),
-  videos: mockContentStore
-    .listVideos()
-    .filter((video) => isSearchableVideo(video))
-    .filter((video) => videoMatches(video, query))
-    .map(mapVideo),
-  movies: mockContentStore.listMovies().filter((movie) => movieMatches(movie, query)).map((movie) => mapMovie(movie)),
-});
+
 
 exports.searchAll = async (req, res) => {
   try {
@@ -72,9 +71,7 @@ exports.searchAll = async (req, res) => {
     const normalizedQuery = String(q || '').trim();
 
     if (!normalizedQuery) {
-      if (isMockMode()) {
-        return res.json(searchMockContent(''));
-      }
+
 
       if (useMongoStore()) {
         const [slokas, stories, videos, movies] = await Promise.all([
@@ -84,10 +81,13 @@ exports.searchAll = async (req, res) => {
           MovieMongo.find({}),
         ]);
 
+        const separated = separateVideos(videos);
+
         return res.json({
           slokas: slokas.map(mapSloka),
           stories: stories.map(mapStory),
-          videos: videos.filter((video) => isSearchableVideo(video)).map(mapVideo),
+          videos: separated.videos,
+          reels: separated.reels,
           movies: movies.map((movie) => mapMovie(movie)),
         });
       }
@@ -108,17 +108,18 @@ exports.searchAll = async (req, res) => {
         }),
       ]);
 
+      const separatedEmpty = separateVideos(videos);
+
       return res.json({
         slokas: slokas.map(mapSloka),
         stories: stories.map(mapStory),
-        videos: videos.filter((video) => isSearchableVideo(video)).map(mapVideo),
+        videos: separatedEmpty.videos,
+        reels: separatedEmpty.reels,
         movies: movies.map((movie) => mapMovie(movie)),
       });
     }
 
-    if (isMockMode()) {
-      return res.json(searchMockContent(normalizedQuery));
-    }
+
 
     if (useMongoStore()) {
       const qRegex = mongoRegex(normalizedQuery);
@@ -145,16 +146,11 @@ exports.searchAll = async (req, res) => {
           ],
         }),
         VideoMongo.find({
-          $and: [
-            { isUserReel: { $ne: true } },
-            {
-              $or: [
-                { title: qRegex },
-                { description: qRegex },
-                { category: qRegex },
-                { language: qRegex },
-              ],
-            },
+          $or: [
+            { title: qRegex },
+            { description: qRegex },
+            { category: qRegex },
+            { language: qRegex },
           ],
         }),
         MovieMongo.find({
@@ -166,10 +162,13 @@ exports.searchAll = async (req, res) => {
         }),
       ]);
 
+      const separatedMongo = separateVideos(videos);
+
       return res.json({
         slokas: slokas.map(mapSloka),
         stories: stories.map(mapStory),
-        videos: videos.filter((video) => isSearchableVideo(video)).map(mapVideo),
+        videos: separatedMongo.videos,
+        reels: separatedMongo.reels,
         movies: movies.map(mapMovie),
       });
     }
@@ -197,16 +196,11 @@ exports.searchAll = async (req, res) => {
       Video.findAll({
         attributes: ['id', 'title', 'description', 'videoUrl', 'youtubeUrl', 'thumbnail', 'category', 'language', 'duration', 'tags', 'views', 'isKids', 'isUserReel', 'uploadedBy', 'uploadSource', 'contentType', 'moderationStatus', 'moderationNote', 'reviewedBy', 'likesCount', 'sharesCount', 'commentsCount', 'likedBy', 'comments', 'chapter', 'moral', 'script', 'createdAt', 'updatedAt'],
         where: {
-          [Op.and]: [
-            { isUserReel: { [Op.not]: true } },
-            {
-              [Op.or]: [
-                { title: { [Op.like]: `%${q}%` } },
-                { description: { [Op.like]: `%${q}%` } },
-                { category: { [Op.like]: `%${q}%` } },
-                { language: { [Op.like]: `%${q}%` } }
-              ]
-            }
+          [Op.or]: [
+            { title: { [Op.like]: `%${q}%` } },
+            { description: { [Op.like]: `%${q}%` } },
+            { category: { [Op.like]: `%${q}%` } },
+            { language: { [Op.like]: `%${q}%` } }
           ]
         }
       }),
@@ -221,10 +215,13 @@ exports.searchAll = async (req, res) => {
       })
     ]);
 
+    const separatedSql = separateVideos(videos);
+
     res.json({
       slokas: slokas.map(mapSloka),
       stories: stories.map(mapStory),
-      videos: videos.filter((video) => isSearchableVideo(video)).map(mapVideo),
+      videos: separatedSql.videos,
+      reels: separatedSql.reels,
       movies: movies.map(mapMovie),
     });
   } catch (error) {

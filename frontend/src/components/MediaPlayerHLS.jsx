@@ -35,6 +35,7 @@ export default function MediaPlayer({
   controls = true,
   playsInline = true,
   fallbackLabel = 'Open video in a new tab',
+  onEnded,
 }) {
   const [failed, setFailed] = useState(false);
   const [showTools, setShowTools] = useState(false);
@@ -176,6 +177,7 @@ export default function MediaPlayer({
         controls={controls}
         playsInline={playsInline}
         onError={() => setFailed(true)}
+        onEnded={onEnded}
         title={title}
       />
       <button

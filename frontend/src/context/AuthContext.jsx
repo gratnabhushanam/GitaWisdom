@@ -61,6 +61,19 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const sendOtpLogin = async (email) => {
+    const { data } = await axios.post('/api/auth/send-otp', { email });
+    return data;
+  };
+
+  const verifyOtpLogin = async (email, otp) => {
+    const { data } = await axios.post('/api/auth/verify-otp', { email, otp });
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -74,6 +87,8 @@ export const AuthProvider = ({ children }) => {
     register,
     verifyRegisterOtp,
     resendRegisterOtp,
+    sendOtpLogin,
+    verifyOtpLogin,
     logout,
     setUser
   };

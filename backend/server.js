@@ -158,12 +158,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/stories', require('./routes/storyRoutes'));
 app.use('/api/videos', require('./routes/videoRoutes'));
 app.use('/api/slokas', require('./routes/slokaRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/movies', require('./routes/movieRoutes'));
 app.use('/api/quiz', require('./routes/quizRoutes'));
+app.use('/api/forums', require('./routes/forumRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/debug', require('./routes/debugRoutes'));
 
 console.log('Routes registered');

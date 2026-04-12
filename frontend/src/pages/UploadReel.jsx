@@ -102,6 +102,8 @@ export default function UploadReel() {
         'video-kids': 'false',
         'video-collection': 'Reels',
         'video-category': 'reels',
+        'video-content-type': 'spiritual',
+        'video-source': 'user',
       };
       const result = await resumableUpload({
         file: videoFile,
@@ -109,9 +111,9 @@ export default function UploadReel() {
         headers,
         onProgress: setUploadProgress,
       });
-      setStatusMessage(result?.message || 'Uploaded successfully');
+      setStatusMessage(result?.message || 'Uploaded successfully! Redirecting to profile...');
       setSuccess(true);
-      setTimeout(() => navigate('/reels'), 2000);
+      setTimeout(() => navigate('/profile'), 2000);
     } catch (error) {
       console.error('Error uploading reel:', error);
       alert(error.message || 'Upload failed. Only spiritual content is allowed.');

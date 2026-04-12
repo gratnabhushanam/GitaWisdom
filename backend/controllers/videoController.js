@@ -2,366 +2,87 @@ const { Video, User } = require('../models');
 const mongoose = require('mongoose');
 const VideoMongo = require('../models/mongo/VideoMongo');
 const { mapVideo } = require('../utils/responseMappers');
-const mockContentStore = require('../utils/mockContentStore');
-const { isMockMode } = require('./authController');
+
+const { isMongoEnabled, isMongoConnected, useMongoStore } = require('../utils/mongoStore');
+
 const fs = require('fs');
 const { getVideoDurationSeconds } = require('../utils/videoMetadata');
 const { transcodeToHLS } = require('../utils/hlsTranscoder');
 const path = require('path');
 
-const MAX_REEL_DURATION_SECONDS = 90;
-
-const SPIRITUAL_KEYWORDS = [
-  'krishna',
-  'shiva',
-  'mahadev',
-  'ganesha',
-  'vinayaka',
-  'hanuman',
-  'rama',
-  'sita',
-  'durga',
-  'lakshmi',
-  'saraswati',
-  'kali',
-  'murugan',
-  'ayyappa',
-  'vishnu',
-  'narasimha',
-  'venkateswara',
-  'tirupati',
-  'srinivasa',
-  'gita',
-  'bhagavad',
-  'bhagavadgita',
-  'sloka',
-  'shloka',
-  'sri krishna',
-  'lord krishna',
-  'vasudeva',
-  'govinda',
-  'madhava',
-  'narayana',
-  'paramatma',
-  'atman',
-  'bhakti',
-  'jnana',
-  'gyana',
-  'karma yoga',
-  'bhakti yoga',
-  'raja yoga',
-  'dhyana',
-  'spiritual',
-  'dharma',
-  'adharma',
-  'yoga',
-  'devotion',
-  'veda',
-  'vedanta',
-  'upanishad',
-  'sanatana',
-  'sanatana dharma',
-  'mantra',
-  'japa',
-  'seva',
-  'satsang',
-  'meditation',
-  'karma',
-  'moksha',
-  'bhajan',
-  'kirtan',
-  'telugu sloka',
-  'geeta',
-  'gita verse',
-  'ram',
-  'hari'
-];
-
-const normalizeTags = (tags) => {
-  if (Array.isArray(tags)) return tags.filter(Boolean);
-  if (typeof tags === 'string') {
-    return tags
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean);
-  }
-  return [];
-};
-
-const isSpiritualContent = ({ title, description, tags }) => {
-  const joined = `${title || ''} ${description || ''} ${normalizeTags(tags).join(' ')}`.toLowerCase();
-  return SPIRITUAL_KEYWORDS.some((keyword) => joined.includes(keyword));
-};
-
-const toIntId = (value) => Number(value);
-const sameUserId = (left, right) => String(left) === String(right);
-const isMongoEnabled = String(process.env.USE_MONGODB || 'false').toLowerCase() === 'true';
-const isMongoConnected = () => mongoose.connection && mongoose.connection.readyState === 1;
-const useMongoStore = () => isMongoEnabled && isMongoConnected();
-
-const getPublicBaseUrl = (req) => `${req.protocol}://${req.get('host')}`;
-const buildUploadedVideoUrl = (req, fileName) => `${getPublicBaseUrl(req)}/uploads/reels/${fileName}`;
-
-exports.getVideos = async (req, res) => {
-  try {
-    if (isMockMode()) {
-      return res.json(mockContentStore.listVideos().map(mapVideo));
-    }
-
-    if (useMongoStore()) {
-      const videos = await VideoMongo.find({});
-      return res.json(videos.map(mapVideo));
-    }
-
-    const videos = await Video.findAll();
-    res.json(videos.map(mapVideo));
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
+// Placeholder: Add Video (admin only)
 exports.addVideo = async (req, res) => {
   try {
-    const payload = {
-      ...req.body,
-      videoUrl: req.body.videoUrl || req.body.youtubeUrl,
-      collectionTitle: String(req.body.collectionTitle || '').trim() || 'Bhagavad Gita',
-      uploadSource: 'admin',
+    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags } = req.body;
+
+    if (!title || !videoUrl) {
+      return res.status(400).json({ message: 'Title and videoUrl are required' });
+    }
+
+    const newVideo = await VideoMongo.create({
+      title,
+      description: description || '',
+      videoUrl,
+      hlsUrl: hlsUrl || null,
+      category: category || 'reels',
+      collectionTitle: collectionTitle || 'Bhagavad Gita',
+      isKids: isKids || false,
+      tags: Array.isArray(tags) ? tags : [],
+      isUserReel: false,
       moderationStatus: 'approved',
-      contentType: req.body.contentType || 'other',
-    };
+      contentType: 'spiritual',
+      uploadedBy: req.user.id,
+    });
 
-    if (isMockMode()) {
-      const newVideo = mockContentStore.addVideo(payload);
-      return res.status(201).json(mapVideo(newVideo));
-    }
-
-    if (useMongoStore()) {
-      const newVideo = await VideoMongo.create(payload);
-      return res.status(201).json(mapVideo(newVideo));
-    }
-
-    const newVideo = await Video.create(payload);
-    res.status(201).json(mapVideo(newVideo));
+    return res.status(201).json(mapVideo(newVideo));
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error adding video:', error);
+    return res.status(500).json({ message: 'Internal server error while adding video' });
   }
 };
 
+// Get curated (admin-uploaded) reels (not user reels)
 exports.getReels = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const { category } = req.query;
-      let videos = mockContentStore.listVideos().filter((v) => !v.isUserReel);
-      if (category) {
-        videos = videos.filter((v) => v.category === category);
-      }
-      return res.json(videos.slice(0, 10).map(mapVideo));
-    }
-
-    const { category } = req.query;
-    let where = { isUserReel: false };
-    if (category) {
-      where.category = category;
-    }
-
-    if (useMongoStore()) {
-      const videos = await VideoMongo.find(where).limit(10);
-      return res.json(videos.map(mapVideo));
-    }
-
-    const videos = await Video.findAll({
-      where,
-      limit: 10
-    });
-    res.json(videos.map(mapVideo));
+    // Only fetch reels uploaded by admin (not user reels)
+    const reels = await VideoMongo.find({
+      isUserReel: { $ne: true },
+      category: 'reels',
+      moderationStatus: 'approved',
+      contentType: 'spiritual',
+    }).sort({ createdAt: -1 });
+    res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Placeholder: Get Kids Videos (public)
 
 exports.getKidsVideos = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const videos = mockContentStore
-        .listVideos()
-        .filter((v) => Boolean(v.isKids))
-        .sort((a, b) => (a.chapter || 0) - (b.chapter || 0));
-      return res.json(videos.map(mapVideo));
-    }
-
-    if (useMongoStore()) {
-      const videos = await VideoMongo.find({ isKids: true }).sort({ chapter: 1 });
-      return res.json(videos.map(mapVideo));
-    }
-
-    const videos = await Video.findAll({
-      where: { isKids: true },
-      order: [['chapter', 'ASC']]
-    });
-    res.json(videos.map(mapVideo));
+    const kidsVideos = await VideoMongo.find({
+      isKids: true,
+      moderationStatus: 'approved',
+      contentType: 'spiritual',
+    }).sort({ createdAt: -1 });
+    res.json(kidsVideos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.uploadUserReel = async (req, res) => {
+// Placeholder: Get Videos (public)
+
+// Get all Videos (public)
+exports.getVideos = async (req, res) => {
   try {
-    const { title, description, tags } = req.body;
-    const normalizedTags = normalizeTags(tags);
-    const uploadedFile = req.file;
-    const videoUrl = uploadedFile?.filename ? buildUploadedVideoUrl(req, uploadedFile.filename) : '';
-    let hlsUrl = '';
-
-    // HLS transcoding (async, non-blocking for now)
-    if (uploadedFile?.path) {
-      const hlsOutputDir = path.join(__dirname, '..', 'uploads', 'hls', path.parse(uploadedFile.filename).name);
-      const baseName = 'playlist';
-      transcodeToHLS(
-        uploadedFile.path,
-        hlsOutputDir,
-        baseName,
-        (err, masterPlaylistPath) => {
-          if (!err && masterPlaylistPath) {
-            console.log('Multi-res HLS transcoded:', masterPlaylistPath);
-          } else if (err) {
-            console.error('HLS transcoding failed:', err);
-          }
-        }
-      );
-      // HLS master playlist URL for client
-      hlsUrl = `${getPublicBaseUrl(req)}/uploads/hls/${path.parse(uploadedFile.filename).name}/playlist_master.m3u8`;
-    }
-
-
-    if (!title || !videoUrl) {
-      return res.status(400).json({ message: 'Title and video file are required' });
-    }
-
-    const duration = await getVideoDurationSeconds(uploadedFile.path);
-
-    if (duration > MAX_REEL_DURATION_SECONDS) {
-      fs.unlink(uploadedFile.path, () => {});
-      return res.status(400).json({ message: `Reel must be ${MAX_REEL_DURATION_SECONDS} seconds or less` });
-    }
-
-    const detectedSpiritual = isSpiritualContent({ title, description, tags: normalizedTags });
-
-    const isAdminUploader = req.user?.role === 'admin';
-
-    if (!detectedSpiritual && !isAdminUploader) {
-      fs.unlink(uploadedFile.path, () => {});
-      return res.status(400).json({
-        message: 'Only spiritual content reels are allowed for user uploads.',
-      });
-    }
-
-    const moderationStatus = isAdminUploader ? 'approved' : 'pending';
-
-
-    if (isMockMode()) {
-      const newReel = mockContentStore.addVideo({
-        title,
-        videoUrl,
-        hlsUrl,
-        description,
-        tags: normalizedTags,
-        category: 'reels',
-        isUserReel: true,
-        uploadedBy: req.user.id,
-        uploadSource: isAdminUploader ? 'admin' : 'user',
-        contentType: detectedSpiritual ? 'spiritual' : 'other',
-        moderationStatus,
-        likesCount: 0,
-        sharesCount: 0,
-        commentsCount: 0,
-        likedBy: [],
-        comments: [],
-      });
-      return res.status(201).json(mapVideo(newReel));
-    }
-
-
-    if (useMongoStore()) {
-      const newReel = await VideoMongo.create({
-        title,
-        videoUrl,
-        hlsUrl,
-        description,
-        tags: normalizedTags,
-        category: 'reels',
-        isUserReel: true,
-        uploadedBy: req.user.id,
-        uploadSource: isAdminUploader ? 'admin' : 'user',
-        contentType: 'spiritual',
-        moderationStatus,
-        likesCount: 0,
-        sharesCount: 0,
-        commentsCount: 0,
-        likedBy: [],
-        comments: [],
-      });
-      return res.status(201).json({
-        ...mapVideo(newReel),
-        message: moderationStatus === 'pending'
-          ? 'Spiritual reel uploaded and sent for admin review'
-          : 'Reel uploaded successfully',
-      });
-    }
-
-    const newReel = await Video.create({
-      title,
-      videoUrl,
-      hlsUrl,
-      description,
-      tags: normalizedTags,
-      category: 'reels',
-      isUserReel: true,
-      uploadedBy: req.user.id,
-      uploadSource: isAdminUploader ? 'admin' : 'user',
+    const videos = await VideoMongo.find({
+      isUserReel: { $ne: true },
+      moderationStatus: 'approved',
       contentType: 'spiritual',
-      moderationStatus,
-      likesCount: 0,
-      sharesCount: 0,
-      commentsCount: 0,
-      likedBy: [],
-      comments: [],
-    });
-    res.status(201).json({
-      ...mapVideo(newReel),
-      message: moderationStatus === 'pending'
-        ? 'Spiritual reel uploaded and sent for admin review'
-        : 'Reel uploaded successfully',
-    });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-exports.getUserReels = async (req, res) => {
-  try {
-    if (isMockMode()) {
-      const reels = mockContentStore
-        .listVideos()
-        .filter(
-          (v) =>
-            Boolean(v.isUserReel) &&
-            v.moderationStatus === 'approved' &&
-            String(v.contentType || 'other') === 'spiritual'
-        );
-      return res.json(reels.map(mapVideo));
-    }
-
-    if (useMongoStore()) {
-      const reels = await VideoMongo.find({ isUserReel: true, moderationStatus: 'approved', contentType: 'spiritual' });
-      return res.json(reels.map(mapVideo));
-    }
-
-    const reels = await Video.findAll({
-      where: { isUserReel: true, moderationStatus: 'approved', contentType: 'spiritual' },
-      include: [{ model: User, as: 'uploader', attributes: ['name'] }]
-    });
-    res.json(reels.map(mapVideo));
+    }).sort({ createdAt: -1 });
+    res.json(videos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -369,15 +90,13 @@ exports.getUserReels = async (req, res) => {
 
 exports.getMyReels = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const reels = mockContentStore
-        .listVideos()
-        .filter((v) => Boolean(v.isUserReel) && toIntId(v.uploadedBy) === toIntId(req.user.id));
-      return res.json(reels.map(mapVideo));
-    }
+
 
     if (useMongoStore()) {
-      const reels = await VideoMongo.find({ isUserReel: true, uploadedBy: req.user.id }).sort({ createdAt: -1 });
+      const reels = await VideoMongo.find({ 
+        isUserReel: true, 
+        uploadedBy: String(req.user._id || req.user.id) 
+      }).sort({ createdAt: -1 });
       return res.json(reels.map(mapVideo));
     }
 
@@ -400,17 +119,7 @@ exports.getUserReelModerationQueue = async (req, res) => {
     const allowedTypes = ['spiritual', 'other'];
     const normalizedContentType = allowedTypes.includes(contentType) ? contentType : 'all';
 
-    if (isMockMode()) {
-      let reels = mockContentStore
-        .listVideos()
-        .filter((v) => Boolean(v.isUserReel) && v.moderationStatus === normalizedStatus);
 
-      if (normalizedContentType !== 'all') {
-        reels = reels.filter((v) => String(v.contentType || 'other') === normalizedContentType);
-      }
-
-      return res.json(reels.map(mapVideo));
-    }
 
     const where = { isUserReel: true, moderationStatus: normalizedStatus };
     if (normalizedContentType !== 'all') {
@@ -419,6 +128,9 @@ exports.getUserReelModerationQueue = async (req, res) => {
 
     if (useMongoStore()) {
       const reels = await VideoMongo.find(where).sort({ createdAt: -1 });
+      if (!reels) {
+        return res.json([]);
+      }
       return res.json(reels.map(mapVideo));
     }
 
@@ -439,6 +151,8 @@ exports.moderateUserReel = async (req, res) => {
     const { status, note } = req.body;
     const allowed = ['approved', 'rejected', 'pending'];
 
+    console.log(`[MODERATE_REEL] Incoming request: id=${id}, status=${status}, note=${note}, req.user=${req.user?.id}`);
+
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: 'Invalid moderation status' });
     }
@@ -447,23 +161,15 @@ exports.moderateUserReel = async (req, res) => {
       return res.status(400).json({ message: 'Rejection note is required' });
     }
 
-    if (isMockMode()) {
-      const reels = mockContentStore.listVideos();
-      const reel = reels.find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel));
-      if (!reel) {
-        return res.status(404).json({ message: 'User reel not found' });
-      }
+    const isMongo = useMongoStore();
+    console.log(`[MODERATE_REEL] Using Mongo: ${isMongo}`);
 
-      reel.moderationStatus = status;
-      reel.moderationNote = note || '';
-      reel.reviewedBy = req.user.id;
-      reel.updatedAt = new Date().toISOString();
-      return res.json(mapVideo(reel));
-    }
-
-    const reel = useMongoStore()
+    const reel = isMongo
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
+
+    console.log(`[MODERATE_REEL] Reel found:`, reel ? true : false);
+
     if (!reel) {
       return res.status(404).json({ message: 'User reel not found' });
     }
@@ -473,8 +179,11 @@ exports.moderateUserReel = async (req, res) => {
     reel.reviewedBy = req.user.id;
     await reel.save();
 
+    console.log(`[MODERATE_REEL] Save successful! new status:`, reel.moderationStatus);
+    
     return res.json(mapVideo(reel));
   } catch (error) {
+    console.error(`[MODERATE_REEL] CRITICAL ERROR:`, error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -482,13 +191,9 @@ exports.moderateUserReel = async (req, res) => {
 exports.updateMyReel = async (req, res) => {
   try {
     const { id } = req.params;
-    const existing = isMockMode()
-      ? mockContentStore
-          .listVideos()
-          .find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel))
-      : useMongoStore()
-        ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
-        : await Video.findOne({ where: { id, isUserReel: true } });
+    const existing = useMongoStore()
+      ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
+      : await Video.findOne({ where: { id, isUserReel: true } });
 
     if (!existing) {
       return res.status(404).json({ message: 'Reel not found' });
@@ -543,16 +248,6 @@ exports.updateMyReel = async (req, res) => {
     existing.moderationStatus = nextModerationStatus;
     existing.moderationNote = '';
 
-    if (isMockMode()) {
-      existing.updatedAt = new Date().toISOString();
-      return res.json({
-        ...mapVideo(existing),
-        message: nextModerationStatus === 'pending'
-          ? 'Reel updated and resubmitted for admin review'
-          : 'Reel updated successfully',
-      });
-    }
-
     await existing.save();
     return res.json({
       ...mapVideo(existing),
@@ -568,42 +263,21 @@ exports.updateMyReel = async (req, res) => {
 exports.deleteMyReel = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (isMockMode()) {
-      const reels = mockContentStore.listVideos();
-      const reel = reels.find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel));
-      if (!reel) {
-        return res.status(404).json({ message: 'Reel not found' });
-      }
-
-      const isOwner = toIntId(reel.uploadedBy) === toIntId(req.user.id);
-      const isAdmin = req.user?.role === 'admin';
-      if (!isOwner && !isAdmin) {
-        return res.status(403).json({ message: 'Not allowed to delete this reel' });
-      }
-
-      const removed = mockContentStore.deleteVideo(id);
-      return res.json({ message: 'Reel deleted successfully', id: removed?.id || Number(id) });
-    }
-
     const reel = useMongoStore()
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
     if (!reel) {
       return res.status(404).json({ message: 'Reel not found' });
     }
-
     const isOwner = sameUserId(reel.uploadedBy, req.user.id) || toIntId(reel.uploadedBy) === toIntId(req.user.id);
     const isAdmin = req.user?.role === 'admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ message: 'Not allowed to delete this reel' });
     }
-
     if (useMongoStore()) {
       await reel.deleteOne();
       return res.json({ message: 'Reel deleted successfully', id: String(id) });
     }
-
     await reel.destroy();
     return res.json({ message: 'Reel deleted successfully', id: Number(id) });
   } catch (error) {
@@ -615,38 +289,17 @@ exports.toggleUserReelLike = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = toIntId(req.user.id);
-
-    if (isMockMode()) {
-      const reels = mockContentStore.listVideos();
-      const reel = reels.find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel));
-      if (!reel) {
-        return res.status(404).json({ message: 'Reel not found' });
-      }
-
-      const likedBy = Array.isArray(reel.likedBy) ? reel.likedBy.map(toIntId) : [];
-      const hasLiked = likedBy.includes(userId);
-
-      reel.likedBy = hasLiked ? likedBy.filter((uid) => uid !== userId) : [...likedBy, userId];
-      reel.likesCount = reel.likedBy.length;
-      reel.updatedAt = new Date().toISOString();
-
-      return res.json({ liked: !hasLiked, reel: mapVideo(reel) });
-    }
-
     const reel = useMongoStore()
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
     if (!reel) {
       return res.status(404).json({ message: 'Reel not found' });
     }
-
     const likedBy = Array.isArray(reel.likedBy) ? reel.likedBy.map(toIntId) : [];
     const hasLiked = likedBy.includes(userId);
-
     reel.likedBy = hasLiked ? likedBy.filter((uid) => uid !== userId) : [...likedBy, userId];
     reel.likesCount = reel.likedBy.length;
     await reel.save();
-
     return res.json({ liked: !hasLiked, reel: mapVideo(reel) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -656,29 +309,14 @@ exports.toggleUserReelLike = async (req, res) => {
 exports.shareUserReel = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (isMockMode()) {
-      const reels = mockContentStore.listVideos();
-      const reel = reels.find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel));
-      if (!reel) {
-        return res.status(404).json({ message: 'Reel not found' });
-      }
-
-      reel.sharesCount = Number(reel.sharesCount || 0) + 1;
-      reel.updatedAt = new Date().toISOString();
-      return res.json(mapVideo(reel));
-    }
-
     const reel = useMongoStore()
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
     if (!reel) {
       return res.status(404).json({ message: 'Reel not found' });
     }
-
     reel.sharesCount = Number(reel.sharesCount || 0) + 1;
     await reel.save();
-
     return res.json(mapVideo(reel));
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -689,11 +327,9 @@ exports.addUserReelComment = async (req, res) => {
   try {
     const { id } = req.params;
     const text = String(req.body.text || '').trim();
-
     if (!text) {
       return res.status(400).json({ message: 'Comment text is required' });
     }
-
     const comment = {
       id: Date.now(),
       userId: req.user.id,
@@ -704,33 +340,16 @@ exports.addUserReelComment = async (req, res) => {
       text,
       createdAt: new Date().toISOString(),
     };
-
-    if (isMockMode()) {
-      const reels = mockContentStore.listVideos();
-      const reel = reels.find((item) => toIntId(item.id) === toIntId(id) && Boolean(item.isUserReel));
-      if (!reel) {
-        return res.status(404).json({ message: 'Reel not found' });
-      }
-
-      const comments = Array.isArray(reel.comments) ? reel.comments : [];
-      reel.comments = [comment, ...comments].slice(0, 200);
-      reel.commentsCount = reel.comments.length;
-      reel.updatedAt = new Date().toISOString();
-      return res.status(201).json(mapVideo(reel));
-    }
-
     const reel = useMongoStore()
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
     if (!reel) {
       return res.status(404).json({ message: 'Reel not found' });
     }
-
     const comments = Array.isArray(reel.comments) ? reel.comments : [];
     reel.comments = [comment, ...comments].slice(0, 200);
     reel.commentsCount = reel.comments.length;
     await reel.save();
-
     return res.status(201).json(mapVideo(reel));
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -740,30 +359,40 @@ exports.addUserReelComment = async (req, res) => {
 exports.deleteVideo = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (isMockMode()) {
-      const removedVideo = mockContentStore.deleteVideo(id);
-      if (!removedVideo) {
-        return res.status(404).json({ message: 'Video not found' });
-      }
-      return res.json({ message: 'Video deleted successfully', id: removedVideo.id });
-    }
-
     const video = useMongoStore()
       ? await VideoMongo.findById(String(id))
       : await Video.findByPk(id);
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
     }
-
     if (useMongoStore()) {
       await video.deleteOne();
       return res.json({ message: 'Video deleted successfully', id: String(id) });
     }
-
     await video.destroy();
     return res.json({ message: 'Video deleted successfully', id: Number(id) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+// Placeholder: Upload User Reel
+exports.uploadUserReel = async (req, res) => {
+  return res.status(501).json({ message: 'uploadUserReel not implemented yet' });
+};
+
+// Get all approved user reels (for feed)
+exports.getUserReels = async (req, res) => {
+  try {
+    const status = req.query.status || 'approved';
+    const filter = {
+      isUserReel: true,
+      moderationStatus: status,
+      contentType: 'spiritual',
+    };
+    const reels = await VideoMongo.find(filter).sort({ createdAt: -1 });
+    res.json(reels.map(mapVideo));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

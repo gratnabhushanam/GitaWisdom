@@ -339,41 +339,84 @@ export default function DailySloka() {
     return true;
   };
 
-  const startPlayback = (lang = language) => {
+  const startPlayback = async (lang = language) => {
     stopPlayback();
+
+    const speechText = getSpeechText(dailySloka, lang);
+    if (!speechText) {
+      setSaveStatus('Audio unavailable for this verse');
+      window.setTimeout(() => setSaveStatus(''), 2000);
+      return;
+    }
+    
+    setPlaybackSource('loading');
+
+    try {
+      const ttsResponse = await axios.post(`${API_BASE_URL}/api/ai/tts`, {
+        text: speechText,
+        voiceType: 'narrator'
+      }, {
+        ...API_REQUEST_CONFIG,
+        responseType: 'arraybuffer'
+      });
+
+      const blob = new Blob([ttsResponse.data], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(blob);
+      const newAudio = new Audio(audioUrl);
+      
+      audioRef.current = newAudio;
+      setPlaybackSource('api');
+      setIsPlaying(true);
+      
+      newAudio.play().catch(e => {
+        console.error('Audio api playback failed:', e);
+        audioRef.current = null;
+        fallbackToSpeechPlayback(lang, speechText);
+      });
+
+      newAudio.onended = () => {
+        setIsPlaying(false);
+        setPlaybackSource(null);
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+      };
+      
+      newAudio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        audioRef.current = null;
+        fallbackToSpeechPlayback(lang, speechText);
+      };
+
+    } catch (apiError) {
+      if (apiError.response && apiError.response.status === 501) {
+         console.log('ElevenLabs API key not configured. Falling back to OS Speech Synthesis.');
+      } else {
+         console.warn('TTS API Error:', apiError);
+      }
+      fallbackToSpeechPlayback(lang, speechText);
+    }
+  };
+
+  const fallbackToSpeechPlayback = (lang, speechText) => {
     const audioUrl = resolveAudioUrl(getAudioByLanguage(dailySloka, lang));
     if (audioUrl) {
       const newAudio = new Audio(audioUrl);
       audioRef.current = newAudio;
       setIsPlaying(true);
       setPlaybackSource('file');
-      newAudio.play().catch((e) => {
-        console.error('Audio playback failed, falling back to speech synthesis:', e);
-        audioRef.current = null;
-        const started = startSpeechPlayback(lang);
-        if (!started) {
-          setIsPlaying(false);
-          setPlaybackSource(null);
-        }
-      });
-      newAudio.onended = () => {
-        audioRef.current = null;
-        setIsPlaying(false);
-        setPlaybackSource(null);
-      };
-      newAudio.onerror = () => {
-        audioRef.current = null;
-        const started = startSpeechPlayback(lang);
-        if (!started) {
-          setIsPlaying(false);
-          setPlaybackSource(null);
-        }
-      };
+      newAudio.play().catch(() => fallToNativeSpeech(lang));
+      newAudio.onended = () => { audioRef.current = null; setIsPlaying(false); setPlaybackSource(null); };
+      newAudio.onerror = () => fallToNativeSpeech(lang);
       return;
     }
+    fallToNativeSpeech(lang);
+  };
 
+  const fallToNativeSpeech = (lang) => {
     const started = startSpeechPlayback(lang);
     if (!started) {
+      setIsPlaying(false);
+      setPlaybackSource(null);
       setSaveStatus('Audio unavailable for this verse on this browser');
       window.setTimeout(() => setSaveStatus(''), 2000);
     }

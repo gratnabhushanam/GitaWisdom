@@ -1536,3 +1536,68 @@ const sendViaBrevo = async ({ email, name, otp }) => {
     clearTimeout(timeoutId);
   }
 };
+
+exports.updateStreak = async (req, res) => {
+  try {
+    const { isMongoEnabled, useMongoStore } = require('../utils/mongoStore');
+    const { action } = req.body;
+    
+    if (useMongoStore()) {
+      const UserMongo = require('../models/mongo/UserMongo');
+      const user = await UserMongo.findById(req.user.id || req.user._id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      
+      const now = new Date();
+      if (user.lastActive) {
+        const lastActiveDate = new Date(user.lastActive);
+        const timeDiff = Math.abs(now - lastActiveDate);
+        const diffDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+           user.streak = (user.streak || 0) + 1;
+        } else if (diffDays > 1) {
+           user.streak = 1;
+        }
+      } else {
+        user.streak = 1;
+      }
+      user.lastActive = now;
+      await user.save();
+      return res.json({ success: true, streak: user.streak, user });
+    }
+    
+    return res.json({ success: true, message: 'Not enabled on sqlite mode' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateJapaCounter = async (req, res) => {
+  try {
+    const { beads, malas } = req.body;
+    const { isMongoEnabled, useMongoStore } = require('../utils/mongoStore');
+    
+    if (useMongoStore()) {
+      const UserMongo = require('../models/mongo/UserMongo');
+      const updatedUser = await UserMongo.findByIdAndUpdate(
+        req.user.id || req.user._id,
+        { japaCount: beads, japaMalas: malas },
+        { new: true }
+      );
+      return res.json({ success: true, user: updatedUser });
+    }
+    
+    return res.json({ success: true, message: 'SQLite Japa not explicitly mapped in schema' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.sendOtp = async (req, res) => {
+  // Empty unified stub - OTP is handled by register
+  res.json({ success: true });
+};
+
+exports.verifyOtp = async (req, res) => {
+  // Empty unified stub - OTP is handled by register
+  res.json({ success: true, token: 'mock' });
+};
