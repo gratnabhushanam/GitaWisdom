@@ -73,6 +73,13 @@ export default function Register() {
 
     try {
       const response = await register(formData.name, formData.email, formData.password);
+      
+      if (response && response.autoVerified) {
+        setInfoMessage('Account instantly created! (Render OTP Bypass Active). Redirecting to Login...');
+        setTimeout(() => navigate('/login', { replace: true }), 2500);
+        return;
+      }
+
       const pendingRegistration = {
         name: formData.name,
         email: response.email || formData.email,
