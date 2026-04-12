@@ -4,7 +4,8 @@ import axios from 'axios';
 // Usage: await resumableUpload({ file, url, headers, chunkSize, onProgress })
 export async function resumableUpload({ file, url, headers = {}, chunkSize = 5 * 1024 * 1024, onProgress }) {
   const totalChunks = Math.ceil(file.size / chunkSize);
-  const uploadId = `${file.name}-${file.size}-${file.lastModified}`;
+  const safeName = encodeURIComponent(file.name);
+  const uploadId = `${file.size}-${file.lastModified}-${safeName.substring(0, 50)}`;
   for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
     const start = chunkIndex * chunkSize;
     const end = Math.min(start + chunkSize, file.size);
@@ -14,7 +15,7 @@ export async function resumableUpload({ file, url, headers = {}, chunkSize = 5 *
       'upload-id': uploadId,
       'chunk-index': chunkIndex,
       'total-chunks': totalChunks,
-      'file-name': file.name,
+      'file-name': safeName,
       'Content-Type': 'application/octet-stream',
     };
     try {

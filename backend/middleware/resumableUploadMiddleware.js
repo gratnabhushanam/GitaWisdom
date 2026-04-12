@@ -19,7 +19,13 @@ function resumableUploadMiddleware(req, res, next) {
   const uploadId = req.headers['upload-id'];
   const chunkIndex = parseInt(req.headers['chunk-index'], 10);
   const totalChunks = parseInt(req.headers['total-chunks'], 10);
-  const fileName = req.headers['file-name'];
+  let fileName = req.headers['file-name'];
+  try {
+    if (fileName) fileName = decodeURIComponent(fileName);
+  } catch (err) {
+    // Fallback if not properly encoded
+  }
+
   if (!uploadId || isNaN(chunkIndex) || isNaN(totalChunks) || !fileName) {
     return res.status(400).json({ message: 'Missing upload headers' });
   }
