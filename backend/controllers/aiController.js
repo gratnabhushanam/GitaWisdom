@@ -2,13 +2,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 exports.chatWithAI = async (req, res) => {
   try {
-    const { messages, userProfile } = req.body;
+    const { messages, userProfile, customAiKey } = req.body;
     
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ message: 'Messages array is required' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || '';
+    const apiKey = customAiKey || process.env.GEMINI_API_KEY || '';
 
     // If no API key is present, gracefully fallback to a simulated realistic mock response
     if (!apiKey) {

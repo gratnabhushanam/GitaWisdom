@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film } from 'lucide-react';
+import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film, Key } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MediaPlayer from '../components/MediaPlayer';
 
@@ -29,6 +29,8 @@ export default function Mentor() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -106,7 +108,8 @@ export default function Mentor() {
     
     try {
       const response = await axios.post(`${API_BASE_URL}/api/ai/chat`, {
-        messages: updatedMessages
+        messages: updatedMessages,
+        customAiKey: customApiKey
       }, API_REQUEST_CONFIG);
       
       const aiReply = { role: 'ai', content: response.data.reply || 'Divine connectivity interrupted.' };
@@ -507,6 +510,13 @@ export default function Mentor() {
           <p className="text-lg md:text-xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto">Seeking guidance in Lord Krishna's eternal words.</p>
         </div>
 
+        {/* API Key Modal Button */}
+        <div className="absolute top-4 right-4 z-20">
+           <button onClick={() => setShowSettingsModal(true)} className="flex items-center gap-2 bg-devotion-darkBlue/40 backdrop-blur-md hover:bg-devotion-gold/10 border border-white/10 hover:border-devotion-gold/40 text-gray-400 hover:text-devotion-gold px-4 py-2 rounded-full transition-all text-xs font-black uppercase shadow-lg">
+             <Key className="w-4 h-4" /> API Key
+           </button>
+        </div>
+
         {/* Tab Switcher */}
         <div className="flex justify-center mb-12">
           <div className="bg-devotion-darkBlue/40 backdrop-blur-md p-1 rounded-full border border-devotion-gold/20 flex w-full max-w-md shadow-2xl">
@@ -875,6 +885,52 @@ export default function Mentor() {
         )}
         </>
         )}
+        
+        {/* Settings Modal */}
+        {showSettingsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="bg-[#06101E] w-full max-w-md rounded-3xl border border-devotion-gold/30 p-8 relative shadow-[0_0_80px_rgba(255,215,0,0.15)] animate-fade-in-up">
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-16 h-16 bg-devotion-gold/10 rounded-full flex items-center justify-center mb-4 border border-devotion-gold/20">
+                  <Key className="text-devotion-gold w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-serif font-black text-white text-center">Gemini API Key</h3>
+              </div>
+              
+              <p className="text-sm text-gray-400 text-center mb-6 font-light leading-relaxed">
+                If the server API key is unavailable, provide your own <b className="text-white">Google Gemini API Key</b> to talk to Krishna. Your key is stored safely in your browser.
+              </p>
+              
+              <div className="space-y-4">
+                <input
+                  type="password"
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-500 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 outline-none transition-all font-mono text-sm"
+                />
+                
+                <button
+                  onClick={() => {
+                    localStorage.setItem('geminiApiKey', customApiKey);
+                    setShowSettingsModal(false);
+                  }}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg hover:shadow-cyan-400/20 hover:-translate-y-0.5 transition-all"
+                >
+                  Save Key
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
