@@ -34,13 +34,13 @@ async function handleResumableUpload(req, res) {
     if (contentType === 'short') {
       const stats = fs.statSync(filePath);
       const fileSizeMB = stats.size / (1024 * 1024);
-      if (fileSizeMB > 100) {
+      if (fileSizeMB > 4000) {
         fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Short-form reels must be <= 100MB.' });
+        return res.status(400).json({ message: 'Short-form reels must be <= 4GB.' });
       }
-      if (duration < 3 || duration > 90) {
+      if (duration < 3 || duration > 1200) {
         fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Short-form reels must be between 3 and 90 seconds.' });
+        return res.status(400).json({ message: 'Short-form reels must be between 3 and 1200 seconds.' });
       }
       let aspect = 0;
       try {

@@ -3,9 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Upload, FileText, Tag, Check, ArrowLeft, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const MAX_REEL_DURATION_SECONDS = 90;
-
+const MAX_REEL_DURATION_SECONDS = 1200;
 const getVideoDuration = (file) => new Promise((resolve, reject) => {
   const testVideo = document.createElement('video');
   const objectUrl = URL.createObjectURL(file);
@@ -203,7 +201,7 @@ export default function UploadReel() {
                         />
                         <p className="mt-3 text-xs text-gray-400">Drag and drop your reel here or choose file</p>
                       </div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-widest">Upload MP4/WEBM/MOV file • Max 90s</p>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest">Upload MP4/WEBM/MOV file • Max 20m</p>
                       {videoValidationError && (
                         <p className="text-[11px] text-red-300 font-bold">{videoValidationError}</p>
                       )}

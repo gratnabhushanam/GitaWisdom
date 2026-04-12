@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // Resumable/chunked upload utility for large files
 // Usage: await resumableUpload({ file, url, headers, chunkSize, onProgress })
 export async function resumableUpload({ file, url, headers = {}, chunkSize = 5 * 1024 * 1024, onProgress }) {
@@ -13,17 +15,19 @@ export async function resumableUpload({ file, url, headers = {}, chunkSize = 5 *
       'chunk-index': chunkIndex,
       'total-chunks': totalChunks,
       'file-name': file.name,
+      'Content-Type': 'application/octet-stream',
     };
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: chunkHeaders,
-      body: chunk,
-    });
-    if (!res.ok) throw new Error(`Chunk ${chunkIndex} failed: ${await res.text()}`);
-    if (onProgress) onProgress(Math.round(((chunkIndex + 1) / totalChunks) * 100));
-    // On last chunk, return server response
-    if (chunkIndex === totalChunks - 1) {
-      return await res.json();
+    try {
+      const res = await axios.post(url, chunk, {
+        headers: chunkHeaders,
+      });
+      if (onProgress) onProgress(Math.round(((chunkIndex + 1) / totalChunks) * 100));
+      // On last chunk, return server response
+      if (chunkIndex === totalChunks - 1) {
+        return res.data;
+      }
+    } catch (error) {
+      throw new Error(`Chunk ${chunkIndex} failed: ${error.response?.data?.message || error.message}`);
     }
   }
 }
