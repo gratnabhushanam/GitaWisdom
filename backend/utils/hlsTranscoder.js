@@ -56,8 +56,11 @@ function transcodeToHLS(inputPath, outputDir, baseName, cb) {
   let hls = renditions.map((r, i) => `-hls_time 6 -hls_playlist_type vod -hls_segment_filename '${outputDir}/${baseName}_${r.name}_%03d.ts' -hls_flags independent_segments -hls_segment_type mpegts`).join(' ');
   let playlistArgs = renditions.map((r, i) => `-f hls '${outputDir}/${baseName}_${r.name}.m3u8'`).join(' ');
 
-  // Build the full command
-  const cmd = `ffmpeg -y -i "${inputPath}" -filter_complex "${filter}" ${map} ${audio} ${hls} ${playlistArgs}`;
+  // Obtain standalone binary path
+  const ffmpegStaticPath = require('ffmpeg-static');
+
+  // Build the full command using the explicit ffmpeg binary
+  const cmd = `"${ffmpegStaticPath}" -y -i "${inputPath}" -filter_complex "${filter}" ${map} ${audio} ${hls} ${playlistArgs}`;
 
   exec(cmd, (err, stdout, stderr) => {
     if (err) {

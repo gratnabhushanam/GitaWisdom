@@ -731,35 +731,9 @@ exports.registerUser = async (req, res) => {
 
       if (!deliveryResult?.delivered) {
         pendingRegistrations.delete(safeEmail);
-        
-        // Render Free Tier Bypass: Create the user instantly
-        const isMock = isMockMode();
-        if (!isMock) {
-           await createPersistentUser({
-            name,
-            email: safeEmail,
-            password: hashedPassword,
-            role: 'user',
-          });
-        } else {
-          const newUser = {
-            id: nextUserId++,
-            name,
-            email: safeEmail,
-            password: hashedPassword,
-            role: 'user',
-            streak: 0,
-            settings: { notifications: true, privacy: 'public', interests: [] },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          mockUsers.push(newUser);
-        }
-
-        return res.status(201).json({
-          autoVerified: true,
-          message: 'Render Free Tier Bypass: Account instantly created because emails are blocked! You can now log into the app instantly.',
-          email: safeEmail,
+        return res.status(502).json({
+          message: 'Failed to send OTP email. Please try again.',
+          error: deliveryResult?.message || 'Mail delivery failed.',
         });
       }
     } catch (mailError) {

@@ -45,6 +45,8 @@ async function handleResumableUpload(req, res) {
       let aspect = 0;
       try {
         const ffmpeg = require('fluent-ffmpeg');
+        ffmpeg.setFfmpegPath(require('ffmpeg-static'));
+        ffmpeg.setFfprobePath(require('ffprobe-static').path);
         await new Promise((resolve) => {
           ffmpeg.ffprobe(filePath, (err, metadata) => {
             if (!err && metadata && metadata.streams && metadata.streams[0]) {
@@ -75,6 +77,8 @@ async function handleResumableUpload(req, res) {
       let aspect = 0;
       try {
         const ffmpeg = require('fluent-ffmpeg');
+        ffmpeg.setFfmpegPath(require('ffmpeg-static'));
+        ffmpeg.setFfprobePath(require('ffprobe-static').path);
         await new Promise((resolve) => {
           ffmpeg.ffprobe(filePath, (err, metadata) => {
             if (!err && metadata && metadata.streams && metadata.streams[0]) {
