@@ -14,6 +14,17 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+// Global Shield: Intercept and destroy sneaky HTML responses from Vercel
+axios.interceptors.response.use(
+  (response) => {
+    if (typeof response.data === 'string' && response.data.toLowerCase().includes('<!doctype html>')) {
+      return Promise.reject(new Error("API returned HTML instead of JSON. Backend might be unreachable."));
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
