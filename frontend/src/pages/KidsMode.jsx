@@ -64,11 +64,11 @@ export default function KidsMode() {
       });
     };
 
-    // Fetch videos (example, replace with real API)
+    // Fetch videos
     useEffect(() => {
       setLoading(true);
       axios.get('/api/videos/kids')
-        .then(res => setVideos(res.data || []))
+        .then(res => setVideos(Array.isArray(res.data) ? res.data : []))
         .catch(() => setVideos([]))
         .finally(() => setLoading(false));
     }, [location]);
