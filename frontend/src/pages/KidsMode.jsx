@@ -192,8 +192,8 @@ function VideoModal({ video, onClose, modalBgIndex, setShowQuiz, setQuizResult, 
   if (!video) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-10 bg-black/80 backdrop-blur-md">
-      <div className="bg-[#06101E] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-devotion-gold/30 p-6 md:p-10 relative animate-fade-in-up shadow-[0_0_80px_rgba(255,215,0,0.12)]">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-6 bg-black/95 backdrop-blur-xl">
+      <div className="bg-[#06101E] w-full max-w-[98vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto rounded-[2rem] border border-devotion-gold/20 md:p-8 p-4 relative animate-fade-in-up shadow-[0_0_100px_rgba(0,0,0,0.8)]">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -202,8 +202,8 @@ function VideoModal({ video, onClose, modalBgIndex, setShowQuiz, setQuizResult, 
           <X />
         </button>
 
-        {/* Video Player */}
-        <div className="rounded-2xl overflow-hidden border border-devotion-gold/20 mb-8">
+        {/* Cinematic Video Player */}
+        <div className="w-full rounded-[1.5rem] overflow-hidden bg-black mb-8 shadow-2xl relative">
           <MediaPlayerHLS
             url={video.videoUrl || video.youtubeUrl || video.url}
             hlsUrl={video.hlsUrl}
