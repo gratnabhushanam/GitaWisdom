@@ -94,9 +94,9 @@ export default function UploadReel() {
       const token = localStorage.getItem('token');
       const headers = {
         Authorization: `Bearer ${token}`,
-        'video-title': formData.title,
-        'video-description': formData.description,
-        'video-tags': formData.tags,
+        'video-title': encodeURIComponent(formData.title || ''),
+        'video-description': encodeURIComponent(formData.description || ''),
+        'video-tags': encodeURIComponent(formData.tags || ''),
         'video-kids': 'false',
         'video-collection': 'Reels',
         'video-category': 'reels',

@@ -12,9 +12,13 @@ async function handleResumableUpload(req, res) {
     if (!req.resumableUpload) return res.status(400).json({ message: 'No file assembled' });
     const { filePath, fileName } = req.resumableUpload;
     const user = req.user;
-    const title = req.headers['video-title'] || fileName;
-    const description = req.headers['video-description'] || '';
-    const tags = (req.headers['video-tags'] || '').split(',').map(t => t.trim()).filter(Boolean);
+    let title = req.headers['video-title'] || fileName;
+    try { title = decodeURIComponent(title); } catch (e) { }
+    let description = req.headers['video-description'] || '';
+    try { description = decodeURIComponent(description); } catch (e) { }
+    let rawTags = req.headers['video-tags'] || '';
+    try { rawTags = decodeURIComponent(rawTags); } catch (e) { }
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
     const isKids = req.headers['video-kids'] === 'true';
     const collectionTitle = req.headers['video-collection'] || 'Bhagavad Gita';
     const category = req.headers['video-category'] || 'reels';
