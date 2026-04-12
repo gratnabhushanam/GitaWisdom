@@ -725,6 +725,10 @@ exports.registerUser = async (req, res) => {
       resendAvailableAt: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
     });
 
+    let deliveryResult;
+    try {
+      deliveryResult = await sendOtpEmail({ email: safeEmail, name, otp });
+
       if (!deliveryResult?.delivered) {
         pendingRegistrations.delete(safeEmail);
         
