@@ -36,11 +36,14 @@ export default function MediaPlayer({
   playsInline = true,
   fallbackLabel = 'Open video in a new tab',
   onEnded,
+  instagramMode = false,
 }) {
   const [failed, setFailed] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [secureHlsUrl, setSecureHlsUrl] = useState('');
   const [loadingToken, setLoadingToken] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
   const videoRef = useRef(null);
 
   const cdnHlsUrl = hlsUrl || '';
@@ -126,6 +129,30 @@ export default function MediaPlayer({
     }
   }, [hlsSource, loadingToken]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const updateProgress = () => setProgress(video.currentTime || 0);
+    const updateDuration = () => setDuration(video.duration || 0);
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('durationchange', updateDuration);
+    video.addEventListener('loadedmetadata', updateDuration);
+    return () => {
+      video.removeEventListener('timeupdate', updateProgress);
+      video.removeEventListener('durationchange', updateDuration);
+      video.removeEventListener('loadedmetadata', updateDuration);
+    };
+  }, [hlsSource, resolvedUrl, loadingToken]);
+
+  const handleSeek = (e) => {
+    const video = videoRef.current;
+    if (video) {
+        const newTime = parseFloat(e.target.value);
+        video.currentTime = newTime;
+        setProgress(newTime);
+    }
+  };
+
   // Advanced tools panel
   const AdvancedTools = () => (
     <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 bg-black/80 rounded-xl p-2 border border-devotion-gold/30 shadow-xl">
@@ -166,15 +193,15 @@ export default function MediaPlayer({
   }
 
   return (
-    <div className={`relative group ${className}`}>
+    <div className={`relative group overflow-hidden ${className}`}>
       <video
         ref={videoRef}
-        className="w-full h-auto rounded-xl shadow-lg"
+        className={`w-full ${instagramMode ? 'h-[100dvh] object-cover rounded-none' : 'h-auto rounded-xl'} shadow-lg`}
         src={hlsSource || resolvedUrl}
         autoPlay={effectiveShouldPlay}
         muted={muted}
         loop={loop}
-        controls={controls}
+        controls={instagramMode ? false : controls}
         playsInline={playsInline}
         onError={() => setFailed(true)}
         onEnded={onEnded}
@@ -188,10 +215,27 @@ export default function MediaPlayer({
         ⋮
       </button>
       {showTools && <AdvancedTools />}
-      {(hlsSource || resolvedUrl) && (
+      {(hlsSource || resolvedUrl) && !instagramMode && (
         <div className="absolute bottom-2 right-2 bg-black/70 text-devotion-gold text-xs px-3 py-1 rounded-full font-bold shadow-lg">
           {hlsSource ? 'HLS / CDN' : 'CDN'}
         </div>
+      )}
+      {instagramMode && duration > 0 && (
+         <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20 z-[60] hover:h-4 transition-all cursor-pointer">
+           <div 
+             className="absolute top-0 left-0 bottom-0 bg-[#E6C38A] shadow-[0_0_10px_rgba(230,195,138,0.8)]" 
+             style={{ width: `${(progress / duration) * 100}%` }}
+           ></div>
+           <input 
+             type="range"
+             min={0}
+             max={duration}
+             step="0.01"
+             value={progress}
+             onChange={handleSeek}
+             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer touch-none"
+           />
+         </div>
       )}
     </div>
   );

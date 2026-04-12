@@ -540,7 +540,8 @@ export default function Reels() {
                  shouldPlay={shouldPlay}
                  muted={!shouldPlay || !soundEnabled}
                  loop={false}
-                 controls={isActive}
+                 controls={false}
+                 instagramMode={isActive}
                  onEnded={handleVideoEnd}
                />
             </div>
