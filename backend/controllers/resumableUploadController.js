@@ -60,10 +60,7 @@ async function handleResumableUpload(req, res) {
           });
         });
       } catch { }
-      if (aspect && !(Math.abs(aspect - 0.56) < 0.1 || Math.abs(aspect - 1.0) < 0.1)) {
-        fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Short-form reels must be 9:16 (vertical) or 1:1 (square) aspect ratio.' });
-      }
+      // Allowed any type/orientation for Reels as per user request
     }
 
     // Validate for long-form videos

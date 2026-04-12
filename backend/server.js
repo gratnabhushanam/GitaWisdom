@@ -83,6 +83,7 @@ app.use('/api', cors({
     return callback(new Error('CORS blocked for this origin'));
   },
   credentials: true,
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-api-key', 'upload-id', 'chunk-index', 'total-chunks', 'file-name', 'video-title', 'video-description', 'video-tags', 'video-kids', 'video-collection', 'video-category', 'video-content-type', 'video-source', 'video-duration', 'video-orientation'],
 }));
 
 if (isProduction) {
@@ -99,7 +100,7 @@ if (isProduction) {
 
 app.use(createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  maxRequests: 300,
+  maxRequests: 2500,
   isMatch: () => true,
 }));
 app.use(createRateLimiter({
