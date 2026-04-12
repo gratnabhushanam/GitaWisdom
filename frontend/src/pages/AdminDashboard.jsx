@@ -79,28 +79,51 @@ function AdminDashboardContent() {
     setVideoUploadProgress(0);
     try {
       const token = localStorage.getItem('token');
+      const currentTitle = activeTab === 'movies' ? movieForm.title : videoForm.title;
+      const currentDesc = activeTab === 'movies' ? movieForm.description : videoForm.description;
+      const currentTags = activeTab === 'movies' ? movieForm.tags : videoForm.tags;
+      const currentKids = activeTab === 'movies' ? 'false' : (videoForm.isKids ? 'true' : 'false');
+      const currentCategory = activeTab === 'movies' ? 'movie' : videoForm.category;
+      const currentCollection = activeTab === 'movies' ? 'Movie Library' : videoForm.collectionTitle;
+      const contentType = activeTab === 'movies' ? 'long' : 'long'; // Movies/Videos are generic long length
+
       const headers = {
         Authorization: `Bearer ${token}`,
-        'video-title': videoForm.title,
-        'video-description': videoForm.description,
-        'video-tags': videoForm.tags,
-        'video-kids': videoForm.isKids ? 'true' : 'false',
-        'video-collection': videoForm.collectionTitle,
-        'video-category': videoForm.category,
+        'video-title': encodeURIComponent(currentTitle || ''),
+        'video-description': encodeURIComponent(currentDesc || ''),
+        'video-tags': encodeURIComponent(currentTags || ''),
+        'video-kids': currentKids,
+        'video-collection': encodeURIComponent(currentCollection || ''),
+        'video-category': encodeURIComponent(currentCategory || ''),
+        'video-content-type': contentType,
+        'video-source': 'admin',
       };
+      
       const result = await resumableUpload({
         file,
         url: '/api/videos/upload/resumable',
         headers,
         onProgress: setVideoUploadProgress,
       });
-      if (result && result.videoUrl) {
-        setVideoForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
-      } else if (result && result.fileName) {
-        setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
+      
+      if (activeTab === 'movies') {
+        if (result && result.videoUrl) {
+          setMovieForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
+        } else if (result && result.fileName) {
+          setMovieForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
+        }
+      } else {
+        if (result && result.videoUrl) {
+          setVideoForm((prev) => ({ ...prev, videoUrl: result.videoUrl, hlsUrl: result.hlsUrl }));
+        } else if (result && result.fileName) {
+          setVideoForm((prev) => ({ ...prev, videoUrl: `/uploads/reels/${result.fileName}` }));
+        }
       }
+      setMessage({ type: 'success', text: 'HQ File successfully transferred and processed!' });
     } catch (err) {
       alert('Video upload failed: ' + err.message);
+    } finally {
+      setTimeout(() => setVideoUploadProgress(0), 1000);
     }
   };
 
@@ -1012,8 +1035,16 @@ function AdminDashboardContent() {
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="e.g. Shri Krishna" value={movieForm.title} onChange={e => setMovieForm({...movieForm, title: e.target.value})} />
                       </div>
                       <div className="space-y-4">
-                         <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Video URL</label>
-                         <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" placeholder="https://cloudinary.com/... or https://example.com/video.mp4" value={movieForm.videoUrl} onChange={e => setMovieForm({...movieForm, videoUrl: e.target.value})} />
+                         <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><LinkIcon className="w-3 h-3"/> Direct File Upload (HQ Netflix/Hotstar Range)</label>
+                         <div className="flex flex-col gap-3">
+                           <input type="file" accept="video/*" onChange={handleVideoFileChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue" />
+                           {videoUploadProgress > 0 && (
+                             <div className="w-full bg-white/10 rounded-full h-2 mt-2">
+                               <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }}></div>
+                             </div>
+                           )}
+                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white text-xs mt-2 opacity-50" placeholder="Or paste link directly..." value={movieForm.videoUrl} onChange={e => setMovieForm({...movieForm, videoUrl: e.target.value})} />
+                         </div>
                       </div>
                       <div className="space-y-4">
                          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2"><ImageIcon className="w-3 h-3"/> Thumbnail Link</label>
@@ -1109,14 +1140,16 @@ function AdminDashboardContent() {
                          <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={videoForm.title} onChange={e => setVideoForm({...videoForm, title: e.target.value})} />
                       </div>
                       <div className="space-y-4">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Video URL</label>
-                         <input
-                           required
-                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none mt-2"
-                           placeholder="https://cloudinary.com/... or https://example.com/video.mp4"
-                           value={videoForm.videoUrl}
-                           onChange={e => setVideoForm({...videoForm, videoUrl: e.target.value})}
-                         />
+                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">High Quality File Upload</label>
+                         <div className="flex flex-col gap-3">
+                           <input type="file" accept="video/*" onChange={handleVideoFileChange} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue" />
+                           {videoUploadProgress > 0 && (
+                             <div className="w-full bg-white/10 rounded-full h-2 mt-2">
+                               <div className="bg-devotion-gold h-2 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }}></div>
+                             </div>
+                           )}
+                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-white text-xs mt-2 opacity-50" placeholder="Or paste link directly..." value={videoForm.videoUrl} onChange={e => setVideoForm({...videoForm, videoUrl: e.target.value})} />
+                         </div>
                          {videoForm.videoUrl && (
                            <div className="mt-3 rounded-xl overflow-hidden border border-devotion-gold/30 aspect-video bg-black">
                              <MediaPlayerHLS
