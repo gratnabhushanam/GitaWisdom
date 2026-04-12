@@ -66,13 +66,13 @@ async function handleResumableUpload(req, res) {
     if (contentType === 'long') {
       const stats = fs.statSync(filePath);
       const fileSizeMB = stats.size / (1024 * 1024);
-      if (fileSizeMB > 5120) {
+      if (fileSizeMB > 102400) {
         fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must be <= 5GB.' });
+        return res.status(400).json({ message: 'Long-form videos must be <= 100GB.' });
       }
-      if (duration < 91 || duration > 14400) {
+      if (duration < 91 || duration > 86400) {
         fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must be between 91 seconds and 4 hours.' });
+        return res.status(400).json({ message: 'Long-form videos must be between 91 seconds and 24 hours.' });
       }
       let aspect = 0;
       try {
@@ -88,9 +88,9 @@ async function handleResumableUpload(req, res) {
           });
         });
       } catch { }
-      if (aspect && !(Math.abs(aspect - 1.78) < 0.1 || Math.abs(aspect - 1.33) < 0.1)) {
+      if (aspect && aspect <= 0.8) {
         fs.unlink(filePath, () => { });
-        return res.status(400).json({ message: 'Long-form videos must be 16:9 (landscape) or 4:3 aspect ratio.' });
+        return res.status(400).json({ message: 'Long-form videos must not be vertical.' });
       }
     }
 
