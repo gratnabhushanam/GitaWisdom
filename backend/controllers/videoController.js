@@ -50,7 +50,7 @@ exports.getReels = async (req, res) => {
       category: 'reels',
       moderationStatus: 'approved',
       contentType: 'spiritual',
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -65,7 +65,7 @@ exports.getKidsVideos = async (req, res) => {
       isKids: true,
       moderationStatus: 'approved',
       contentType: 'spiritual',
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     res.json(kidsVideos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -81,7 +81,7 @@ exports.getVideos = async (req, res) => {
       isUserReel: { $ne: true },
       moderationStatus: 'approved',
       contentType: 'spiritual',
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     res.json(videos.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -390,7 +390,7 @@ exports.getUserReels = async (req, res) => {
       moderationStatus: status,
       contentType: 'spiritual',
     };
-    const reels = await VideoMongo.find(filter).sort({ createdAt: -1 });
+    const reels = await VideoMongo.find(filter).sort({ createdAt: -1 }).lean();
     res.json(reels.map(mapVideo));
   } catch (error) {
     res.status(500).json({ message: error.message });

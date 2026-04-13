@@ -205,18 +205,36 @@ const initializeApp = async () => {
   return initializePromise;
 };
 
+const cluster = require('cluster');
+const os = require('os');
+
 const startServer = async () => {
   try {
-    await initializeApp();
+    if (cluster.isPrimary && isProduction) {
+      const numCPUs = os.cpus().length;
+      console.log(`[CLUSTER] Primary ${process.pid} is running`);
+      console.log(`[CLUSTER] Forking ${numCPUs} workers for maximum concurrent scale...`);
 
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+      for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+      }
 
-    if (!isProduction && String(LEGACY_PORT) !== String(PORT)) {
-      app.listen(LEGACY_PORT, '0.0.0.0', () => {
-        console.log(`Legacy compatibility port running on ${LEGACY_PORT}`);
+      cluster.on('exit', (worker, code, signal) => {
+        console.warn(`[CLUSTER] Worker ${worker.process.pid} died. Forking a replacement...`);
+        cluster.fork();
       });
+    } else {
+      await initializeApp();
+
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`[CLUSTER] Worker ${process.pid} running on port ${PORT}`);
+      });
+
+      if (!isProduction && String(LEGACY_PORT) !== String(PORT)) {
+        app.listen(LEGACY_PORT, '0.0.0.0', () => {
+          console.log(`[CLUSTER] Worker ${process.pid} legacy compatibility port running on ${LEGACY_PORT}`);
+        });
+      }
     }
   } catch (err) {
     console.error('DB Connection Failed:', err);
