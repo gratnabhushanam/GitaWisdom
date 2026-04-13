@@ -169,13 +169,13 @@ export default function Movies() {
 
       {/* Cinematic Movie Modal */}
       {selectedMovie && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-12 bg-black/98 backdrop-blur-3xl">
-           <div className="relative w-full max-w-7xl aspect-video bg-zinc-950 rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(255,215,0,0.15)] border border-white/10">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-12 bg-black/98 backdrop-blur-3xl">
+           <div className="relative w-full max-w-7xl aspect-video bg-zinc-950 md:rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(255,215,0,0.15)] md:border border-white/10">
               <button 
                 onClick={() => setSelectedMovie(null)}
-                className="absolute top-8 right-8 z-20 bg-black/50 hover:bg-red-500 text-white p-4 rounded-[1.5rem] transition-all border border-white/10 hover:scale-110 active:scale-90"
+                className="absolute top-2 right-2 md:top-8 md:right-8 z-20 bg-black/50 hover:bg-red-500 text-white p-2 md:p-4 rounded-xl md:rounded-[1.5rem] transition-all border border-white/10 hover:scale-110 active:scale-90 shadow-2xl backdrop-blur-md"
               >
-                <X className="w-8 h-8" />
+                <X className="w-5 h-5 md:w-8 md:h-8" />
               </button>
               
               <div className="absolute inset-0 bg-gold-glow opacity-10 pointer-events-none"></div>
