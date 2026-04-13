@@ -11,6 +11,14 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', Georgia, serif;
   }
+
+  /* Universal TV spatial navigation and D-Pad focus logic */
+  button:focus-visible, 
+  a:focus-visible, 
+  [tabindex]:focus-visible {
+    @apply outline-none ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#06101E] z-50 transition-all scale-105;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+  }
 }
 
 /* Custom Scrollbar */
