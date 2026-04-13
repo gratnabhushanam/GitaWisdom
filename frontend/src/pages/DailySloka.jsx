@@ -52,6 +52,7 @@ export default function DailySloka() {
       window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
       return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => () => {
@@ -85,6 +86,7 @@ export default function DailySloka() {
     checkNotificationStatus();
     loadHistory();
     loadSavedVerses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
 
   const hasValidSloka = (payload) => Boolean(payload && typeof payload.sanskrit === 'string' && payload.sanskrit.trim().length > 0);
@@ -236,7 +238,6 @@ export default function DailySloka() {
     const permission = await requestNotificationPermission();
     setNotificationEnabled(permission === 'granted');
     if (permission === 'granted' && dailySloka) {
-      const meaning = getMeaningByLanguage(dailySloka, language);
       sendNotification('Daily Sloka', {
         body: dailySloka.sanskrit,
         tag: 'daily-sloka',
@@ -371,7 +372,7 @@ export default function DailySloka() {
       newAudio.play().catch(e => {
         console.error('Audio api playback failed:', e);
         audioRef.current = null;
-        fallbackToSpeechPlayback(lang, speechText);
+        fallbackToSpeechPlayback(lang);
       });
 
       newAudio.onended = () => {
@@ -384,7 +385,7 @@ export default function DailySloka() {
       newAudio.onerror = () => {
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
-        fallbackToSpeechPlayback(lang, speechText);
+        fallbackToSpeechPlayback(lang);
       };
 
     } catch (apiError) {
@@ -393,11 +394,11 @@ export default function DailySloka() {
       } else {
          console.warn('TTS API Error:', apiError);
       }
-      fallbackToSpeechPlayback(lang, speechText);
+      fallbackToSpeechPlayback(lang);
     }
   };
 
-  const fallbackToSpeechPlayback = (lang, speechText) => {
+  const fallbackToSpeechPlayback = (lang) => {
     const audioUrl = resolveAudioUrl(getAudioByLanguage(dailySloka, lang));
     if (audioUrl) {
       const newAudio = new Audio(audioUrl);

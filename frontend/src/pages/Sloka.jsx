@@ -57,6 +57,7 @@ export default function Sloka() {
     return () => {
       window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getSpeechLang = (selectedLanguage) => {
@@ -206,6 +207,7 @@ export default function Sloka() {
       }
     };
     fetchSloka();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -213,6 +215,7 @@ export default function Sloka() {
 
     stopPlayback();
     startPlayback(language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
   const toggleAudio = () => {

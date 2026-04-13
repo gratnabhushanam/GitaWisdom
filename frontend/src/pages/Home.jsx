@@ -9,15 +9,11 @@ const HOME_BACKGROUND_SCENES = [
 ];
 
 export default function Home() {
-  const [user, setUser] = useState(null);
-  const [bgIndex, setBgIndex] = useState(0);
-
-  useEffect(() => {
+  const [user] = useState(() => {
     const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
+    return userData ? JSON.parse(userData) : null;
+  });
+  const [bgIndex, setBgIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {

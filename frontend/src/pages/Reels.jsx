@@ -100,13 +100,13 @@ export default function Reels() {
         const response = await axios.get('/api/videos/user-reels?status=pending');
         setPendingReels(response.data || []);
       } catch (err) {
+        console.error('Failed to fetch pending reels:', err);
         setPendingReels([]);
       }
     };
 
     fetchReels();
     fetchPendingModeration();
-    // eslint-disable-next-line
   }, [user?.role]);
 
   // Sound preference effect
@@ -153,7 +153,7 @@ export default function Reels() {
       console.error('Failed to load saved reels:', error);
       setSavedReelMap({});
     }
-  }, [location?.state?.focusReelId, reels]);
+  }, [location?.state?.focusReelId, reels, currentUserId]);
 
   useEffect(() => {
     if (!reels.length) {

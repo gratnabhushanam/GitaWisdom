@@ -11,10 +11,10 @@ import MediaPlayerHLS from '../components/MediaPlayerHLS';
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
 
 function AdminDashboardContent() {
-  const [showAuthError, setShowAuthError] = useState(false);
+  const [, setShowAuthError] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
-  const [videoUploadFile, setVideoUploadFile] = useState(null);
+  const [, setVideoUploadFile] = useState(null);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -152,6 +152,7 @@ function AdminDashboardContent() {
     } else if (user?.role === 'admin') {
       fetchAdminData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, activeTab, pendingContentFilter, navigate]);
 
   const fetchAdminData = async () => {
@@ -619,7 +620,7 @@ function AdminDashboardContent() {
                      { label: 'Divine Movies', value: data.stats.totalMovies, icon: <Film />, color: 'text-devotion-gold' },
                      { label: 'Wisdom Stories', value: data.stats.totalStories, icon: <BookOpen />, color: 'text-orange-400' },
                      { label: 'Library Videos', value: data.stats.totalVideos, icon: <Video />, color: 'text-green-400' },
-                   ].map((stat, i) => (
+                   ].map((stat) => (
                      <div key={stat.label} className="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-3xl shadow-2xl">
                         <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 ${stat.color}`}>
                            {stat.icon}

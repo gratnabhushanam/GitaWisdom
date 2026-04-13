@@ -70,6 +70,7 @@ function AppShell() {
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
 
   useEffect(() => {
+     
     setBgIndex(getSceneIndexForPath(location.pathname));
   }, [location.pathname]);
 
@@ -83,6 +84,7 @@ function AppShell() {
     }, 5000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthRoute]);
 
   if (loading) {

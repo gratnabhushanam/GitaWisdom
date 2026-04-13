@@ -122,6 +122,7 @@ export default function Mentor() {
 
   useEffect(() => {
     loadMentorHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -245,6 +246,7 @@ export default function Mentor() {
     return () => {
       window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getSpeechLang = (selectedLanguage) => {
@@ -259,24 +261,6 @@ export default function Mentor() {
     return `${currentSolution.sanskrit}\n\n${meaning}`.trim();
   };
 
-  const getSpeechVoice = (selectedLanguage) => {
-    const voiceLanguageHints = {
-      english: ['en-us', 'en-gb', 'en-in'],
-      hindi: ['hi-in', 'hi'],
-      telugu: ['te-in', 'te'],
-    };
-    const hints = voiceLanguageHints[selectedLanguage] || voiceLanguageHints.english;
-
-    for (const hint of hints) {
-      const byLang = voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith(hint));
-      if (byLang) return byLang;
-
-      const byName = voices.find((voice) => String(voice.name || '').toLowerCase().includes(hint.replace('-', '')));
-      if (byName) return byName;
-    }
-
-    return voices.find((voice) => voice.default) || voices[0] || null;
-  };
 
   const getVoiceByCharacter = (selectedLanguage) => {
     // Get language-matching voices
@@ -292,25 +276,6 @@ export default function Mentor() {
     const selectedVoiceIndex = Math.min(voiceIndex >= 0 ? voiceIndex : 0, langVoices.length - 1);
     
     return langVoices[selectedVoiceIndex] || langVoices[0] || null;
-  };
-
-  const getVoiceLabel = () => {
-    if (!isSpeechSupported) return 'Browser narration unavailable';
-    if (!voices.length) return 'Loading voices';
-    const voice = getSpeechVoice(language);
-    if (!voice) return 'Default browser voice';
-    const normalizedName = String(voice.name || '').toLowerCase();
-    const normalizedLang = String(voice.lang || '').toLowerCase();
-    if (language === 'hindi' && (normalizedLang.startsWith('hi') || normalizedName.includes('hindi'))) {
-      return `Hindi voice: ${voice.name}`;
-    }
-    if (language === 'telugu' && (normalizedLang.startsWith('te') || normalizedName.includes('telugu'))) {
-      return `Telugu voice: ${voice.name}`;
-    }
-    if (language === 'english' && normalizedLang.startsWith('en')) {
-      return `English voice: ${voice.name}`;
-    }
-    return `Fallback voice: ${voice.name}`;
   };
 
   const stopPlayback = () => {
@@ -440,12 +405,14 @@ export default function Mentor() {
         window.speechSynthesis.cancel();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!isPlaying || !solution) return;
     stopPlayback();
     startPlayback(language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, voiceCharacter]);
 
   const toggleAudio = () => {

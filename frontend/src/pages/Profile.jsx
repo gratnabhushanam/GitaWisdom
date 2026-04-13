@@ -421,7 +421,7 @@ export default function Profile() {
 
       setReelVideoFile(file);
       setReelEditError('');
-    } catch (error) {
+    } catch {
       setReelVideoFile(null);
       setReelEditError('Could not validate selected file. Please choose another video.');
     }

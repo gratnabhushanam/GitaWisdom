@@ -16,22 +16,22 @@ export default function Satsangs() {
   const [newGroupForm, setNewGroupForm] = useState({ name: '', description: '', category: 'General' });
 
   useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  const fetchGroups = async () => {
-    try {
-      const { data } = await axios.get('/api/forums/groups');
-      setGroups(data);
-      if (data.length > 0 && !activeGroupId) {
-        setActiveGroupId(data[0]._id);
+    const fetchGroups = async () => {
+      try {
+        const { data } = await axios.get('/api/forums/groups');
+        setGroups(data);
+        if (data.length > 0 && !activeGroupId) {
+          setActiveGroupId(data[0]._id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch groups', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch groups', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (activeGroupId) fetchPosts(activeGroupId);
@@ -58,6 +58,7 @@ export default function Satsangs() {
       setActiveGroupId(data._id);
       setNewGroupForm({ name: '', description: '', category: 'General' });
     } catch (error) {
+      console.error('Group creation error:', error);
       alert('Failed to create group');
     }
   };
@@ -75,6 +76,7 @@ export default function Satsangs() {
         setActiveGroupId(groups.find(g => g._id !== groupId)?._id || null);
       }
     } catch (error) {
+      console.error('Group deletion error:', error);
       alert('Failed to delete group');
     }
   };
@@ -92,6 +94,7 @@ export default function Satsangs() {
       setActiveGroupPosts([data, ...activeGroupPosts]);
       setPostContent('');
     } catch (error) {
+      console.error('Post creation error:', error);
       alert('Failed to post');
     }
   };
@@ -104,6 +107,7 @@ export default function Satsangs() {
       });
       setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
     } catch (error) {
+      console.error('Like error:', error);
       alert('Must be logged in to like');
     }
   };

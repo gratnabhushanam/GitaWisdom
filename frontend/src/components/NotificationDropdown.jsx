@@ -11,6 +11,7 @@ export default function NotificationDropdown({ token }) {
 
   useEffect(() => {
     if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     axios.get('/api/notifications', {
       headers: { Authorization: `Bearer ${token}` },

@@ -19,8 +19,8 @@ export default function Navbar() {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           });
           setNotifications(Array.isArray(data) ? data : []);
-        } catch (error) {
-           // Silent catch
+        } catch (err) {
+           console.error('Failed to fetch notifications:', err);
         }
       };
       fetchNotifications();
@@ -37,7 +37,9 @@ export default function Navbar() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setNotifications(notifications.map(n => ({...n, isRead: true, read: true})));
-    } catch {}
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
   };
 
   const getInitials = (name) => {

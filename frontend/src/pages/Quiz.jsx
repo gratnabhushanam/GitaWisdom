@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import KrishnaSVG from '../assets/krishna-scene.svg';
 import axios from 'axios';
 import { Trophy, CheckCircle, XCircle, ArrowRight, RefreshCcw, Loader } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 export default function Quiz() {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -18,13 +17,13 @@ export default function Quiz() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
   
   const queryParams = new URLSearchParams(location.search);
   const videoId = queryParams.get('videoId');
 
   useEffect(() => {
     fetchQuestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
   const fetchQuestions = async () => {

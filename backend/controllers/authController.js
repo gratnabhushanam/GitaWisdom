@@ -1503,57 +1503,6 @@ module.exports.getUserByIdForAuth = async (id) => {
 
 
 
-const sendViaBrevo = async ({ email, name, otp }) => {
-  if (!isBrevoConfigured()) {
-    return {
-      delivered: false,
-      message: 'Brevo is not configured. Set BREVO_API_KEY and BREVO_FROM_EMAIL.',
-    };
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'api-key': BREVO_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(buildBrevoPayload({ email, name, otp })),
-      signal: controller.signal,
-    });
-
-    const responseText = await response.text();
-    const responseBody = responseText ? (() => {
-      try {
-        return JSON.parse(responseText);
-      } catch {
-        return { raw: responseText };
-      }
-    })() : {};
-
-    if (!response.ok) {
-      const error = new Error(responseBody.message || `Brevo request failed with status ${response.status}`);
-      error.status = response.status;
-      error.responseBody = responseBody;
-      error.responseText = responseText;
-      error.provider = 'brevo';
-      error.code = response.status === 401 || response.status === 403 ? 'EAUTH' : 'EFAIL';
-      throw error;
-    }
-
-    return { delivered: true, provider: 'brevo', messageId: responseBody.messageId || null };
-  } catch (error) {
-    if (error && error.name === 'AbortError') {
-      error.code = 'ETIMEDOUT';
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
 
 exports.updateStreak = async (req, res) => {
   try {

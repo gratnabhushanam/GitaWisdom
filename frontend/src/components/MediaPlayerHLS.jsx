@@ -14,13 +14,7 @@ function extractVideoId(url) {
   }
 }
 
-// Dynamically load hls.js only if needed
-let Hls = null;
-if (typeof window !== 'undefined') {
-  try {
-    Hls = require('hls.js');
-  } catch {}
-}
+import Hls from 'hls.js';
 
 export default function MediaPlayer({
   url,
@@ -34,11 +28,9 @@ export default function MediaPlayer({
   loop = false,
   controls = true,
   playsInline = true,
-  fallbackLabel = 'Open video in a new tab',
   onEnded,
   instagramMode = false,
 }) {
-  const [failed, setFailed] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [secureHlsUrl, setSecureHlsUrl] = useState('');
   const [secureVideoUrl, setSecureVideoUrl] = useState('');
@@ -46,6 +38,7 @@ export default function MediaPlayer({
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const videoRef = useRef(null);
+  const [hlsFallbackActive, setHlsFallbackActive] = useState(false);
 
   const getAbsoluteUrl = (inputUrl) => {
     if (!inputUrl) return inputUrl;
@@ -101,6 +94,63 @@ export default function MediaPlayer({
     return () => { cancelled = true; };
   }, [cdnHlsUrl, cdnVideoUrl]);
 
+  // HLS playback hook
+  useEffect(() => {
+    if (!secureHlsUrl || loadingToken || hlsFallbackActive) return;
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = secureHlsUrl;
+      video.onerror = () => setHlsFallbackActive(true);
+    } else if (Hls && Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(secureHlsUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.fatal) {
+          hls.destroy();
+          setHlsFallbackActive(true);
+        }
+      });
+      return () => hls.destroy();
+    } else {
+      setHlsFallbackActive(true);
+    }
+  }, [secureHlsUrl, loadingToken, hlsFallbackActive]);
+
+  const activeSource = hlsFallbackActive ? null : secureHlsUrl;
+  const resolvedUrl = secureVideoUrl || cdnVideoUrl;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const updateProgress = () => setProgress(video.currentTime || 0);
+    const updateDuration = () => setDuration(video.duration || 0);
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('durationchange', updateDuration);
+    video.addEventListener('loadedmetadata', updateDuration);
+    return () => {
+      video.removeEventListener('timeupdate', updateProgress);
+      video.removeEventListener('durationchange', updateDuration);
+      video.removeEventListener('loadedmetadata', updateDuration);
+    };
+  }, [secureHlsUrl, resolvedUrl, loadingToken]);
+
+  useEffect(() => {
+    if (effectiveShouldPlay && videoRef.current) {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+             playPromise.catch(e => {
+                  console.warn("Autoplay blocked, attempting muted play:", e);
+                  videoRef.current.muted = true;
+                  videoRef.current.play().catch(err => console.warn("Fallback play also blocked:", err));
+             });
+        }
+    } else if (!effectiveShouldPlay && videoRef.current) {
+        videoRef.current.pause();
+    }
+  }, [effectiveShouldPlay, activeSource, resolvedUrl, loadingToken]);
+
   if (!cdnVideoUrl && !cdnHlsUrl) return null;
 
   // YouTube embed
@@ -125,68 +175,6 @@ export default function MediaPlayer({
     );
   }
 
-  const hlsSource = secureHlsUrl;
-  const resolvedUrl = secureVideoUrl || cdnVideoUrl;
-
-  const [hlsFallbackActive, setHlsFallbackActive] = useState(false);
-
-  // HLS playback hook
-  useEffect(() => {
-    if (!hlsSource || loadingToken || hlsFallbackActive) return;
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Browser native HLS
-      video.src = hlsSource;
-      video.onerror = () => setHlsFallbackActive(true);
-    } else if (Hls && Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(hlsSource);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, function (event, data) {
-        if (data.fatal) {
-          hls.destroy();
-          setHlsFallbackActive(true);
-        }
-      });
-      return () => hls.destroy();
-    } else {
-      setHlsFallbackActive(true);
-    }
-  }, [hlsSource, loadingToken, hlsFallbackActive]);
-
-  const activeSource = hlsFallbackActive ? null : hlsSource;
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const updateProgress = () => setProgress(video.currentTime || 0);
-    const updateDuration = () => setDuration(video.duration || 0);
-    video.addEventListener('timeupdate', updateProgress);
-    video.addEventListener('durationchange', updateDuration);
-    video.addEventListener('loadedmetadata', updateDuration);
-    return () => {
-      video.removeEventListener('timeupdate', updateProgress);
-      video.removeEventListener('durationchange', updateDuration);
-      video.removeEventListener('loadedmetadata', updateDuration);
-    };
-  }, [hlsSource, resolvedUrl, loadingToken]);
-
-  useEffect(() => {
-    if (effectiveShouldPlay && videoRef.current) {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-             playPromise.catch(e => {
-                  console.warn("Autoplay blocked, attempting muted play:", e);
-                  videoRef.current.muted = true;
-                  videoRef.current.play().catch(err => console.warn("Fallback play also blocked:", err));
-             });
-        }
-    } else if (!effectiveShouldPlay && videoRef.current) {
-        videoRef.current.pause();
-    }
-  }, [effectiveShouldPlay, activeSource, resolvedUrl, loadingToken]);
-
   const handleSeek = (e) => {
     const video = videoRef.current;
     if (video) {
@@ -199,8 +187,8 @@ export default function MediaPlayer({
   // Advanced tools panel
   const AdvancedTools = () => (
     <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 bg-black/80 rounded-xl p-2 border border-devotion-gold/30 shadow-xl">
-      {hlsSource && (
-        <button className="text-xs text-devotion-gold hover:underline" onClick={() => navigator.clipboard.writeText(hlsSource)}>
+      {secureHlsUrl && (
+        <button className="text-xs text-devotion-gold hover:underline" onClick={() => navigator.clipboard.writeText(secureHlsUrl)}>
           Copy HLS Link
         </button>
       )}
@@ -209,7 +197,7 @@ export default function MediaPlayer({
           Copy CDN Link
         </button>
       )}
-      {hlsSource && <a href={hlsSource} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:underline">Open HLS in Tab</a>}
+      {secureHlsUrl && <a href={secureHlsUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:underline">Open HLS in Tab</a>}
       {resolvedUrl && <a href={resolvedUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:underline">Open CDN in Tab</a>}
       {resolvedUrl && <a href={resolvedUrl} download className="text-xs text-green-400 hover:underline">Download Original</a>}
     </div>
@@ -236,7 +224,7 @@ export default function MediaPlayer({
         loop={loop}
         controls={instagramMode ? false : controls}
         playsInline={playsInline}
-        onError={() => setFailed(true)}
+        onError={() => console.warn('Video failed to play')}
         onEnded={onEnded}
         title={title}
       />
@@ -248,9 +236,9 @@ export default function MediaPlayer({
         ⋮
       </button>
       {showTools && <AdvancedTools />}
-      {(hlsSource || resolvedUrl) && !instagramMode && (
+      {(secureHlsUrl || resolvedUrl) && !instagramMode && (
         <div className="absolute bottom-2 right-2 bg-black/70 text-devotion-gold text-xs px-3 py-1 rounded-full font-bold shadow-lg">
-          {hlsSource ? 'HLS / CDN' : 'CDN'}
+          {secureHlsUrl ? 'HLS / CDN' : 'CDN'}
         </div>
       )}
       {instagramMode && duration > 0 && (

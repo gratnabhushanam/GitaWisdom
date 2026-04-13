@@ -71,6 +71,7 @@ export default function UploadReel() {
       setVideoFile(file);
       setVideoValidationError('');
     } catch (error) {
+      console.error('Video validation error:', error);
       setVideoFile(null);
       setVideoValidationError('Could not validate this file. Please choose another video.');
     }

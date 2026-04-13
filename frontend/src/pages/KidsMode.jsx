@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useLocation } from 'react-router-dom';
 import { Play, Star, Award, BookOpen, X, Sparkles, Heart } from 'lucide-react';
@@ -34,12 +34,10 @@ export default function KidsMode() {
     ];
     const location = useLocation();
     const [videos, setVideos] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [selectedVideo, setSelectedVideo] = useState(null);
-    const [modalBgIndex, setModalBgIndex] = useState(0);
     const [showQuiz, setShowQuiz] = useState(false);
-    const [quizResult, setQuizResult] = useState(null);
-    const consumedOpenVideoIdRef = useRef(null);
+
     // Favorites state (localStorage)
     const [favorites, setFavorites] = useState(() => {
       try {
@@ -66,6 +64,7 @@ export default function KidsMode() {
 
     // Fetch videos
     useEffect(() => {
+      // eslint-disable-next-line
       setLoading(true);
       axios.get('/api/videos/kids')
         .then(res => setVideos(Array.isArray(res.data) ? res.data : []))
@@ -162,26 +161,21 @@ export default function KidsMode() {
           <VideoModal
             video={selectedVideo}
             onClose={() => setSelectedVideo(null)}
-            modalBgIndex={modalBgIndex}
             setShowQuiz={setShowQuiz}
-            setQuizResult={setQuizResult}
             isFavorite={isFavorite}
             toggleFavorite={toggleFavorite}
           />
         )}
         {showQuiz && selectedVideo && (
           <QuizModal
-            video={selectedVideo}
             onClose={() => { setShowQuiz(false); setSelectedVideo(null); }}
-            result={quizResult}
-            setResult={setQuizResult}
           />
         )}
       </>
     );
 }
 
-function VideoModal({ video, onClose, modalBgIndex, setShowQuiz, setQuizResult, isFavorite, toggleFavorite }) {
+function VideoModal({ video, onClose, setShowQuiz, setQuizResult, isFavorite, toggleFavorite }) {
   if (!video) return null;
 
   return (
@@ -294,7 +288,7 @@ function ReadAlong({ script }) {
   );
 }
 
-function QuizModal({ video, onClose, result, setResult }) {
+function QuizModal({ onClose, setResult }) {
   const [quiz] = useState(() => SAMPLE_QUIZ[Math.floor(Math.random() * SAMPLE_QUIZ.length)]);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);

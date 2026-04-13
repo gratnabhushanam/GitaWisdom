@@ -29,6 +29,7 @@ export default function Search() {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const performSearch = async () => {

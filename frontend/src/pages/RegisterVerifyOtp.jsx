@@ -15,7 +15,7 @@ export default function RegisterVerifyOtp() {
     try {
       const raw = sessionStorage.getItem('pending_registration_v1');
       return raw ? JSON.parse(raw) : null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, []);

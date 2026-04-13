@@ -19,6 +19,20 @@ export default function MediaPlayer({
   const resolvedUrl = resolveMediaUrl(url);
   const effectiveShouldPlay = typeof shouldPlay === 'boolean' ? shouldPlay : autoPlay;
 
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (effectiveShouldPlay) {
+      const playPromise = el.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {});
+      }
+    } else {
+      el.pause();
+    }
+  }, [effectiveShouldPlay, resolvedUrl]);
+
   if (!resolvedUrl) return null;
 
   if (isYoutubeUrl(resolvedUrl)) {
@@ -55,19 +69,6 @@ export default function MediaPlayer({
     );
   }
 
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    if (effectiveShouldPlay) {
-      const playPromise = el.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {});
-      }
-    } else {
-      el.pause();
-    }
-  }, [effectiveShouldPlay, resolvedUrl]);
 
   return (
     <video
