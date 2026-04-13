@@ -31,6 +31,29 @@ exports.createGroup = async (req, res) => {
   }
 };
 
+exports.deleteGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    if (!useMongoStore()) return res.status(400).json({ message: 'MongoDB required for forums' });
+
+    // Ensure the sender is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admins can delete communities' });
+    }
+
+    const group = await GroupMongo.findById(groupId);
+    if (!group) return res.status(404).json({ message: 'Community not found' });
+
+    await group.deleteOne();
+    // Also delete associated posts
+    await PostMongo.deleteMany({ groupId });
+
+    res.json({ message: 'Community deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // ----------------- POSTS -----------------
 exports.getPostsByGroup = async (req, res) => {
   try {

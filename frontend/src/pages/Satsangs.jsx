@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Users, Plus, MessageCircle, Heart, Search, ChevronRight } from 'lucide-react';
+import { Users, Plus, MessageCircle, Heart, Search, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Satsangs() {
@@ -59,6 +59,23 @@ export default function Satsangs() {
       setNewGroupForm({ name: '', description: '', category: 'General' });
     } catch (error) {
       alert('Failed to create group');
+    }
+  };
+
+  const handleDeleteGroup = async (e, groupId) => {
+    e.stopPropagation(); // prevent setting active group id
+    if (!window.confirm('Are you sure you want to delete this community?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/forums/groups/${groupId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGroups(groups.filter(g => g._id !== groupId));
+      if (activeGroupId === groupId) {
+        setActiveGroupId(groups.find(g => g._id !== groupId)?._id || null);
+      }
+    } catch (error) {
+      alert('Failed to delete group');
     }
   };
 
@@ -143,6 +160,14 @@ export default function Satsangs() {
                   >
                      <h4 className={`font-bold ${activeGroupId === group._id ? 'text-devotion-gold' : 'text-white'}`}>{group.name}</h4>
                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{group.category}</p>
+                     {user?.role === 'admin' && (
+                        <button
+                          onClick={(e) => handleDeleteGroup(e, group._id)}
+                          className="mt-3 inline-flex items-center gap-1.5 text-[10px] text-red-400 hover:text-red-300 uppercase font-black tracking-widest bg-red-400/10 px-2 py-1 rounded-md transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
+                        </button>
+                     )}
                   </button>
                 ))}
               </div>
