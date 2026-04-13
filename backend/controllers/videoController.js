@@ -1,6 +1,7 @@
 const { Video, User } = require('../models');
 const mongoose = require('mongoose');
 const VideoMongo = require('../models/mongo/VideoMongo');
+const QuizMongo = require('../models/mongo/QuizMongo');
 const { mapVideo } = require('../utils/responseMappers');
 
 const { isMongoEnabled, isMongoConnected, useMongoStore } = require('../utils/mongoStore');
@@ -31,7 +32,7 @@ exports.grantStreamingToken = async (req, res) => {
 // Placeholder: Add Video (admin only)
 exports.addVideo = async (req, res) => {
   try {
-    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags } = req.body;
+    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags, videoQuizDraft } = req.body;
 
     if (!title || !videoUrl) {
       return res.status(400).json({ message: 'Title and videoUrl are required' });
@@ -51,6 +52,23 @@ exports.addVideo = async (req, res) => {
       contentType: 'spiritual',
       uploadedBy: req.user.id,
     });
+
+    // Check if an embedded quiz draft was attached to this video publish
+    if (videoQuizDraft && videoQuizDraft.questionText) {
+      const optionMap = { A: videoQuizDraft.optionA, B: videoQuizDraft.optionB, C: videoQuizDraft.optionC, D: videoQuizDraft.optionD };
+      const optionsArray = ['A', 'B', 'C', 'D'].map(k => optionMap[k]).filter(Boolean);
+      const correctAnswer = optionMap[videoQuizDraft.correctOption];
+      
+      if (optionsArray.length >= 2 && correctAnswer) {
+        await QuizMongo.create({
+          videoId: newVideo._id,
+          question: videoQuizDraft.questionText,
+          options: optionsArray,
+          correct_answer: correctAnswer,
+          difficulty: 'medium'
+        });
+      }
+    }
 
     return res.status(201).json(mapVideo(newVideo));
   } catch (error) {

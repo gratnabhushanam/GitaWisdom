@@ -94,26 +94,69 @@ exports.submitQuiz = async (req, res) => {
 
 exports.addQuizQuestion = async (req, res) => {
   try {
-    const { videoId, question, options, correct_answer, explanation, difficulty } = req.body;
+    const { videoId, videoUrl, question, questionText, options, correct_answer, category, difficulty } = req.body;
 
-    if (!videoId || !question || !options || !correct_answer) {
+    // Handle AdminDashboard generic payloads
+    const resolvedQuestion = question || questionText;
+    let resolvedVideoId = videoId;
+    
+    // If frontend sent a videoUrl instead of an ObjectID, look it up in the database.
+    if (!resolvedVideoId && videoUrl) {
+      // It might be a full URL, or an uploads path. Try to parse out the filename or match the DB directly.
+      let searchUrl = videoUrl;
+      try {
+         const parsed = new URL(videoUrl);
+         searchUrl = parsed.pathname;
+      } catch (e) {} // Not a valid URL, treat as string
+      
+      const VideoMongo = require('../models/mongo/VideoMongo');
+      // Look for the exact url, or one ending with the filename
+      const video = await VideoMongo.findOne({
+        $or: [
+          { videoUrl: searchUrl },
+          { videoUrl: { $regex: escapeRegex(searchUrl) + '$' } }
+        ]
+      });
+      
+      if (video) {
+        resolvedVideoId = video._id;
+      } else {
+        return res.status(404).json({ message: 'Could not find a video matching that URL' });
+      }
+    }
+
+    // Process options. Frontend might send [{answerText, isCorrect}] or ['str', 'str']
+    let resolvedOptions = options;
+    let resolvedCorrectAnswer = correct_answer;
+
+    if (Array.isArray(options) && options.length > 0 && typeof options[0] === 'object') {
+       resolvedOptions = options.map(o => o.answerText);
+       const correctObj = options.find(o => o.isCorrect);
+       resolvedCorrectAnswer = correctObj ? correctObj.answerText : resolvedOptions[0];
+    }
+
+    if (!resolvedVideoId || !resolvedQuestion || !resolvedOptions || !resolvedCorrectAnswer) {
       return res.status(400).json({ message: 'Missing required quiz fields' });
     }
 
     const newQuiz = await QuizMongo.create({
-      videoId,
-      question,
-      options,
-      correct_answer,
-      explanation,
-      difficulty
+      videoId: resolvedVideoId,
+      question: resolvedQuestion,
+      options: resolvedOptions,
+      correct_answer: resolvedCorrectAnswer,
+      difficulty: difficulty || 'medium'
     });
 
     return res.status(201).json(newQuiz);
   } catch (error) {
+    console.error('Quiz Create Error:', error);
     return res.status(500).json({ message: 'Failed to add quiz question' });
   }
 };
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
 
 exports.deleteQuizQuestion = async (req, res) => {
   try {
