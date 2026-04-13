@@ -72,19 +72,20 @@ export default function Movies() {
         </div>
 
         {/* Cinematic Movie List - Premium Stream Cards */}
-        <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10 pb-20">
+        <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 pb-20">
           {movies.map((movie) => (
             <div 
               key={movie._id}
-              className="flex flex-row items-stretch p-4 md:p-5 rounded-[20px] bg-gradient-to-br from-[#0F2027] to-[#2C5364] backdrop-blur-3xl border border-white/10 opacity-95 transition-all duration-500 transform hover:scale-[1.05] hover:shadow-[0_0_40px_rgba(255,215,0,0.2)] cursor-pointer group relative overflow-hidden"
+              className="flex flex-col p-4 md:p-5 rounded-[20px] bg-gradient-to-br from-[#F5E6C8] to-[#E6C068] border border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.25)] transition-all duration-500 transform hover:scale-[1.08] hover:border-[#FFD700] hover:shadow-[0_15px_35px_rgba(255,215,0,0.3)] hover:-translate-y-2 cursor-pointer group relative overflow-hidden"
               onClick={() => setSelectedMovie(movie)}
             >
-              {/* Light particles/sparkles overlay */}
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-screen"></div>
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#FFD700] rounded-full blur-[100px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
+              {/* Subtle inner glow and shimmer */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/50 to-white/0 opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-in-out w-[200%] -translate-x-[100%] group-hover:translate-x-[50%] pointer-events-none z-20"></div>
+              
+              <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(255,255,255,0.7)] rounded-[20px] pointer-events-none"></div>
 
-              {/* Thumbnail Left */}
-              <div className="relative w-1/3 md:w-2/5 rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(255,215,0,0.15)] flex-shrink-0 group-hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-shadow">
+              {/* Thumbnail Top */}
+              <div className="relative w-full aspect-[16/9] rounded-[14px] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.15)] mb-5 border border-black/5 z-10">
                    <img 
                      src={movie.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} 
                      alt={movie.title}
@@ -93,32 +94,41 @@ export default function Movies() {
                        e.target.src = 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
                      }}
                    />
-                   <div className="absolute top-2 left-2 bg-gradient-to-r from-[#FFD700] to-yellow-600 text-[#0F2027] px-2 py-0.5 rounded-md font-black text-[9px] tracking-widest uppercase shadow-md">
+                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 opacity-70 group-hover:opacity-30 transition-colors"></div>
+                   
+                   <div className="absolute top-3 left-3 bg-white/90 text-[#020617] px-3 py-1 rounded font-black text-[10px] tracking-widest uppercase shadow-md backdrop-blur-md">
                       {movie.releaseYear || 'NEW'}
+                   </div>
+                   
+                   {/* Play Button overlay */}
+                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100">
+                      <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center text-gray-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] backdrop-blur-md">
+                         <Play className="w-6 h-6 fill-current ml-1" />
+                      </div>
                    </div>
               </div>
 
-              {/* Content Right */}
-              <div className="relative z-10 flex flex-col justify-center ml-5 md:ml-6 flex-grow pr-2">
-                <h3 className="text-xl md:text-2xl font-black bg-gradient-to-r from-white to-[#FFD700] bg-clip-text text-transparent mb-1 leading-tight uppercase font-serif tracking-wide drop-shadow-sm">
+              {/* Content Bottom */}
+              <div className="relative z-10 flex flex-col flex-grow px-2">
+                <h3 className="text-xl md:text-2xl font-black text-[#020617] mb-2 leading-tight uppercase font-serif tracking-wide drop-shadow-sm line-clamp-1">
                   {movie.title}
                 </h3>
                 
-                <p className="text-gray-300 font-medium text-xs md:text-sm mb-4 line-clamp-2 leading-relaxed opacity-90">
+                <p className="text-gray-600 font-medium text-xs md:text-sm mb-6 line-clamp-2 leading-relaxed">
                   {movie.description || movie.ownerHistory}
                 </p>
                 
-                <div className="mt-auto flex items-center justify-between">
-                  <button className="bg-gradient-to-r from-[#FFD700] to-yellow-500 text-[#0F2027] px-4 md:px-5 py-2 md:py-2.5 rounded-full font-black text-[10px] md:text-xs uppercase tracking-[0.2em] flex items-center gap-2 shadow-[0_0_15px_rgba(255,215,0,0.4)] group-hover:shadow-[0_0_25px_rgba(255,215,0,0.7)] hover:bg-[#FFD700] transition-all group-hover:translate-x-1">
-                    Play <Play className="w-3 h-3 md:w-4 md:h-4 fill-current transition-transform group-hover:scale-125 duration-300" />
-                  </button>
-                  <div className="flex gap-1">
+                <div className="mt-auto flex items-center justify-between pt-3 border-t border-black/10">
+                  <div className="flex gap-1.5">
                      {(movie.tags || []).slice(0,2).map(tag => (
-                       <span key={tag} className="px-2 py-1 bg-white/5 rounded-md text-gray-400 text-[8px] font-bold uppercase tracking-widest border border-white/10">
+                       <span key={tag} className="px-2 py-1 bg-[#020617]/5 rounded text-[#020617]/70 text-[8px] font-black uppercase tracking-widest border border-[#020617]/10">
                          {tag}
                        </span>
                      ))}
                   </div>
+                  <button className="bg-[#0F2027] text-[#FFD700] px-5 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg group-hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all active:scale-95 group-hover:-translate-y-1 hover:bg-[#1A3644]">
+                    Watch <Play className="w-3 h-3 fill-current" />
+                  </button>
                 </div>
               </div>
             </div>
