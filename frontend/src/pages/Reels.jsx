@@ -602,14 +602,7 @@ export default function Reels() {
                </div>
 
                <div className="flex flex-col gap-6 items-center">
-                 <button className="flex flex-col items-center gap-1 group" onClick={() => window.location.href = `/quiz?videoId=${reel._id || reel.id}`}>
-                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E6C38A] to-[#D39A4A] flex items-center justify-center shadow-[0_0_15px_rgba(255,215,0,0.4)] transform hover:scale-110 border border-white/40">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#06101E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                   </div>
-                   <span className="text-[10px] uppercase tracking-[0.18em] text-[#E6C38A] font-black drop-shadow-md">Quiz</span>
-                 </button>
-
-                 <button className="flex flex-col items-center gap-1 group mt-4" onClick={() => handleToggleLike(reel)}>
+                 <button className="flex flex-col items-center gap-1 group" onClick={() => handleToggleLike(reel)}>
                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/20 transition-all transform hover:scale-110">
                      <img src="/ram-symbol.svg" alt="Like" className="w-6 h-6 object-contain drop-shadow-[0_0_6px_rgba(255,215,0,0.5)]" />
                    </div>

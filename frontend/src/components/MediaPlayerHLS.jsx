@@ -198,17 +198,7 @@ export default function MediaPlayer({
     );
   }
 
-  if (failed) {
-    return (
-      <div className={`${className} flex items-center justify-center bg-black/70 text-white text-center px-4 relative`}>
-        <a href={hlsSource || resolvedUrl} target="_blank" rel="noreferrer" className="underline text-devotion-gold font-black">
-          {fallbackLabel}
-        </a>
-        <button onClick={() => setShowTools(v => !v)} className="absolute top-2 left-2 bg-devotion-gold/20 text-devotion-gold rounded-full px-2 py-1 text-xs font-bold">⋮</button>
-        {showTools && <AdvancedTools />}
-      </div>
-    );
-  }
+  // Empty failed array so we never rip the video out of the layout
 
   return (
     <div className={`relative group overflow-hidden ${className}`}>
