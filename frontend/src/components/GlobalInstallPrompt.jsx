@@ -12,33 +12,24 @@ export default function GlobalInstallPrompt() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     
     // Check if the user has already dismissed the popup in the past
-    const hasSeenPopup = localStorage.getItem('hasSeenInstallPopup');
+    const hasSeenPopup = localStorage.getItem('hasSeenInstallPopupV2');
 
     if (isStandalone) {
       return; // Do not show if already installed
     }
 
+    // Always show the popup after 1.5 seconds if they haven't seen it and aren't standalone
+    // This ensures it works even on localhost or browsers that don't support beforeinstallprompt natively
+    if (!hasSeenPopup) {
+      setTimeout(() => setShowPopup(true), 1500);
+    }
+
     const handleBeforeInstallPrompt = (e) => {
-      // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      
-      // If they haven't seen the popup before, show it immediately (with a slight delay for better UX)
-      if (!hasSeenPopup) {
-        setTimeout(() => setShowPopup(true), 1500);
-      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Safari/iOS doesn't fire beforeinstallprompt. We can manually show the prompt for iOS 
-    // if we detect they are on mobile AND not in standalone mode. 
-    // This provides fallback for iOS users.
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS && !isStandalone && !hasSeenPopup) {
-       setTimeout(() => setShowPopup(true), 2000);
-    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -52,13 +43,13 @@ export default function GlobalInstallPrompt() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setShowPopup(false);
-        localStorage.setItem('hasSeenInstallPopup', 'true');
+      localStorage.setItem('hasSeenInstallPopupV2', 'true');
       }
       setDeferredPrompt(null);
     } else {
       // If there is no deferred prompt (e.g. Safari on iOS), redirect to the dedicated install instructions page
       setShowPopup(false);
-      localStorage.setItem('hasSeenInstallPopup', 'true');
+      localStorage.setItem('hasSeenInstallPopupV2', 'true');
       navigate('/install');
     }
   };
@@ -66,7 +57,7 @@ export default function GlobalInstallPrompt() {
   const handleDismiss = () => {
     setShowPopup(false);
     // Remember that the user dismissed it so we don't bother them again
-    localStorage.setItem('hasSeenInstallPopup', 'true');
+    localStorage.setItem('hasSeenInstallPopupV2', 'true');
   };
 
   if (!showPopup) return null;
