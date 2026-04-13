@@ -1433,11 +1433,7 @@ module.exports.getUserByIdForAuth = async (id) => {
   });
 };
 
-const ensureMockAdminUser = () => {
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-    console.warn('Admin credentials missing in env. Set ADMIN_EMAIL and ADMIN_PASSWORD.');
-  }
-};
+
 
 const sendViaBrevo = async ({ email, name, otp }) => {
   if (!isBrevoConfigured()) {
