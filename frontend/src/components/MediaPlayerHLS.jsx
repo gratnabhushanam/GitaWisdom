@@ -128,7 +128,6 @@ export default function MediaPlayer({
   const hlsSource = secureHlsUrl;
   const resolvedUrl = secureVideoUrl || cdnVideoUrl;
 
-  const [failed, setFailed] = useState(false);
   const [hlsFallbackActive, setHlsFallbackActive] = useState(false);
 
   // HLS playback hook
