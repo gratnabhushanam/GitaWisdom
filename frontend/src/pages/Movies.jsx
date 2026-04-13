@@ -167,29 +167,62 @@ export default function Movies() {
         )}
       </div>
 
-      {/* Cinematic Movie Modal */}
+      {/* Cinematic Movie Modal with Title Card Layout */}
       {selectedMovie && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-12 bg-black/98 backdrop-blur-3xl">
-           <div className="relative w-full max-w-7xl aspect-video bg-zinc-950 md:rounded-[3rem] overflow-hidden shadow-[0_0_150px_rgba(255,215,0,0.15)] md:border border-white/10">
-              <button 
-                onClick={() => setSelectedMovie(null)}
-                className="absolute top-2 right-2 md:top-8 md:right-8 z-20 bg-black/50 hover:bg-red-500 text-white p-2 md:p-4 rounded-xl md:rounded-[1.5rem] transition-all border border-white/10 hover:scale-110 active:scale-90 shadow-2xl backdrop-blur-md"
-              >
-                <X className="w-5 h-5 md:w-8 md:h-8" />
-              </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 bg-black/98 backdrop-blur-3xl overflow-y-auto">
+           <div className="relative w-full max-w-7xl bg-gradient-to-b from-[#0A0F2C] to-[#020617] rounded-[2rem] md:rounded-[3rem] shadow-[0_0_100px_rgba(250,204,21,0.15)] border border-white/10 flex flex-col mt-auto md:mt-0 mb-auto">
               
-              <div className="absolute inset-0 bg-gold-glow opacity-10 pointer-events-none"></div>
+              <div className="relative w-full aspect-video bg-zinc-950 rounded-t-[2rem] md:rounded-t-[3rem] overflow-hidden">
+                  <div className="absolute inset-0 bg-gold-glow opacity-10 pointer-events-none"></div>
 
-              <MediaPlayerHLS
-                url={selectedMovie.videoUrl || selectedMovie.youtubeUrl || selectedMovie.url}
-                hlsUrl={selectedMovie.hlsUrl}
-                title={selectedMovie.title}
-                className="w-full h-full relative z-10 object-contain bg-black"
-                youtubeParams="autoplay=1&rel=0&modestbranding=1"
-                autoPlay
-                controls
-                playLimitSeconds={120}
-              />
+                  <MediaPlayerHLS
+                    url={selectedMovie.videoUrl || selectedMovie.youtubeUrl || selectedMovie.url}
+                    hlsUrl={selectedMovie.hlsUrl}
+                    title={selectedMovie.title}
+                    className="w-full h-full relative z-10 object-contain bg-black"
+                    youtubeParams="autoplay=1&rel=0&modestbranding=1"
+                    autoPlay
+                    controls
+                    playLimitSeconds={120}
+                  />
+              </div>
+
+              <div className="p-6 md:p-10 flex flex-col gap-4 relative overflow-hidden">
+                 {/* Decorative background blur */}
+                 <div className="absolute bottom-0 right-0 w-64 h-64 bg-devotion-gold/5 blur-[100px]"></div>
+                 
+                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+                     <div className="flex flex-col gap-2">
+                         <div className="flex items-center gap-3 mb-2">
+                            <span className="bg-[#FACC15] text-[#020617] px-3 py-1 rounded-lg font-black text-[10px] tracking-widest uppercase">
+                               TEASER PLAY
+                            </span>
+                            <span className="text-gray-400 text-sm tracking-widest uppercase font-bold">
+                               {selectedMovie.releaseYear || 'NEW'}
+                            </span>
+                         </div>
+                         <h2 className="text-3xl md:text-5xl font-serif text-white tracking-widest uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            {selectedMovie.title}
+                         </h2>
+                         <p className="text-gray-400 mt-2 max-w-3xl text-sm md:text-base leading-relaxed">
+                            {selectedMovie.desc || selectedMovie.description || "Immerse yourself in this divine cinematic experience. Explore stories of valor and spirit that define our journey."}
+                         </p>
+                     </div>
+                     
+                     <div className="flex items-center gap-3 w-full md:w-auto">
+                         <button className="flex-1 md:flex-none uppercase bg-transparent border border-devotion-gold text-devotion-gold hover:bg-devotion-gold/10 px-6 py-4 rounded-xl font-bold tracking-widest transition-all whitespace-nowrap text-xs shadow-[0_0_20px_rgba(250,204,21,0.1)]">
+                             Watchlist
+                         </button>
+                         <button 
+                             onClick={() => setSelectedMovie(null)} 
+                             className="flex-1 md:flex-none uppercase bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-xl font-bold tracking-widest transition-colors text-xs"
+                         >
+                             Close
+                         </button>
+                     </div>
+                 </div>
+              </div>
+
            </div>
         </div>
       )}
