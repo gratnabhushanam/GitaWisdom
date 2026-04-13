@@ -52,7 +52,9 @@ const mapVideo = (video) => {
     likes: likesCount,
     commentsTotal: commentsCount,
     shares: sharesCount,
-    uploaderName: plain.uploader?.name || plain.uploaderName || null,
+    uploaderName: plain.uploadedBy?.name || plain.uploader?.name || plain.uploaderName || null,
+    uploaderEmail: plain.uploadedBy?.email || plain.uploader?.email || null,
+    uploaderRole: plain.uploadedBy?.role || plain.uploader?.role || null,
   };
 };
 

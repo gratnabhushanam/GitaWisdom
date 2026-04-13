@@ -166,7 +166,9 @@ exports.getUserReelModerationQueue = async (req, res) => {
     }
 
     if (useMongoStore()) {
-      const reels = await VideoMongo.find(where).sort({ createdAt: -1 });
+      const reels = await VideoMongo.find(where)
+        .populate('uploadedBy', 'name email role _id')
+        .sort({ createdAt: -1 });
       if (!reels) {
         return res.json([]);
       }

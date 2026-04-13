@@ -889,8 +889,12 @@ function AdminDashboardContent() {
                             )}
                             <p className="text-white font-bold mb-1 line-clamp-1">{reel.title}</p>
                             <p className="text-xs text-gray-300 mb-2 line-clamp-2">{reel.description || 'No description'}</p>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
                               Type: {reel.contentType || 'other'}
+                            </p>
+                            <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-3 border-b border-white/10 pb-2">
+                              Uploader: {reel.uploaderName || 'Unknown User'}
+                              {reel.uploaderEmail && <span className="text-gray-400 font-normal lowercase ml-1">({reel.uploaderEmail})</span>}
                             </p>
                             <textarea
                               rows="2"
