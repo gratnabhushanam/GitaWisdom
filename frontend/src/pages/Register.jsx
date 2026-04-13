@@ -6,7 +6,7 @@ import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
 
 export default function Register() {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phoneNumber: '', password: '' });
   const [infoMessage, setInfoMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,13 +72,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const response = await register(formData.name, formData.email, formData.password);
-      
-      if (response && response.autoVerified) {
-        setInfoMessage('Account instantly created! (Render OTP Bypass Active). Redirecting to Login...');
-        setTimeout(() => navigate('/login', { replace: true }), 2500);
-        return;
-      }
+      const response = await register(formData.name, formData.email, formData.phoneNumber, formData.password);
 
       const pendingRegistration = {
         name: formData.name,
@@ -177,6 +171,22 @@ export default function Register() {
                   className={`auth-input ${focusedField === 'email' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''} ${emailError ? 'border-red-400/60' : ''}`}
                 />
                 {emailError && <p className="mt-2 text-xs text-red-300">{emailError}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                  Phone Number
+                </label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(event) => setFormData((current) => ({ ...current, phoneNumber: event.target.value }))}
+                  onFocus={() => setFocusedField('phoneNumber')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="1234567890"
+                  className={`auth-input ${focusedField === 'phoneNumber' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                />
               </div>
 
               <div>

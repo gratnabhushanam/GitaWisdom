@@ -172,6 +172,21 @@ export default function MediaPlayer({
     };
   }, [hlsSource, resolvedUrl, loadingToken]);
 
+  useEffect(() => {
+    if (effectiveShouldPlay && videoRef.current) {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+             playPromise.catch(e => {
+                  console.warn("Autoplay blocked, attempting muted play:", e);
+                  videoRef.current.muted = true;
+                  videoRef.current.play().catch(err => console.warn("Fallback play also blocked:", err));
+             });
+        }
+    } else if (!effectiveShouldPlay && videoRef.current) {
+        videoRef.current.pause();
+    }
+  }, [effectiveShouldPlay, activeSource, resolvedUrl, loadingToken]);
+
   const handleSeek = (e) => {
     const video = videoRef.current;
     if (video) {

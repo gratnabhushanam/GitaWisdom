@@ -638,7 +638,7 @@ module.exports.initializeAdminCredentials = initializeAdminCredentials;
 // Register step 1: create OTP challenge, send email, do not create user yet.
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phoneNumber } = req.body;
     const safeEmail = normalizeEmail(email);
 
     if (!name || !safeEmail || !password) {
@@ -664,6 +664,7 @@ exports.registerUser = async (req, res) => {
     pendingRegistrations.set(safeEmail, {
       name,
       email: safeEmail,
+      phoneNumber,
       password: hashedPassword,
       otp,
       expiresAt: getOtpExpiryTime(),
@@ -810,6 +811,7 @@ exports.verifyRegistrationOtp = async (req, res) => {
         id: nextUserId++,
         name: pending.name,
         email: pending.email,
+        phoneNumber: pending.phoneNumber,
         password: pending.password,
         role: 'user',
         language: 'telugu',
@@ -831,6 +833,8 @@ exports.verifyRegistrationOtp = async (req, res) => {
         name: pending.name,
         email: pending.email,
         password: pending.password,
+        phoneNumber: pending.phoneNumber,
+        phone: pending.phoneNumber,
       });
     }
 

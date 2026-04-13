@@ -83,9 +83,6 @@ export default function Reels() {
 
         const mergedReels = [...safeUserReels, ...curatedData];
         setReels(mergedReels);
-        if (mergedReels.length === 0) {
-          setError('No reels found. Please check back later or upload new content.');
-        }
       } catch (err) {
         setError('Failed to load reels. Please try again later.');
         console.error('Error fetching reels:', err);

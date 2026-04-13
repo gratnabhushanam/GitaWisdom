@@ -76,13 +76,6 @@ export default function KidsMode() {
     return (
       <>
         <div className="min-h-screen bg-[#06101E] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative">
-          {/* Animated Krishna floating SVG */}
-          <img
-            src={FLOATING_KRISHNA}
-            alt="Little Krishna floating"
-            className="pointer-events-none select-none fixed left-[-80px] top-24 w-64 h-64 animate-krishna-float z-30 opacity-80"
-            style={{ filter: 'drop-shadow(0 8px 32px #FFD70088)' }}
-          />
           {/* Sparkle overlay */}
           <div className="pointer-events-none fixed inset-0 z-20 animate-sparkle-bg" />
           {/* Interactive radial background */}
@@ -302,7 +295,7 @@ function ReadAlong({ script }) {
 }
 
 function QuizModal({ video, onClose, result, setResult }) {
-  const quiz = SAMPLE_QUIZ[Math.floor(Math.random() * SAMPLE_QUIZ.length)];
+  const [quiz] = useState(() => SAMPLE_QUIZ[Math.floor(Math.random() * SAMPLE_QUIZ.length)]);
   const [selected, setSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
   const handleAnswer = (idx) => {

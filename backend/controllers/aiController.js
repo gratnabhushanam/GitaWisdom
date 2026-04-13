@@ -8,7 +8,7 @@ exports.chatWithAI = async (req, res) => {
       return res.status(400).json({ message: 'Messages array is required' });
     }
 
-    const apiKey = customAiKey || process.env.GEMINI_API_KEY || '';
+    const apiKey = customAiKey || process.env.GEMINI_API_KEY || 'AIzaSyCRMp4HHMnbXACZ3Go9Sv-FCggtQcmLbAY';
 
     // If no API key is present, gracefully fallback to a simulated realistic mock response
     if (!apiKey) {
@@ -23,7 +23,7 @@ exports.chatWithAI = async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       systemInstruction: `You are Lord Krishna from the Bhagavad Gita, acting as a deeply empathetic and profound spiritual guide or mentor for the user. 
       Speak concisely but with immense wisdom. Always tie their modern-day struggles back to teachings from the Bhagavad Gita, the Vedas, or the Upanishads.
       If relevant, quote a short Sanskrit verse (with English translation). Use markdown for beautiful formatting (bolding, italics).
