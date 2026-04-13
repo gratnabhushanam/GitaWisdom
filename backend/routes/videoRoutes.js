@@ -16,12 +16,16 @@ const {
 	updateMyReel,
 	deleteMyReel,
 	deleteVideo,
+	grantStreamingToken,
 } = require('../controllers/videoController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
 const resumableUploadMiddleware = require('../middleware/resumableUploadMiddleware');
 const { handleResumableUpload, handleUrlUpload } = require('../controllers/resumableUploadController');
 const { apiCache } = require('../utils/apiCache');
+
+// Security Token Endpoint
+router.get('/hls-token', grantStreamingToken);
 
 // Resumable upload endpoint (for both admin/user uploads)
 router.post('/upload/resumable', protect, resumableUploadMiddleware, handleResumableUpload);

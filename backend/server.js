@@ -12,8 +12,10 @@ const { initializeAdminCredentials } = require('./controllers/authController');
 const app = express();
 let initializePromise = null;
 
-// Serve HLS playlists and segments
-app.use('/uploads/hls', express.static(path.join(__dirname, 'uploads', 'hls')));
+const { protectStreaming } = require('./middleware/drmMiddleware');
+
+// Serve HLS playlists and segments securely behind DRM Firewall
+app.use('/uploads/hls', protectStreaming, express.static(path.join(__dirname, 'uploads', 'hls')));
 
 // Honor x-forwarded-proto so generated absolute URLs use https in production behind proxies.
 app.set('trust proxy', 1);
@@ -122,9 +124,9 @@ app.use('/uploads/reels', cors({
   exposedHeaders: ['Content-Range', 'Accept-Ranges', 'Content-Encoding', 'Content-Length'],
 }));
 
-// Custom video streaming route for bulletproof range support
+// Custom video streaming route for bulletproof range support behind DRM Firewall
 const fs = require('fs');
-app.get('/uploads/reels/:filename', (req, res) => {
+app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
   const filePath = path.join(__dirname, 'uploads', 'reels', req.params.filename);
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {

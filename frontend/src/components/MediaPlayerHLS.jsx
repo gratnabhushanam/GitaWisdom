@@ -41,6 +41,7 @@ export default function MediaPlayer({
   const [failed, setFailed] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [secureHlsUrl, setSecureHlsUrl] = useState('');
+  const [secureVideoUrl, setSecureVideoUrl] = useState('');
   const [loadingToken, setLoadingToken] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -64,40 +65,46 @@ export default function MediaPlayer({
   useEffect(() => {
     let cancelled = false;
     async function fetchToken() {
-      if (!cdnHlsUrl) return;
+      if (!cdnHlsUrl && !cdnVideoUrl) return;
       setLoadingToken(true);
       try {
-        const videoId = extractVideoId(cdnHlsUrl) || extractVideoId(cdnVideoUrl);
-        if (!videoId) {
-          if (!cancelled) setSecureHlsUrl(cdnHlsUrl);
-          return;
-        }
+        const videoId = extractVideoId(cdnHlsUrl) || extractVideoId(cdnVideoUrl) || 'anonymous';
         const res = await fetch(`/api/videos/hls-token?videoId=${videoId}`);
         if (!res.ok) throw new Error('token endpoint unavailable');
         const data = await res.json();
         if (!data?.token) throw new Error('no token');
-        const urlObj = new URL(cdnHlsUrl, window.location.origin);
-        urlObj.searchParams.set('token', data.token);
-        if (!cancelled) setSecureHlsUrl(urlObj.toString());
+        
+        if (cdnHlsUrl) {
+          const hlsUrlObj = new URL(cdnHlsUrl, window.location.origin);
+          hlsUrlObj.searchParams.set('token', data.token);
+          if (!cancelled) setSecureHlsUrl(hlsUrlObj.toString());
+        }
+        
+        if (cdnVideoUrl && !isYoutubeUrl(cdnVideoUrl) && cdnVideoUrl.includes('/uploads/')) {
+          const videoUrlObj = new URL(cdnVideoUrl, window.location.origin);
+          videoUrlObj.searchParams.set('token', data.token);
+          if (!cancelled) setSecureVideoUrl(videoUrlObj.toString());
+        } else {
+          if (!cancelled) setSecureVideoUrl(cdnVideoUrl);
+        }
       } catch {
-        if (!cancelled) setSecureHlsUrl(cdnHlsUrl);
+        if (!cancelled) {
+          setSecureHlsUrl(cdnHlsUrl);
+          setSecureVideoUrl(cdnVideoUrl);
+        }
       } finally {
         if (!cancelled) setLoadingToken(false);
       }
     }
-    if (cdnHlsUrl) {
-      fetchToken();
-    } else {
-      setSecureHlsUrl('');
-    }
+    fetchToken();
     return () => { cancelled = true; };
   }, [cdnHlsUrl, cdnVideoUrl]);
 
   if (!cdnVideoUrl && !cdnHlsUrl) return null;
 
   // YouTube embed
-  if (isYoutubeUrl(cdnVideoUrl)) {
-    const embedUrl = getYoutubeEmbedUrl(cdnVideoUrl);
+  if (isYoutubeUrl(secureVideoUrl || cdnVideoUrl)) {
+    const embedUrl = getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl);
     const videoId = getYoutubeVideoId(cdnVideoUrl);
     const params = new URLSearchParams(youtubeParams);
     if (loop && videoId && !params.has('playlist')) {
@@ -118,7 +125,7 @@ export default function MediaPlayer({
   }
 
   const hlsSource = secureHlsUrl;
-  const resolvedUrl = cdnVideoUrl;
+  const resolvedUrl = secureVideoUrl || cdnVideoUrl;
 
   // HLS playback hook
   // eslint-disable-next-line react-hooks/rules-of-hooks

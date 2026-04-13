@@ -9,6 +9,24 @@ const fs = require('fs');
 const { getVideoDurationSeconds } = require('../utils/videoMetadata');
 const { transcodeToHLS } = require('../utils/hlsTranscoder');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+
+exports.grantStreamingToken = async (req, res) => {
+  try {
+    const videoId = req.query.videoId || 'anonymous_stream';
+    
+    // Generate a temporary JWT license token valid for 6 hours
+    const token = jwt.sign(
+      { license: 'streaming_license', videoId },
+      process.env.JWT_SECRET || 'dev_secret_fallback',
+      { expiresIn: '6h' }
+    );
+
+    return res.status(200).json({ token, message: 'DRM License Granted' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error generating media license' });
+  }
+};
 
 // Placeholder: Add Video (admin only)
 exports.addVideo = async (req, res) => {
