@@ -106,6 +106,7 @@ async function handleResumableUpload(req, res) {
     const blobBase = `videos/${path.parse(fileName).name}/`;
     let masterPlaylistCdnUrl = '';
     let videoCdnUrl = '';
+    const backendUrl = `${req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http'}://${req.get('host')}`;
 
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
@@ -116,13 +117,13 @@ async function handleResumableUpload(req, res) {
         videoCdnUrl = await uploadToVercelBlob(filePath, `videos/${fileName}`);
       } catch (uploadErr) {
         console.warn('Vercel Blob upload failed, falling back to local storage:', uploadErr.message);
-        masterPlaylistCdnUrl = `/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
-        videoCdnUrl = `/uploads/reels/${fileName}`;
+        masterPlaylistCdnUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+        videoCdnUrl = `${backendUrl}/uploads/reels/${fileName}`;
       }
     } else {
       console.warn('BLOB_READ_WRITE_TOKEN not found, falling back to local storage.');
-      masterPlaylistCdnUrl = `/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
-      videoCdnUrl = `/uploads/reels/${fileName}`;
+      masterPlaylistCdnUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+      videoCdnUrl = `${backendUrl}/uploads/reels/${fileName}`;
     }
 
     // Save to MongoDB
