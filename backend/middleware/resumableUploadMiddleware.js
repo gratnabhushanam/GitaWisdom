@@ -2,8 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 // Directory to store upload chunks
-defaultChunkDir = path.join(__dirname, '..', 'uploads', 'chunks');
+const defaultChunkDir = path.join(__dirname, '..', 'uploads', 'chunks');
 fs.mkdirSync(defaultChunkDir, { recursive: true });
+
+const targetReelsDir = path.join(__dirname, '..', 'uploads', 'reels');
+fs.mkdirSync(targetReelsDir, { recursive: true });
 
 /**
  * Middleware for handling resumable (chunked) uploads.
@@ -34,19 +37,32 @@ function resumableUploadMiddleware(req, res, next) {
   const chunkPath = path.join(uploadDir, `chunk_${chunkIndex}`);
   const writeStream = fs.createWriteStream(chunkPath);
   req.pipe(writeStream);
+  
   writeStream.on('finish', () => {
     // If last chunk, assemble file
     if (chunkIndex === totalChunks - 1) {
-      const finalPath = path.join(__dirname, '..', 'uploads', 'reels', fileName);
+      const finalPath = path.join(targetReelsDir, fileName);
       const outStream = fs.createWriteStream(finalPath);
-      for (let i = 0; i < totalChunks; i++) {
-        const chunk = fs.readFileSync(path.join(uploadDir, `chunk_${i}`));
-        outStream.write(chunk);
+      
+      outStream.on('error', (err) => {
+        console.error('File assembly stream error:', err);
+        return res.status(500).json({ message: 'File assembly error', error: err.message });
+      });
+
+      try {
+        for (let i = 0; i < totalChunks; i++) {
+          const chunk = fs.readFileSync(path.join(uploadDir, `chunk_${i}`));
+          outStream.write(chunk);
+        }
+        outStream.end();
+      } catch (appendErr) {
+        console.error('Error assembling chunks:', appendErr);
+        return res.status(500).json({ message: 'Failed to read chunks', error: appendErr.message });
       }
-      outStream.end();
+      
       outStream.on('finish', () => {
         // Cleanup
-        fs.rmSync(uploadDir, { recursive: true, force: true });
+        try { fs.rmSync(uploadDir, { recursive: true, force: true }); } catch(err){}
         req.resumableUpload = { filePath: finalPath, fileName };
         next();
       });
@@ -54,6 +70,7 @@ function resumableUploadMiddleware(req, res, next) {
       res.status(200).json({ message: 'Chunk uploaded' });
     }
   });
+  
   writeStream.on('error', (err) => {
     res.status(500).json({ message: 'Chunk write error', error: err.message });
   });
