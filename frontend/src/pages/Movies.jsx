@@ -43,19 +43,26 @@ export default function Movies() {
   );
 
   return (
-    <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#0A0F2C] to-[#020617] text-white">
+    <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#050B14] text-white">
       
       {/* Cinematic Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-         {/* Subtle temple background blur behind poster */}
+         {/* Stardust universe texture overlay */}
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.15] mix-blend-screen"></div>
+         
+         {/* Cosmic Indigo & Royal Purple Radial Glows */}
+         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[80%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2E1065]/30 via-[#1E1B4B]/10 to-transparent blur-[100px] rounded-full"></div>
+         
+         <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[90%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A2F5C]/40 via-[#0F172A]/20 to-transparent blur-[150px] rounded-full"></div>
+         
+         {/* Spiritual Sunrise Gold Glow (Horizon/Center) */}
+         <div className="absolute top-[30%] left-[50%] -translate-x-[50%] w-[120vw] h-[50vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FFD700]/10 via-[#B45309]/5 to-transparent blur-[120px]"></div>
+
+         {/* Subtle temple/krishna background blur behind poster */}
          <div 
-           className="absolute top-0 right-0 w-full lg:w-3/4 h-[80vh] opacity-[0.03] mix-blend-screen bg-cover bg-right-top blur-md" 
+           className="absolute top-0 right-0 w-full lg:w-3/4 h-[90vh] opacity-[0.06] mix-blend-screen bg-cover bg-right-top blur-[3px]" 
            style={{ backgroundImage: `url('/scene-krishna.svg')` }}
          ></div>
-         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[50%] bg-[#0A0F2C] blur-[140px] rounded-full"></div>
-         <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-[#020617] blur-[150px] rounded-full"></div>
-         {/* Golden aura highlights */}
-         <div className="absolute top-[20%] right-[10%] w-[30%] h-[40%] bg-devotion-gold/5 blur-[120px] rounded-full"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
