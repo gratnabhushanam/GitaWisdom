@@ -133,10 +133,18 @@ app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
       return res.status(404).end('Video not found');
     }
 
+    const corsHeaders = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization',
+      'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Encoding, Content-Length',
+    };
+
     const range = req.headers.range;
     if (!range) {
       // No range header, send the whole file
       res.writeHead(200, {
+        ...corsHeaders,
         'Content-Length': stats.size,
         'Content-Type': 'video/mp4',
         'Accept-Ranges': 'bytes',
@@ -152,6 +160,7 @@ app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
     const chunkSize = (end - start) + 1;
 
     res.writeHead(206, {
+      ...corsHeaders,
       'Content-Range': `bytes ${start}-${end}/${stats.size}`,
       'Accept-Ranges': 'bytes',
       'Content-Length': chunkSize,
@@ -162,7 +171,7 @@ app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
   });
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 

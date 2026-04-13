@@ -128,24 +128,35 @@ export default function MediaPlayer({
   const hlsSource = secureHlsUrl;
   const resolvedUrl = secureVideoUrl || cdnVideoUrl;
 
+  const [failed, setFailed] = useState(false);
+  const [hlsFallbackActive, setHlsFallbackActive] = useState(false);
+
   // HLS playback hook
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    if (!hlsSource || loadingToken) return;
+    if (!hlsSource || loadingToken || hlsFallbackActive) return;
     const video = videoRef.current;
     if (!video) return;
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Browser native HLS
       video.src = hlsSource;
+      video.onerror = () => setHlsFallbackActive(true);
     } else if (Hls && Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(hlsSource);
       hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, () => setFailed(true));
+      hls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.fatal) {
+          hls.destroy();
+          setHlsFallbackActive(true);
+        }
+      });
       return () => hls.destroy();
     } else {
-      setFailed(true);
+      setHlsFallbackActive(true);
     }
-  }, [hlsSource, loadingToken]);
+  }, [hlsSource, loadingToken, hlsFallbackActive]);
+
+  const activeSource = hlsFallbackActive ? null : hlsSource;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -205,7 +216,7 @@ export default function MediaPlayer({
       <video
         ref={videoRef}
         className={`w-full ${instagramMode ? 'h-[100dvh] object-cover rounded-none' : 'h-auto rounded-xl'} shadow-lg`}
-        src={hlsSource || resolvedUrl}
+        src={activeSource || resolvedUrl}
         autoPlay={effectiveShouldPlay}
         muted={muted}
         loop={loop}

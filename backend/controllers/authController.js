@@ -211,6 +211,7 @@ const buildTransporter = () => nodemailer.createTransport({
     user: getEmailAuthConfig().user,
     pass: getEmailAuthConfig().pass,
   },
+  tls: { rejectUnauthorized: false }
 });
 
 const buildResendPayload = ({ email, name, otp }) => ({
