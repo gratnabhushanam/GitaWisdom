@@ -99,7 +99,7 @@ export default function Navbar() {
           <div className="flex-shrink-0 flex items-center gap-3">
             <Link to="/home" className="group flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center group-hover:drop-shadow-[0_0_12px_rgba(255,215,0,0.4)] transition-all">
-                <img src="/logo.png" alt="Gita Wisdom Logo" className="w-full h-full object-cover" />
+                <img src="/logo-om.png" alt="Gita Wisdom Logo" className="w-full h-full object-cover" />
               </div>
               <span className="text-base font-bold bg-gradient-to-r from-devotion-gold to-[#FFE6A5] bg-clip-text text-transparent tracking-tight">
                 GitaWisdom
@@ -264,7 +264,7 @@ export default function Navbar() {
             </button>
             <div className="p-6 text-center">
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-devotion-gold/20 to-devotion-gold/5 rounded-2xl border border-devotion-gold/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,215,0,0.15)] overflow-hidden">
-                 <img src="/logo.png" alt="Gita Wisdom" className="w-10 h-10 object-contain drop-shadow-md" />
+                 <img src="/logo-om.png" alt="Gita Wisdom" className="w-10 h-10 object-contain drop-shadow-md" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2 font-serif">Install Gita Wisdom</h3>
               <p className="text-[13px] text-gray-300 leading-relaxed mb-6">

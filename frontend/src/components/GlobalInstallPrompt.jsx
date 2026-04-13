@@ -89,7 +89,7 @@ export default function GlobalInstallPrompt() {
           <div className="flex items-start gap-4 mb-5">
             {/* Logo */}
             <div className="w-16 h-16 bg-gradient-to-br from-devotion-gold/20 to-devotion-gold/5 rounded-2xl border border-devotion-gold/30 flex items-center justify-center flex-shrink-0 shadow-[0_0_15px_rgba(255,215,0,0.15)] relative overflow-hidden">
-               <img src="/logo.png" alt="App Logo" className="w-10 h-10 object-contain drop-shadow-lg" />
+               <img src="/logo-om.png" alt="App Logo" className="w-10 h-10 object-contain drop-shadow-lg" />
             </div>
             
             {/* Content */}
