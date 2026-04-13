@@ -517,82 +517,21 @@ exports.getEmailHealth = async (req, res) => {
 };
 
 const sendOtpEmail = async ({ email, name, otp }) => {
-  if (ALLOW_OTP_PREVIEW) {
-    return { delivered: true, provider: 'preview', previewCode: otp };
-  }
-
   const isConfigured = isEmailTransportConfigured();
   if (!isConfigured) {
-    console.warn(`[OTP FALLBACK] Email service is not configured. Falling back to preview mode for ${email}`);
-    return {
-      delivered: true,
-      provider: 'preview',
-      previewCode: otp,
-      message: 'Email service is not configured. OTP sent to UI.'
-    };
+    throw new Error('Email transport is not configured. Cannot send real email.');
   }
 
-  const providerPreference = resolveEmailProvider();
-  const deliveryPlan = providerPreference === 'resend'
-    ? ['resend', 'brevo', 'smtp']
-    : providerPreference === 'brevo'
-      ? ['brevo', 'resend', 'smtp']
-    : providerPreference === 'smtp'
-      ? ['smtp', 'resend', 'brevo']
-      : ['resend', 'brevo', 'smtp'];
-
-  let lastError = null;
-
-  for (const provider of deliveryPlan) {
-    try {
-      if (provider === 'resend') {
-        const result = await sendViaResend({ email, name, otp });
-        if (result?.delivered) {
-          return result;
-        }
-        lastError = new Error(result?.message || 'Resend delivery failed');
-        lastError.provider = 'resend';
-        lastError.code = 'EFAIL';
-        continue;
-      }
-
-      if (provider === 'brevo') {
-        const result = await sendViaBrevo({ email, name, otp });
-        if (result?.delivered) {
-          return result;
-        }
-        if (result?.message && /not configured/i.test(result.message) && lastError) {
-          continue;
-        }
-        lastError = new Error(result?.message || 'Brevo delivery failed');
-        lastError.provider = 'brevo';
-        lastError.code = 'EFAIL';
-        continue;
-      }
-
-      const result = await sendViaSmtp({ email, name, otp });
-      if (result?.delivered) {
-        return result;
-      }
-      // Keep the richer previous provider error (usually Resend) when SMTP fallback
-      // is unavailable, so callers get actionable upstream diagnostics.
-      if (provider === 'smtp' && result?.message && /not configured/i.test(result.message) && lastError) {
-        continue;
-      }
-      lastError = new Error(result?.message || 'SMTP delivery failed');
-      lastError.code = 'EFAIL';
-    } catch (error) {
-      lastError = error;
+  try {
+    const result = await sendViaSmtp({ email, name, otp });
+    if (result?.delivered) {
+      return result;
     }
+    throw new Error('SMTP returned not delivered flag');
+  } catch (error) {
+    console.error(`[OTP FATAL ERROR] Failed to send real email to ${email}:`, error.stack || error.message || error);
+    throw new Error('Failed to send real OTP email. Check backend logs for credential/network failure.');
   }
-
-  console.warn(`[OTP FALLBACK] Email failed to send to ${email} due to: ${lastError?.message}. Falling back to preview mode.`);
-  return {
-    delivered: true,
-    provider: 'preview',
-    previewCode: otp,
-    message: 'Mail delivery degraded. OTP sent to UI.'
-  };
 };
 
 const ensureMockAdminUser = () => {
@@ -1494,6 +1433,12 @@ module.exports.getUserByIdForAuth = async (id) => {
   });
 };
 
+const ensureMockAdminUser = () => {
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+    console.warn('Admin credentials missing in env. Set ADMIN_EMAIL and ADMIN_PASSWORD.');
+  }
+};
+
 const sendViaBrevo = async ({ email, name, otp }) => {
   if (!isBrevoConfigured()) {
     return {
@@ -1503,7 +1448,7 @@ const sendViaBrevo = async ({ email, name, otp }) => {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), BREVO_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {

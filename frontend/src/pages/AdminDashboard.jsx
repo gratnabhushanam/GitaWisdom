@@ -5,6 +5,7 @@ import { Database, Upload, Users, BookOpen, Video, LogOut, Settings, Film, Plus,
 import { resumableUpload } from '../utils/resumableUpload';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 const VIDEO_COLLECTION_PRESETS = ['Bhagavad Gita', 'Ramayanam', 'Mahabharat', 'Puranas'];
@@ -629,7 +630,58 @@ function AdminDashboardContent() {
                    ))}
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 mb-12">
+                    <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                       <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Content Distribution</h3>
+                       <div className="h-[300px] w-full">
+                         <ResponsiveContainer width="100%" height="100%">
+                           <PieChart>
+                             <Pie
+                               data={[
+                                 { name: 'Movies', value: data.stats.totalMovies || 0 },
+                                 { name: 'Stories', value: data.stats.totalStories || 0 },
+                                 { name: 'Videos', value: data.stats.totalVideos || 0 },
+                               ]}
+                               cx="50%"
+                               cy="50%"
+                               innerRadius={60}
+                               outerRadius={100}
+                               paddingAngle={5}
+                               dataKey="value"
+                             >
+                               <Cell fill="#fbbf24" />
+                               <Cell fill="#fb923c" />
+                               <Cell fill="#4ade80" />
+                             </Pie>
+                             <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                           </PieChart>
+                         </ResponsiveContainer>
+                       </div>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                       <h3 className="text-xl font-serif font-black text-white mb-6 uppercase tracking-widest text-center">Platform Overview</h3>
+                       <div className="h-[300px] w-full">
+                         <ResponsiveContainer width="100%" height="100%">
+                           <BarChart
+                             data={[
+                               { name: 'Users', count: data.stats.totalUsers || 0 },
+                               { name: 'Movies', count: data.stats.totalMovies || 0 },
+                               { name: 'Stories', count: data.stats.totalStories || 0 },
+                               { name: 'Videos', count: data.stats.totalVideos || 0 },
+                             ]}
+                             margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                           >
+                             <XAxis dataKey="name" stroke="#64748b" />
+                             <RechartsTooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                             <Bar dataKey="count" fill="#38bdf8" radius={[8, 8, 0, 0]} />
+                           </BarChart>
+                         </ResponsiveContainer>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
                    <h3 className="text-2xl font-serif font-black text-white mb-10 uppercase tracking-widest flex items-center gap-4">
                       <Users className="text-devotion-gold" /> Recent Seeker Signups
                    </h3>
