@@ -71,91 +71,70 @@ export default function Movies() {
            <p className="text-2xl text-gray-400 font-serif italic max-w-3xl mx-auto leading-relaxed">"Exploring stories of valor and spirit that define our journey."</p>
         </div>
 
-        {/* Cinematic Movie List */}
-        <div className="space-y-32">
-          {movies.map((movie, index) => (
-            <div 
-              key={movie._id}
-              className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-16 items-center animate-fade-in-up`}
-            >
-               {/* Poster Frame */}
-               <div className="w-full lg:w-3/5 relative group">
-                  {/* Soft glowing golden aura around the card */}
-                  <div className="absolute -inset-6 bg-gradient-to-br from-yellow-500/30 via-devotion-gold/10 to-transparent blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rotate-indefinite"></div>
-                  
-                  <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)] group-hover:border-devotion-gold/40 group-hover:shadow-[0_0_60px_rgba(250,204,21,0.2)] transition-all duration-700">
+        {/* Cinematic Movie List - Grid Kids Card Type */}
+        <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 pb-20">
+          {movies.map((movie, index) => {
+            const kidsColors = [
+                'bg-gradient-to-br from-[#FFE5B4] to-[#FFF8DC]',
+                'bg-gradient-to-br from-[#E6F7FF] to-[#F0FFFF]',
+                'bg-gradient-to-br from-[#E6FFE6] to-[#F0FFF0]',
+                'bg-gradient-to-br from-[#FFF0F5] to-[#FCE6F0]'
+            ];
+            const activeColor = kidsColors[index % kidsColors.length];
+
+            return (
+              <div 
+                key={movie._id}
+                className={`p-6 rounded-[2.5rem] border border-white/20 backdrop-blur-3xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer group relative overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.45)] ${activeColor}`}
+                onClick={() => setSelectedMovie(movie)}
+              >
+                <div className="absolute -top-10 -right-10 text-black/5 text-[10rem] group-hover:rotate-12 transition-transform select-none">🕉️</div>
+                
+                <div className="relative aspect-[16/9] rounded-[1.5rem] overflow-hidden shadow-lg mb-6 border border-white/40">
                      <img 
                        src={movie.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'} 
                        alt={movie.title}
-                       className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-[1.05]"
+                       className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                        onError={(e) => {
                          e.target.src = 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
                        }}
                      />
-                     
-                     <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-black/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-700"></div>
-                     
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-sm bg-black/20">
-                        <button 
-                          onClick={() => setSelectedMovie(movie)}
-                          className="w-24 h-24 bg-devotion-gold rounded-full flex items-center justify-center text-[#020617] transform scale-75 group-hover:scale-100 transition-all duration-[400ms] ease-out shadow-[0_0_50px_rgba(250,204,21,0.6)] hover:bg-yellow-400"
-                        >
-                           <Play className="w-10 h-10 fill-current ml-2" />
-                        </button>
-                     </div>
-
-                     <div className="absolute bottom-8 left-8 flex items-center gap-4 z-20">
-                        <div className="bg-[#FACC15] text-[#020617] px-5 py-2 rounded-xl font-black text-xs shadow-2xl tracking-widest">
-                           {movie.releaseYear || 'NEW'}
-                        </div>
-                        <div className="backdrop-blur-xl bg-white/10 border border-white/20 text-[#FACC15] px-5 py-2 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-[0_0_15px_rgba(250,204,21,0.2)]">
-                           SPOTLIGHT
+                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center text-gray-900 shadow-xl drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]">
+                           <Play className="w-6 h-6 fill-current ml-1" />
                         </div>
                      </div>
-                  </div>
-               </div>
+                     <div className="absolute top-4 left-4 bg-white/90 text-gray-900 px-3 py-1 rounded-lg font-black text-[10px] tracking-widest uppercase shadow-md">
+                        {movie.releaseYear || 'NEW'}
+                     </div>
+                </div>
 
-               {/* Cinematic Details */}
-               <div className="w-full lg:w-2/5 space-y-8">
-                  <div className="flex items-center gap-4 text-devotion-gold font-black text-[10px] tracking-[0.4em] uppercase">
-                     <History className="w-4 h-4" /> Personal Selection
-                  </div>
-                  
-                  <h2 className="text-6xl md:text-8xl font-serif font-black text-white tracking-tighter uppercase leading-tight group-hover:text-devotion-gold transition-colors">
+                <div className="relative z-10 flex flex-col h-full flex-grow">
+                  <h3 className="text-2xl font-serif font-black text-gray-900 mb-2 leading-tight drop-shadow-sm uppercase">
                     {movie.title}
-                  </h2>
-
-                  <div className="relative pl-8 border-l-2 border-devotion-gold/30 italic">
-                     <div className="absolute top-0 left-0 -translate-x-1/2 w-4 h-4 bg-devotion-gold rounded-full blur-sm"></div>
-                     <p className="text-gray-300 text-xl font-serif leading-relaxed opacity-90">
-                       "{movie.ownerHistory}"
-                     </p>
-                  </div>
-
-                  <p className="text-gray-400 text-lg leading-relaxed font-light">
-                    {movie.description}
+                  </h3>
+                  
+                  <p className="text-gray-700 font-medium text-sm mb-6 line-clamp-3 leading-relaxed border-l-2 border-gray-400 pl-3 italic">
+                    {movie.description || movie.ownerHistory}
                   </p>
-
-                  <div className="flex flex-wrap gap-3 pt-4">
-                     {(movie.tags || []).map(tag => (
-                       <span key={tag} className="px-5 py-2 bg-white/5 rounded-2xl border border-white/10 text-gray-500 text-[9px] font-black uppercase tracking-widest hover:border-devotion-gold hover:text-devotion-gold transition-all cursor-default">
-                         #{tag}
-                       </span>
-                     ))}
-                  </div>
-
-                  <div className="pt-8">
-                    <button 
-                      onClick={() => setSelectedMovie(movie)}
-                      className="group/btn relative inline-flex items-center gap-6 bg-gradient-to-r from-devotion-gold to-yellow-500 text-devotion-darkBlue px-12 py-6 rounded-[2rem] font-black text-xs tracking-[0.3em] uppercase hover:shadow-[0_20px_60px_rgba(255,215,0,0.3)] transition-all transform hover:-translate-y-2 active:scale-95"
-                    >
-                       Begin Experience
-                       <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />
+                  
+                  <div className="mt-auto flex items-center justify-between pt-4">
+                    <button className="bg-gray-900 text-white px-6 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg hover:shadow-xl transition-all active:translate-y-1">
+                      Begin <Play className="w-4 h-4 fill-current" />
                     </button>
+                    <div className="flex gap-2">
+                       {(movie.tags || []).slice(0,2).map(tag => (
+                         <span key={tag} className="px-3 py-1 bg-black/5 rounded-xl text-gray-600 text-[8px] font-black uppercase tracking-widest border border-black/10">
+                           #{tag}
+                         </span>
+                       ))}
+                    </div>
                   </div>
-               </div>
-            </div>
-          ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Empty State */}
