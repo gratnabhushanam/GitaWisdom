@@ -27,6 +27,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Movies = lazy(() => import('./pages/Movies'));
 const UploadReel = lazy(() => import('./pages/UploadReel'));
 const Satsangs = lazy(() => import('./pages/Satsangs'));
+const InstallApp = lazy(() => import('./pages/InstallApp'));
 
 function AppShell() {
   const scenes = [
@@ -138,6 +139,7 @@ function AppShell() {
               <Route path="/videos" element={user ? <Videos /> : <Navigate to="/login" replace />} />
               <Route path="/sloka" element={user ? <Sloka /> : <Navigate to="/login" replace />} />
               <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
+              <Route path="/install" element={<InstallApp />} />
               <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
               <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
               <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />

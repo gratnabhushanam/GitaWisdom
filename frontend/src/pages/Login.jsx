@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Shield, BookOpen, Heart, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, BookOpen, Heart, Eye, EyeOff, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
@@ -94,6 +94,19 @@ export default function Login() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
+
+            <Link to="/install" className="mb-6 group flex items-center justify-between bg-gradient-to-r from-devotion-gold/20 to-devotion-gold/5 border border-devotion-gold/30 rounded-2xl p-4 hover:border-devotion-gold/60 hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] transition-all cursor-pointer">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-devotion-gold/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                     <Download className="w-5 h-5 text-devotion-gold" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white mb-0.5">Install Gita Wisdom App</h3>
+                    <p className="text-[10px] uppercase tracking-widest text-devotion-gold">Get the native mobile experience</p>
+                  </div>
+               </div>
+               <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-devotion-gold group-hover:translate-x-1 transition-all" />
+            </Link>
 
             {error && (
               <div className="mb-5 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-200">
