@@ -45,22 +45,22 @@ export default function Movies() {
   return (
     <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#050B14] text-white">
       
-      {/* Cinematic Background Decor */}
+      {/* Cinematic Background Decor - Animated Floating Galaxy */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
          {/* Stardust universe texture overlay */}
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.15] mix-blend-screen"></div>
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.15] mix-blend-screen animate-[pulse_8s_ease-in-out_infinite]"></div>
          
          {/* Cosmic Indigo & Royal Purple Radial Glows */}
-         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[80%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2E1065]/30 via-[#1E1B4B]/10 to-transparent blur-[100px] rounded-full"></div>
+         <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[100%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2E1065]/30 via-[#1E1B4B]/10 to-transparent blur-[100px] rounded-full animate-[spin_60s_linear_infinite] origin-center opacity-80"></div>
          
-         <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[90%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A2F5C]/40 via-[#0F172A]/20 to-transparent blur-[150px] rounded-full"></div>
+         <div className="absolute bottom-[-30%] right-[-20%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A2F5C]/40 via-[#0F172A]/20 to-transparent blur-[150px] rounded-full animate-[spin_90s_linear_infinite_reverse] origin-center opacity-80"></div>
          
          {/* Spiritual Sunrise Gold Glow (Horizon/Center) */}
-         <div className="absolute top-[30%] left-[50%] -translate-x-[50%] w-[120vw] h-[50vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FFD700]/10 via-[#B45309]/5 to-transparent blur-[120px]"></div>
+         <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[150vw] h-[80vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FFD700]/10 via-[#B45309]/5 to-transparent blur-[120px] animate-[pulse_12s_ease-in-out_infinite]"></div>
 
          {/* Subtle temple/krishna background blur behind poster */}
          <div 
-           className="absolute top-0 right-0 w-full lg:w-3/4 h-[90vh] opacity-[0.06] mix-blend-screen bg-cover bg-right-top blur-[3px]" 
+           className="absolute top-0 right-0 w-full lg:w-3/4 h-[90vh] opacity-[0.06] mix-blend-screen bg-cover bg-right-top blur-[3px] animate-float" 
            style={{ backgroundImage: `url('/scene-krishna.svg')` }}
          ></div>
       </div>
