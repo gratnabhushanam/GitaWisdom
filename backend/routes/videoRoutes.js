@@ -20,9 +20,10 @@ const {
 const { protect, admin } = require('../middleware/authMiddleware');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
 const resumableUploadMiddleware = require('../middleware/resumableUploadMiddleware');
-const { handleResumableUpload } = require('../controllers/resumableUploadController');
+const { handleResumableUpload, handleUrlUpload } = require('../controllers/resumableUploadController');
 // Resumable upload endpoint (for both admin/user uploads)
 router.post('/upload/resumable', protect, resumableUploadMiddleware, handleResumableUpload);
+router.post('/upload/url', protect, handleUrlUpload);
 
 router.get('/', getVideos);
 router.get('/reels', getReels);

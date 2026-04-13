@@ -156,4 +156,29 @@ async function handleResumableUpload(req, res) {
   }
 }
 
-module.exports = { handleResumableUpload };
+async function handleUrlUpload(req, res) {
+  try {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ message: 'URL is required' });
+    }
+
+    const destDir = path.join(__dirname, '..', 'uploads', 'reels');
+    const { downloadFromUrl } = require('../utils/urlDownloader');
+
+    // Download the video
+    const { filePath, fileName } = await downloadFromUrl(url, destDir);
+    
+    // Mount it on the request similarly to the resumable upload middleware
+    req.resumableUpload = { filePath, fileName };
+    
+    // Now just pass control to the existing handleResumableUpload logic
+    return handleResumableUpload(req, res);
+    
+  } catch (err) {
+    console.error('URL upload error:', err);
+    res.status(500).json({ message: err.message || 'Error processing remote video URL' });
+  }
+}
+
+module.exports = { handleResumableUpload, handleUrlUpload };

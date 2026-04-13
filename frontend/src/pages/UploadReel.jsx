@@ -31,10 +31,12 @@ export default function UploadReel() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoValidationError, setVideoValidationError] = useState('');
+  const [uploadMethod, setUploadMethod] = useState('file'); // 'file' or 'url'
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    tags: ''
+    tags: '',
+    videoUrlInput: ''
   });
 
   useEffect(() => {
@@ -84,10 +86,15 @@ export default function UploadReel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!videoFile) {
+    if (uploadMethod === 'file' && !videoFile) {
       alert('Please select a video file to upload.');
       return;
     }
+    if (uploadMethod === 'url' && !formData.videoUrlInput) {
+      alert('Please enter a valid video URL.');
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(0);
     try {
@@ -103,18 +110,30 @@ export default function UploadReel() {
         'video-content-type': 'spiritual',
         'video-source': 'user',
       };
-      const result = await resumableUpload({
-        file: videoFile,
-        url: '/api/videos/upload/resumable',
-        headers,
-        onProgress: setUploadProgress,
-      });
-      setStatusMessage(result?.message || 'Uploaded successfully! Redirecting to profile...');
+      
+      let resultMessage = '';
+      if (uploadMethod === 'url') {
+        setStatusMessage('Extracting and downloading from URL... this may take a moment.');
+        const response = await axios.post('/api/videos/upload/url', {
+          url: formData.videoUrlInput
+        }, { headers });
+        resultMessage = response.data?.message || 'Reel processed and uploaded successfully!';
+      } else {
+        const result = await resumableUpload({
+          file: videoFile,
+          url: '/api/videos/upload/resumable',
+          headers,
+          onProgress: setUploadProgress,
+        });
+        resultMessage = result?.message || 'Uploaded successfully! Redirecting to profile...';
+      }
+      
+      setStatusMessage(resultMessage);
       setSuccess(true);
       setTimeout(() => navigate('/profile'), 2000);
     } catch (error) {
       console.error('Error uploading reel:', error);
-      alert(error.message || 'Upload failed. Only spiritual content is allowed.');
+      alert(error.response?.data?.message || error.message || 'Upload failed. Only spiritual content is allowed.');
     } finally {
       setLoading(false);
       setTimeout(() => setUploadProgress(0), 700);
@@ -169,41 +188,62 @@ export default function UploadReel() {
                       />
                    </div>
 
-                   <div className="space-y-4">
-                     <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-devotion-gold ml-2">
-                       <Upload className="w-4 h-4" /> Video File
+                    <div className="space-y-4">
+                     <label className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-devotion-gold ml-2">
+                       <span className="flex items-center gap-2"><Upload className="w-4 h-4" /> Video Source</span>
+                       <div className="flex bg-white/5 rounded-lg overflow-hidden border border-white/10">
+                         <button type="button" onClick={() => setUploadMethod('file')} className={`px-3 py-1 ${uploadMethod === 'file' ? 'bg-devotion-gold text-devotion-darkBlue' : 'text-gray-400 hover:text-white'}`}>File</button>
+                         <button type="button" onClick={() => setUploadMethod('url')} className={`px-3 py-1 ${uploadMethod === 'url' ? 'bg-devotion-gold text-devotion-darkBlue' : 'text-gray-400 hover:text-white'}`}>URL</button>
+                       </div>
                       </label>
-                      <div
-                        onDragEnter={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDragActive(true);
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDragActive(true);
-                        }}
-                        onDragLeave={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDragActive(false);
-                        }}
-                        onDrop={handleDrop}
-                        className={`rounded-2xl border-2 border-dashed p-5 transition-all ${dragActive ? 'border-devotion-gold bg-devotion-gold/10' : 'border-white/20 bg-white/5'}`}
-                      >
-                        <input
-                          required
-                          type="file"
-                          accept="video/*"
-                          className="w-full bg-transparent text-sm text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue"
-                          onChange={(e) => handleVideoSelection(e.target.files?.[0] || null)}
-                        />
-                        <p className="mt-3 text-xs text-gray-400">Drag and drop your reel here or choose file</p>
-                      </div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-widest">Upload MP4/WEBM/MOV file • Max 20m</p>
-                      {videoValidationError && (
-                        <p className="text-[11px] text-red-300 font-bold">{videoValidationError}</p>
+                      
+                      {uploadMethod === 'file' ? (
+                        <>
+                          <div
+                            onDragEnter={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDragActive(true);
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDragActive(true);
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDragActive(false);
+                            }}
+                            onDrop={handleDrop}
+                            className={`rounded-2xl border-2 border-dashed p-5 transition-all outline-none ${dragActive ? 'border-devotion-gold bg-devotion-gold/10' : 'border-white/20 bg-white/5'}`}
+                          >
+                            <input
+                              required={uploadMethod === 'file'}
+                              type="file"
+                              accept="video/*"
+                              className="w-full bg-transparent text-sm text-white file:mr-4 file:rounded-xl file:border-0 file:bg-devotion-gold file:px-4 file:py-2 file:text-xs file:font-black file:text-devotion-darkBlue"
+                              onChange={(e) => handleVideoSelection(e.target.files?.[0] || null)}
+                            />
+                            <p className="mt-3 text-xs text-gray-400">Drag and drop your reel here or choose file</p>
+                          </div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Upload MP4/WEBM/MOV file • Max 20m</p>
+                          {videoValidationError && (
+                            <p className="text-[11px] text-red-300 font-bold">{videoValidationError}</p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="space-y-2">
+                          <input 
+                            required={uploadMethod === 'url'}
+                            type="url"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white placeholder:text-gray-600 focus:border-devotion-gold focus:outline-none transition-all"
+                            placeholder="e.g. Instagram Reel URL, YouTube Short"
+                            value={formData.videoUrlInput}
+                            onChange={(e) => setFormData({...formData, videoUrlInput: e.target.value})}
+                          />
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Public videos only. Extracts best quality MP4.</p>
+                        </div>
                       )}
                    </div>
                 </div>
@@ -250,7 +290,7 @@ export default function UploadReel() {
                    </p>
                    <button 
                      type="submit"
-                     disabled={loading || Boolean(videoValidationError)}
+                     disabled={loading || Boolean(videoValidationError) || (uploadMethod === 'file' && !videoFile) || (uploadMethod === 'url' && !formData.videoUrlInput)}
                      className="w-full bg-gradient-to-br from-devotion-gold via-[#FFB800] to-[#FF9F1C] text-devotion-darkBlue py-6 rounded-2xl font-black text-lg uppercase tracking-widest shadow-2xl hover:shadow-[0_0_50px_rgba(255,215,0,0.4)] transform hover:-translate-y-1 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:translate-y-0"
                    >
                       {loading ? (
