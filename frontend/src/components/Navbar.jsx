@@ -28,7 +28,10 @@ export default function Navbar() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert('To install the app on your device, tap the Share icon in your browser (iOS) or the menu icon (Android) and select "Add to Home Screen".');
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -118,7 +121,6 @@ export default function Navbar() {
               
               <div className="h-5 w-px bg-devotion-gold/20 mx-2"></div>
               
-              {isInstallable && (
                 <button
                   onClick={handleInstallClick}
                   className="mr-3 px-3 py-1.5 bg-gradient-to-br from-devotion-gold to-[#FFE6A5] text-[#06101E] text-[10px] font-bold uppercase tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] transition-all flex items-center"
@@ -126,7 +128,6 @@ export default function Navbar() {
                   <Download className="w-3.5 h-3.5 mr-1" />
                   Get App
                 </button>
-              )}
               
               {user && (
                  <div className="relative">
@@ -218,7 +219,6 @@ export default function Navbar() {
               </Link>
             ))}
             
-            {isInstallable && (
               <button
                 onClick={() => {
                   handleInstallClick();
@@ -229,7 +229,6 @@ export default function Navbar() {
                 <Download className="w-4 h-4 mr-1.5" />
                 Install Gita Wisdom App
               </button>
-            )}
             
             {user ? (
               <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center px-3 py-2 text-gray-400 hover:text-devotion-gold transition-colors mt-3 border-t border-devotion-gold/10 pt-3 text-xs">
