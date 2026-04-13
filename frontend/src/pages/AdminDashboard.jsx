@@ -245,9 +245,10 @@ function AdminDashboardContent() {
             questionText: quizForm.questionText,
             category: quizForm.category,
             videoUrl: quizForm.videoUrl,
-            options: ['A', 'B', 'C', 'D']
-              .map((key) => ({ answerText: String(optionMap[key] || '').trim(), isCorrect: quizForm.correctOption === key }))
-              .filter((item) => item.answerText),
+            question: quizForm.questionText,
+            options: ['A', 'B', 'C', 'D'].map((k) => optionMap[k]).filter(Boolean),
+            correct_answer: optionMap[quizForm.correctOption],
+            difficulty: 'medium',
           };
         } else {
           endpoint = '/api/videos';
@@ -255,8 +256,8 @@ function AdminDashboardContent() {
             ...videoForm,
             collectionTitle: String(videoForm.collectionTitle || '').trim() || 'Bhagavad Gita',
             tags: videoForm.tags.split(',').map(tag => tag.trim()),
+            videoQuizDraft: videoQuizDraft && videoQuizDraft.questionText ? videoQuizDraft : null,
           };
-          // If quizzes were added, send them in a separate request after video upload
         }
       }
 
