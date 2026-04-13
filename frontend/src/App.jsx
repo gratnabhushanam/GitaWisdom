@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import GlobalInstallPrompt from './components/GlobalInstallPrompt';
 import './styles/app-shell.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -125,6 +126,7 @@ function AppShell() {
 
       <div className="relative z-10 flex min-h-screen flex-col">
         {!isAuthRoute && <Navbar />}
+        <GlobalInstallPrompt />
         <main className="flex-grow">
           <Suspense fallback={pageFallback}>
             <Routes>
