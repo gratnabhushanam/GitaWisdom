@@ -30,6 +30,7 @@ export default function MediaPlayer({
   playsInline = true,
   onEnded,
   instagramMode = false,
+  playLimitSeconds = null,
 }) {
   const [showTools, setShowTools] = useState(false);
   const [secureHlsUrl, setSecureHlsUrl] = useState('');
@@ -124,17 +125,42 @@ export default function MediaPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const updateProgress = () => setProgress(video.currentTime || 0);
+    const updateProgress = () => {
+      const current = video.currentTime || 0;
+      setProgress(current);
+      
+      // Feature: Auto Teaser Limit (2 Minutes cutoff)
+      if (playLimitSeconds && current >= playLimitSeconds) {
+        video.pause();
+      }
+    };
     const updateDuration = () => setDuration(video.duration || 0);
+
+    // Feature: Auto Rotate Fullscreen (Mobile)
+    const handleOrientation = () => {
+      if (window.screen && window.screen.orientation) {
+        if (window.screen.orientation.angle === 90 || window.screen.orientation.angle === -90 || window.screen.orientation.angle === 270) {
+          if (video.requestFullscreen) {
+            video.requestFullscreen().catch(err => console.warn(err));
+          } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen().catch(err => console.warn(err));
+          }
+        }
+      }
+    };
+
     video.addEventListener('timeupdate', updateProgress);
     video.addEventListener('durationchange', updateDuration);
     video.addEventListener('loadedmetadata', updateDuration);
+    window.addEventListener("orientationchange", handleOrientation);
+
     return () => {
       video.removeEventListener('timeupdate', updateProgress);
       video.removeEventListener('durationchange', updateDuration);
       video.removeEventListener('loadedmetadata', updateDuration);
+      window.removeEventListener("orientationchange", handleOrientation);
     };
-  }, [secureHlsUrl, resolvedUrl, loadingToken]);
+  }, [secureHlsUrl, resolvedUrl, loadingToken, playLimitSeconds]);
 
   useEffect(() => {
     if (effectiveShouldPlay && videoRef.current) {

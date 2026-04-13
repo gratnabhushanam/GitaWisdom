@@ -43,12 +43,19 @@ export default function Movies() {
   );
 
   return (
-    <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#06101E] text-white">
+    <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-[#0A0F2C] to-[#020617] text-white">
       
       {/* Cinematic Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-         <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-devotion-gold/5 blur-[120px] rounded-full"></div>
-         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-devotion-maroon/10 blur-[150px] rounded-full"></div>
+         {/* Subtle temple background blur behind poster */}
+         <div 
+           className="absolute top-0 right-0 w-full lg:w-3/4 h-[80vh] opacity-[0.03] mix-blend-screen bg-cover bg-right-top blur-md" 
+           style={{ backgroundImage: `url('/scene-krishna.svg')` }}
+         ></div>
+         <div className="absolute top-[-10%] left-[-5%] w-[50%] h-[50%] bg-[#0A0F2C] blur-[140px] rounded-full"></div>
+         <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-[#020617] blur-[150px] rounded-full"></div>
+         {/* Golden aura highlights */}
+         <div className="absolute top-[20%] right-[10%] w-[30%] h-[40%] bg-devotion-gold/5 blur-[120px] rounded-full"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -73,34 +80,35 @@ export default function Movies() {
             >
                {/* Poster Frame */}
                <div className="w-full lg:w-3/5 relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-br from-devotion-gold/20 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                  {/* Soft glowing golden aura around the card */}
+                  <div className="absolute -inset-6 bg-gradient-to-br from-yellow-500/30 via-devotion-gold/10 to-transparent blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 rotate-indefinite"></div>
                   
-                  <div className="relative aspect-[16/9] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.6)] group-hover:border-devotion-gold/30 transition-all duration-700">
+                  <div className="relative aspect-[16/9] rounded-[2rem] overflow-hidden border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)] group-hover:border-devotion-gold/40 group-hover:shadow-[0_0_60px_rgba(250,204,21,0.2)] transition-all duration-700">
                      <img 
                        src={movie.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'} 
                        alt={movie.title}
-                       className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                       className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-[1.05]"
                        onError={(e) => {
                          e.target.src = 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
                        }}
                      />
                      
-                     <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-transparent to-transparent opacity-60"></div>
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-black/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-700"></div>
                      
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-black/40">
+                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-sm bg-black/20">
                         <button 
                           onClick={() => setSelectedMovie(movie)}
-                          className="w-28 h-28 bg-devotion-gold rounded-full flex items-center justify-center text-devotion-darkBlue transform scale-75 group-hover:scale-100 transition-all duration-500 shadow-[0_0_50px_rgba(255,215,0,0.4)]"
+                          className="w-24 h-24 bg-devotion-gold rounded-full flex items-center justify-center text-[#020617] transform scale-75 group-hover:scale-100 transition-all duration-[400ms] ease-out shadow-[0_0_50px_rgba(250,204,21,0.6)] hover:bg-yellow-400"
                         >
-                           <Play className="w-12 h-12 fill-current ml-2" />
+                           <Play className="w-10 h-10 fill-current ml-2" />
                         </button>
                      </div>
 
-                     <div className="absolute bottom-8 left-8 flex items-center gap-4">
-                        <div className="bg-devotion-gold text-devotion-darkBlue px-5 py-2 rounded-xl font-black text-xs shadow-2xl tracking-widest">
-                           {movie.releaseYear}
+                     <div className="absolute bottom-8 left-8 flex items-center gap-4 z-20">
+                        <div className="bg-[#FACC15] text-[#020617] px-5 py-2 rounded-xl font-black text-xs shadow-2xl tracking-widest">
+                           {movie.releaseYear || 'NEW'}
                         </div>
-                        <div className="backdrop-blur-xl bg-white/10 border border-white/10 text-white px-5 py-2 rounded-xl font-black text-[10px] tracking-widest uppercase">
+                        <div className="backdrop-blur-xl bg-white/10 border border-white/20 text-[#FACC15] px-5 py-2 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-[0_0_15px_rgba(250,204,21,0.2)]">
                            SPOTLIGHT
                         </div>
                      </div>
@@ -180,6 +188,7 @@ export default function Movies() {
                 youtubeParams="autoplay=1&rel=0&modestbranding=1"
                 autoPlay
                 controls
+                playLimitSeconds={120}
               />
            </div>
         </div>
