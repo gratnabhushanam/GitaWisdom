@@ -113,7 +113,7 @@ export default function UploadReel() {
       
       let resultMessage = '';
       if (uploadMethod === 'url') {
-        setStatusMessage('Extracting and downloading from URL... this may take a moment.');
+        setStatusMessage('Linking video directly to platform...');
         const response = await axios.post('/api/videos/upload/url', {
           url: formData.videoUrlInput
         }, { headers });
@@ -242,7 +242,7 @@ export default function UploadReel() {
                             value={formData.videoUrlInput}
                             onChange={(e) => setFormData({...formData, videoUrlInput: e.target.value})}
                           />
-                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Public videos only. Extracts best quality MP4.</p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">Public YouTube or MP4 URLs only. Directly links to your reel without downloading.</p>
                         </div>
                       )}
                    </div>

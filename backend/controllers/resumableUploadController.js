@@ -164,18 +164,49 @@ async function handleUrlUpload(req, res) {
       return res.status(400).json({ message: 'URL is required' });
     }
 
-    const destDir = path.join(__dirname, '..', 'uploads', 'reels');
-    const { downloadFromUrl } = require('../utils/urlDownloader');
+    const user = req.user;
+    let title = req.headers['video-title'] || 'External Video';
+    try { title = decodeURIComponent(title); } catch (e) { }
+    let description = req.headers['video-description'] || '';
+    try { description = decodeURIComponent(description); } catch (e) { }
+    let rawTags = req.headers['video-tags'] || '';
+    try { rawTags = decodeURIComponent(rawTags); } catch (e) { }
+    const tags = rawTags.split(',').map(t => t.trim()).filter(Boolean);
+    const isKids = req.headers['video-kids'] === 'true';
+    const collectionTitle = req.headers['video-collection'] || 'Bhagavad Gita';
+    const category = req.headers['video-category'] || 'reels';
+    const contentType = req.headers['video-content-type'] || 'short';
+    const explicitSource = req.headers['video-source'];
+    const moderationStatus = user && user.role === 'admin' && explicitSource !== 'user' ? 'approved' : 'pending';
+    const uploadSource = user && user.role === 'admin' && explicitSource !== 'user' ? 'admin' : 'user';
 
-    // Download the video
-    const { filePath, fileName } = await downloadFromUrl(url, destDir);
-    
-    // Mount it on the request similarly to the resumable upload middleware
-    req.resumableUpload = { filePath, fileName };
-    
-    // Now just pass control to the existing handleResumableUpload logic
-    return handleResumableUpload(req, res);
-    
+    const VideoMongo = require('../models/mongo/VideoMongo');
+    const { mapVideo } = require('../utils/responseMappers');
+
+    const newVideo = await VideoMongo.create({
+      title,
+      videoUrl: url,
+      hlsUrl: '', // No local HLS for external hotlinks
+      description,
+      tags,
+      category,
+      isKids,
+      collectionTitle,
+      isUserReel: uploadSource === 'user',
+      uploadedBy: user ? String(user._id || user.id) : undefined,
+      uploadSource,
+      moderationStatus,
+      contentType,
+      duration: 60, // Default duration approximation 
+      orientation: 'portrait',
+      likesCount: 0,
+      sharesCount: 0,
+      commentsCount: 0,
+      likedBy: [],
+      comments: [],
+    });
+
+    res.status(201).json({ ...mapVideo(newVideo), message: 'Video successfully linked to platform!' });
   } catch (err) {
     console.error('URL upload error:', err);
     res.status(500).json({ message: err.message || 'Error processing remote video URL' });
