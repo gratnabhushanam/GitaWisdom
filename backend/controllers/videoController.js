@@ -12,6 +12,9 @@ const { transcodeToHLS } = require('../utils/hlsTranscoder');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 
+const sameUserId = (id1, id2) => String(id1 || '') === String(id2 || '');
+const toIntId = (id) => parseInt(id, 10) || 0;
+
 exports.grantStreamingToken = async (req, res) => {
   try {
     const videoId = req.query.videoId || 'anonymous_stream';
