@@ -179,27 +179,28 @@ function VideoModal({ video, onClose, setShowQuiz, setQuizResult, isFavorite, to
   if (!video) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-6 bg-black/70 backdrop-blur-3xl">
-      <div className="bg-gradient-to-br from-[#081525] to-[#030910] w-full max-w-[98vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto rounded-[2.5rem] border border-devotion-gold/40 md:p-8 p-6 relative animate-fade-in-up shadow-[0_0_80px_rgba(255,215,0,0.1)] overflow-hidden">
-        {/* Subtle Krishna Background Image */}
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-6 bg-[#06101E]/80 backdrop-blur-xl transition-all duration-300">
+      <div className="bg-gradient-to-br from-[#FFE5B4] via-[#FFEBB0] to-[#FFF8DC] w-full max-w-[98vw] lg:max-w-7xl max-h-[95vh] overflow-y-auto rounded-[2.5rem] border-4 border-white/40 md:p-8 p-6 relative animate-fade-in-up shadow-[0_20px_100px_rgba(255,229,180,0.3)] overflow-hidden">
+        {/* Subtle Krishna Background Image - warm overlay */}
         <div 
-           className="absolute inset-0 z-0 opacity-[0.06] pointer-events-none bg-cover bg-center bg-no-repeat Mix-blend-overlay" 
+           className="absolute inset-0 z-0 opacity-[0.15] pointer-events-none bg-cover bg-center bg-no-repeat Mix-blend-multiply" 
            style={{ backgroundImage: `url('/scene-krishna.svg')` }} 
         />
-        {/* Vignette Overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_30%,#030910_80%)]"></div>
+        {/* Radial warm glow */}
+        <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.4)_0%,transparent_60%)]"></div>
 
         <div className="relative z-10">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-0 right-0 bg-devotion-gold/15 text-devotion-gold w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-devotion-gold/30 hover:bg-devotion-gold/25 transition-all hover:-translate-y-1 active:translate-y-1 z-20 backdrop-blur-md shadow-xl"
+            className="absolute top-0 right-0 bg-white/70 text-[#4A2E00] w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border-2 border-white/50 hover:bg-white hover:text-red-500 hover:scale-105 transition-all active:scale-95 z-20 backdrop-blur-md shadow-xl"
+            aria-label="Close"
           >
             <X />
           </button>
 
           {/* Cinematic Video Player */}
-          <div className="w-full rounded-[2rem] overflow-hidden bg-black mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative border border-white/5 mt-16 md:mt-0">
+          <div className="w-full rounded-[2rem] overflow-hidden bg-[#4A2E00] mb-8 shadow-[0_20px_50px_rgba(74,46,0,0.2)] relative border-4 border-white mt-16 md:mt-0">
             <MediaPlayerHLS
               url={video.videoUrl || video.youtubeUrl || video.url}
               hlsUrl={video.hlsUrl}
@@ -215,22 +216,22 @@ function VideoModal({ video, onClose, setShowQuiz, setQuizResult, isFavorite, to
 
           {/* Title & Info */}
           <div className="mb-8">
-            <h2 className="text-4xl md:text-5xl font-serif font-black text-devotion-gold mb-4 drop-shadow-md">
+            <h2 className="text-4xl md:text-5xl font-serif font-black text-[#5C2B11] mb-4 drop-shadow-sm">
               {video.chapter ? `Chapter ${video.chapter}: ` : ''}{video.title}
             </h2>
-            <p className="text-gray-300 text-xl font-light leading-relaxed max-w-4xl">
+            <p className="text-[#6D4224] text-xl font-medium leading-relaxed max-w-4xl">
               {video.description || "Join Krishna for a fun adventure!"}
             </p>
           </div>
 
           {/* Moral of the Story */}
           {video.moral && (
-            <div className="bg-gradient-to-r from-devotion-gold/15 to-transparent border-l-4 border-devotion-gold rounded-r-2xl p-6 mb-10 shadow-lg">
+            <div className="bg-white/60 backdrop-blur-sm border-l-8 border-[#FF8C00] rounded-r-3xl p-6 mb-10 shadow-[0_10px_30px_rgba(255,140,0,0.1)]">
               <div className="flex items-center gap-3 mb-3">
-                <Star className="w-7 h-7 text-devotion-gold fill-devotion-gold drop-shadow-md" />
-                <h4 className="text-xl font-black text-white uppercase tracking-[0.2em]">Moral</h4>
+                <Star className="w-8 h-8 text-[#FF8C00] fill-[#FF8C00] drop-shadow-md animate-pulse" />
+                <h4 className="text-xl font-black text-[#8B4513] uppercase tracking-[0.2em]">Moral</h4>
               </div>
-              <p className="text-devotion-gold text-2xl font-serif italic drop-shadow-sm">{video.moral}</p>
+              <p className="text-[#A0522D] text-2xl font-serif font-bold italic drop-shadow-sm leading-relaxed">{video.moral}</p>
             </div>
           )}
 
@@ -238,26 +239,26 @@ function VideoModal({ video, onClose, setShowQuiz, setQuizResult, isFavorite, to
           {video.script && <ReadAlong script={video.script} />}
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-5 items-center mt-6">
+          <div className="flex flex-wrap gap-5 items-center mt-8">
             <button
               onClick={() => {
                 setQuizResult(null);
                 setShowQuiz(true);
               }}
-              className="bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-10 py-4 rounded-full font-black text-sm uppercase tracking-[0.2em] flex items-center gap-3 shadow-[0_10px_30px_rgba(255,215,0,0.25)] hover:shadow-[0_15px_40px_rgba(255,215,0,0.35)] hover:scale-105 transition-all active:translate-y-1"
+              className="bg-gradient-to-r from-[#FF8C00] to-[#FFA500] text-white px-10 py-4 rounded-full font-black text-lg uppercase tracking-[0.1em] flex items-center gap-3 shadow-[0_10px_30px_rgba(255,140,0,0.4)] hover:shadow-[0_15px_40px_rgba(255,140,0,0.6)] hover:scale-105 transition-all active:scale-95"
             >
-              <Award className="w-6 h-6" /> Take Quiz
+              <Award className="w-7 h-7" /> Take Quiz!
             </button>
             <button
-              className={`flex items-center gap-3 px-8 py-4 rounded-full border-2 font-black text-sm uppercase tracking-widest transition-all hover:scale-105 ${isFavorite(video) ? 'border-devotion-gold bg-devotion-gold/20 text-devotion-gold shadow-[0_0_20px_rgba(255,215,0,0.2)]' : 'border-white/20 bg-white/5 text-white/70 hover:bg-white/10'}`}
+              className={`flex items-center gap-3 px-8 py-4 rounded-full border-4 font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 ${isFavorite(video) ? 'border-[#FF4500] bg-[#FF4500]/10 text-[#FF4500] shadow-[0_10px_20px_rgba(255,69,0,0.2)]' : 'border-[#FF8C00]/30 bg-white/50 text-[#C65D00] hover:bg-white/80'}`}
               onClick={() => toggleFavorite(video)}
             >
-              <Heart className={`w-5 h-5 ${isFavorite(video) ? 'fill-devotion-gold' : 'fill-none'}`} />
-              {isFavorite(video) ? 'Favorited' : 'Favorite'}
+              <Heart className={`w-6 h-6 ${isFavorite(video) ? 'fill-[#FF4500]' : 'fill-none stroke-current'}`} />
+              {isFavorite(video) ? 'Saved' : 'Save to Favorites'}
             </button>
             <button
               onClick={onClose}
-              className="px-8 py-4 rounded-full border-2 border-transparent text-gray-400 font-bold text-sm uppercase tracking-widest hover:text-white transition-all ml-auto"
+              className="px-8 py-4 rounded-full border-4 border-transparent text-[#6D4224] bg-white/40 font-black text-sm uppercase tracking-widest hover:bg-white hover:text-red-600 transition-all ml-auto hover:scale-105 shadow-sm"
             >
               Close
             </button>
