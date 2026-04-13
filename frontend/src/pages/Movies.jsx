@@ -50,13 +50,13 @@ export default function Movies() {
          {/* Stardust universe texture overlay */}
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.15] mix-blend-screen animate-[pulse_8s_ease-in-out_infinite]"></div>
          
-         {/* Cosmic Indigo & Royal Purple Radial Glows */}
-         <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[100%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2E1065]/30 via-[#1E1B4B]/10 to-transparent blur-[100px] rounded-full animate-[spin_60s_linear_infinite] origin-center opacity-80"></div>
+         {/* Website Theme Floating Glows (Devotion Gold & Deep Azure) */}
+         <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[100%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A1929]/60 via-[#020617]/10 to-transparent blur-[100px] rounded-full animate-[spin_60s_linear_infinite] origin-center opacity-90"></div>
          
-         <div className="absolute bottom-[-30%] right-[-20%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A2F5C]/40 via-[#0F172A]/20 to-transparent blur-[150px] rounded-full animate-[spin_90s_linear_infinite_reverse] origin-center opacity-80"></div>
+         <div className="absolute bottom-[-30%] right-[-20%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-devotion-gold/10 via-[#0A1929]/20 to-transparent blur-[150px] rounded-full animate-[spin_90s_linear_infinite_reverse] origin-center opacity-80"></div>
          
-         {/* Spiritual Sunrise Gold Glow (Horizon/Center) */}
-         <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[150vw] h-[80vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FFD700]/10 via-[#B45309]/5 to-transparent blur-[120px] animate-[pulse_12s_ease-in-out_infinite]"></div>
+         {/* Spiritual Devotion Gold Aura (Horizon/Center) */}
+         <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[150vw] h-[80vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FACC15]/15 via-[#B45309]/5 to-transparent blur-[120px] animate-[pulse_12s_ease-in-out_infinite]"></div>
 
          {/* Subtle temple/krishna background blur behind poster */}
          <div 
