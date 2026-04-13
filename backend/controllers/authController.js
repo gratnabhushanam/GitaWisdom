@@ -594,7 +594,8 @@ const sendOtpEmail = async ({ email, name, otp }) => {
     throw new Error(`${provider.toUpperCase()} returned not delivered flag`);
   } catch (error) {
     console.error(`[OTP FATAL ERROR] Failed to send real email to ${email}:`, error.stack || error.message || error);
-    throw new Error('Failed to send real OTP email. Check backend logs for credential/network failure.');
+    const genericMsg = 'Failed to send OTP email. Please ensure your provider API Keys (Brevo/Resend) are valid on Render.';
+    throw new Error(error.message ? `OTP Error: ${error.message}` : genericMsg);
   }
 };
 
