@@ -49,7 +49,7 @@ export default function MediaPlayer({
 
   const getAbsoluteUrl = (inputUrl) => {
     if (!inputUrl) return inputUrl;
-    if (inputUrl.startsWith('/uploads/')) {
+    if (inputUrl.startsWith('/uploads/') || inputUrl.startsWith('/api/')) {
       const isProd = import.meta.env.MODE === 'production';
       const baseUrl = isProd ? 'https://gitawisdom.onrender.com' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888');
       return `${baseUrl}${inputUrl}`;
@@ -69,7 +69,8 @@ export default function MediaPlayer({
       setLoadingToken(true);
       try {
         const videoId = extractVideoId(cdnHlsUrl) || extractVideoId(cdnVideoUrl) || 'anonymous';
-        const res = await fetch(`/api/videos/hls-token?videoId=${videoId}`);
+        const absoluteTokenUrl = getAbsoluteUrl(`/api/videos/hls-token?videoId=${videoId}`);
+        const res = await fetch(absoluteTokenUrl);
         if (!res.ok) throw new Error('token endpoint unavailable');
         const data = await res.json();
         if (!data?.token) throw new Error('no token');
