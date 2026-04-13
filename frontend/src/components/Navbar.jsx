@@ -12,6 +12,7 @@ export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -29,7 +30,7 @@ export default function Navbar() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      alert('To install the app on your device, tap the Share icon in your browser (iOS) or the menu icon (Android) and select "Add to Home Screen".');
+      setShowInstallModal(true);
       return;
     }
     deferredPrompt.prompt();
@@ -247,6 +248,41 @@ export default function Navbar() {
                 Login / Register
               </Link>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Custom PWA Install Guide Modal */}
+      {showInstallModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#06101E] border border-devotion-gold/30 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowInstallModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-devotion-gold/20 to-devotion-gold/5 rounded-2xl border border-devotion-gold/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(255,215,0,0.15)] overflow-hidden">
+                 <img src="/logo.png" alt="Gita Wisdom" className="w-10 h-10 object-contain drop-shadow-md" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2 font-serif">Install Gita Wisdom</h3>
+              <p className="text-[13px] text-gray-300 leading-relaxed mb-6">
+                Get instant access straight from your home screen.
+                <br /><br />
+                <strong className="text-devotion-gold block mb-1 uppercase tracking-widest text-[10px]">iOS & Safari Users</strong> 
+                Tap the <strong className="text-white">Share</strong> icon at the bottom of your browser, then select <strong className="text-white">Add to Home Screen</strong>.
+                <br /><br />
+                <strong className="text-devotion-gold block mb-1 uppercase tracking-widest text-[10px]">Android & Non-Chrome Users</strong> 
+                Tap the <strong className="text-white">Menu (⋮)</strong> at the top right, then select <strong className="text-white">Install App</strong> or <strong className="text-white">Add to Home Screen</strong>.
+              </p>
+              <button 
+                onClick={() => setShowInstallModal(false)}
+                className="w-full py-3 bg-devotion-gold text-[#06101E] rounded-xl font-bold uppercase tracking-widest text-xs shadow-[0_0_15px_rgba(255,215,0,0.3)] hover:bg-[#FFE6A5] hover:shadow-[0_0_25px_rgba(255,215,0,0.4)] transition-all"
+              >
+                Understood
+              </button>
+            </div>
           </div>
         </div>
       )}
