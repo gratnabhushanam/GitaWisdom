@@ -46,8 +46,18 @@ export default function MediaPlayer({
   const [duration, setDuration] = useState(0);
   const videoRef = useRef(null);
 
-  const cdnHlsUrl = hlsUrl || '';
-  const cdnVideoUrl = url || '';
+  const getAbsoluteUrl = (inputUrl) => {
+    if (!inputUrl) return inputUrl;
+    if (inputUrl.startsWith('/uploads/')) {
+      const isProd = import.meta.env.MODE === 'production';
+      const baseUrl = isProd ? 'https://gitawisdom.onrender.com' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8888');
+      return `${baseUrl}${inputUrl}`;
+    }
+    return inputUrl;
+  };
+
+  const cdnHlsUrl = getAbsoluteUrl(hlsUrl || '');
+  const cdnVideoUrl = getAbsoluteUrl(url || '');
   const effectiveShouldPlay = typeof shouldPlay === 'boolean' ? shouldPlay : autoPlay;
 
   // Fetch secure HLS token — falls back gracefully if endpoint is missing
