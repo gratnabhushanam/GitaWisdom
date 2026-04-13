@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell } from 'lucide-react';
+import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -10,6 +10,32 @@ export default function Navbar() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     if (user) {
@@ -91,6 +117,16 @@ export default function Navbar() {
               ))}
               
               <div className="h-5 w-px bg-devotion-gold/20 mx-2"></div>
+              
+              {isInstallable && (
+                <button
+                  onClick={handleInstallClick}
+                  className="mr-3 px-3 py-1.5 bg-gradient-to-br from-devotion-gold to-[#FFE6A5] text-[#06101E] text-[10px] font-bold uppercase tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] transition-all flex items-center"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Get App
+                </button>
+              )}
               
               {user && (
                  <div className="relative">
@@ -181,6 +217,20 @@ export default function Navbar() {
                 {link.name}
               </Link>
             ))}
+            
+            {isInstallable && (
+              <button
+                onClick={() => {
+                  handleInstallClick();
+                  setIsOpen(false);
+                }}
+                className="flex items-center justify-center w-full mt-2 px-3 py-2.5 bg-gradient-to-r from-devotion-gold to-[#FFE6A5] text-[#06101E] rounded-lg font-bold text-[11px] uppercase tracking-widest shadow-md"
+              >
+                <Download className="w-4 h-4 mr-1.5" />
+                Install Gita Wisdom App
+              </button>
+            )}
+            
             {user ? (
               <Link to="/profile" onClick={() => setIsOpen(false)} className="flex items-center px-3 py-2 text-gray-400 hover:text-devotion-gold transition-colors mt-3 border-t border-devotion-gold/10 pt-3 text-xs">
                 {user.profilePicture ? (
