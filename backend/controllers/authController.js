@@ -284,6 +284,59 @@ const sendViaResend = async ({ email, name, otp }) => {
   }
 };
 
+const sendViaBrevo = async ({ email, name, otp }) => {
+  if (!isBrevoConfigured()) {
+    return {
+      delivered: false,
+      message: 'Brevo is not configured. Set BREVO_API_KEY and BREVO_FROM_EMAIL.',
+    };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), BREVO_TIMEOUT_MS);
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(buildBrevoPayload({ email, name, otp })),
+      signal: controller.signal,
+    });
+
+    const responseText = await response.text();
+    const responseBody = responseText ? (() => {
+      try {
+        return JSON.parse(responseText);
+      } catch {
+        return { raw: responseText };
+      }
+    })() : {};
+    
+    if (!response.ok) {
+      const error = new Error(responseBody.message || `Brevo request failed with status ${response.status}`);
+      error.status = response.status;
+      error.responseBody = responseBody;
+      error.responseText = responseText;
+      error.provider = 'brevo';
+      error.code = response.status === 401 || response.status === 403 ? 'EAUTH' : 'EFAIL';
+      throw error;
+    }
+
+    return { delivered: true, provider: 'brevo', messageId: responseBody.messageId || null };
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      error.code = 'ETIMEDOUT';
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const sendViaSmtp = async ({ email, name, otp }) => {
   const { user } = getEmailAuthConfig();
   if (!user) {
@@ -524,11 +577,21 @@ const sendOtpEmail = async ({ email, name, otp }) => {
   }
 
   try {
-    const result = await sendViaSmtp({ email, name, otp });
+    const provider = resolveEmailProvider();
+    let result;
+
+    if (provider === 'brevo') {
+      result = await sendViaBrevo({ email, name, otp });
+    } else if (provider === 'resend') {
+      result = await sendViaResend({ email, name, otp });
+    } else {
+      result = await sendViaSmtp({ email, name, otp });
+    }
+
     if (result?.delivered) {
       return result;
     }
-    throw new Error('SMTP returned not delivered flag');
+    throw new Error(`${provider.toUpperCase()} returned not delivered flag`);
   } catch (error) {
     console.error(`[OTP FATAL ERROR] Failed to send real email to ${email}:`, error.stack || error.message || error);
     throw new Error('Failed to send real OTP email. Check backend logs for credential/network failure.');
