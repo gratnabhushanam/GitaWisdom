@@ -28,9 +28,9 @@ exports.chatMentor = async (req, res) => {
     
     const systemInstruction = 'You are Gita Mentor, a spiritual guide based on Bhagavad Gita. Give practical life advice with simple explanations. Do not be overly robotic; be warm, compassionate, and divine.';
     
-    // We use gemini-1.5-flash which supports system instructions natively
+    // We use gemini-1.5-flash-latest which is highly compliant with v1beta endpoint
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       systemInstruction,
     });
 
