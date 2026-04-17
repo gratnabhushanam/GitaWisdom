@@ -783,6 +783,5 @@ export default function Reels() {
       )}
 
       </div>
-    </div>
   );
 }
