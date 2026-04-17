@@ -62,16 +62,16 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const sendOtpLogin = async (email) => {
-    const { data } = await axios.post('/api/auth/send-otp', { email });
+  const sendOtpLogin = async (payload) => {
+    const { data } = await axios.post('/api/auth/send-otp', payload);
     return data;
   };
 
-  const verifyOtpLogin = async (email, otp) => {
-    const { data } = await axios.post('/api/auth/verify-otp', { email, otp });
+  const verifyOtpLogin = async (payload) => {
+    const { data } = await axios.post('/api/auth/verify-otp', payload);
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data));
-    setUser(data);
+    localStorage.setItem('user', JSON.stringify(data.user)); // Note: unified payload
+    setUser(data.user);
     return data;
   };
 

@@ -23,8 +23,8 @@ router.post('/register/verify-otp', verifyRegistrationOtp);
 router.post('/register/resend-otp', resendRegistrationOtp);
 
 // Unified OTP Auth Endpoints
-router.post('/send-otp', require('../controllers/authController').sendOtp);
-router.post('/verify-otp', require('../controllers/authController').verifyOtp);
+router.post('/send-otp', require('../controllers/otpController').sendOtp);
+router.post('/verify-otp', require('../controllers/otpController').verifyOtp);
 
 router.post('/forgot-password/request-otp', requestPasswordResetOtp);
 router.post('/forgot-password/verify-otp', verifyPasswordResetOtp);

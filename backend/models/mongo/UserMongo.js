@@ -13,11 +13,19 @@ const defaultBenefits = {
 
 const UserMongoSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    phone: { type: String, trim: true },
+    name: { type: String, trim: true },
+    email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
+    phone: { type: String, unique: true, sparse: true, trim: true },
     verified: { type: Boolean, default: false },
-    password: { type: String, required: true },
+    password: { type: String },
+    
+    // OTP Auth Fields
+    otpHash: { type: String },
+    otpExpiry: { type: Date },
+    otpAttempts: { type: Number, default: 0 },
+    otpRequestCount: { type: Number, default: 0 },
+    lastOtpRequestTime: { type: Date },
+
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     language: { type: String, default: 'telugu' },
     streak: { type: Number, default: 0 },
