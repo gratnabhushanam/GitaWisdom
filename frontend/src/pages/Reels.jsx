@@ -530,11 +530,15 @@ export default function Reels() {
       )}
       
       <div className="w-full h-full relative z-10">
-        <Link to="/upload-reel" className="fixed bottom-8 right-8 z-[100] flex items-center gap-2 bg-gradient-to-r from-devotion-gold to-yellow-600 text-black px-6 py-4 rounded-full shadow-[0_0_30px_rgba(255,215,0,0.4)] hover:scale-105 transition-transform font-black uppercase text-xs tracking-widest">
-           <PlusCircle className="w-5 h-5" /> Upload Reel
-        </Link>
+        
+        {/* Fixed Top Header */}
+        <div className="fixed top-0 left-0 w-full z-[100] px-4 py-4 md:max-w-[420px] md:left-1/2 md:-translate-x-1/2 flex justify-end pointer-events-none">
+          <Link to="/upload-reel" className="pointer-events-auto flex items-center justify-center bg-black/40 backdrop-blur-md rounded-full p-2 border border-white/20 hover:bg-white/10 transition-colors shadow-lg">
+             <PlusCircle className="w-6 h-6 text-white" />
+          </Link>
+        </div>
 
-      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] mx-auto h-[100dvh] relative z-10 bg-black md:border-x md:border-white/10 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth" onScroll={handleScroll}>
+      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] mx-auto h-[100dvh] relative z-10 bg-black md:border-x md:border-white/10 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth pb-16 md:pb-0" onScroll={handleScroll}>
         
         {reels.length > 0 ? reels.map((reel) => {
           const reelId = String(reel._id || reel.id || '');
@@ -679,12 +683,21 @@ export default function Reels() {
         )}
         </div>
 
+        {/* Click-to-Dismiss Backdrop Overlay */}
+        {expandedCommentReel && (
+          <div 
+            className="fixed inset-0 z-[90] bg-transparent" 
+            onClick={() => setExpandedCommentReel(null)}
+          />
+        )}
+
         {/* Global Bottom Sheet Drawer for Comments */}
         <div 
           className={`absolute bottom-0 left-0 w-full bg-[#0b1220]/95 backdrop-blur-xl border-t border-[#D39A4A]/20 rounded-t-3xl z-[100] flex flex-col transition-transform duration-300 ease-in-out shadow-[0_-20px_50px_rgba(0,0,0,0.8)] ${
             expandedCommentReel ? 'translate-y-0' : 'translate-y-full'
           }`}
           style={{ height: '70dvh', touchAction: 'none' }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="w-full flex justify-center pt-4 pb-2 cursor-pointer" onClick={() => setExpandedCommentReel(null)}>
             <div className="w-12 h-1.5 bg-gray-500/50 rounded-full"></div>
