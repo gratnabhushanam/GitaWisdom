@@ -93,7 +93,7 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-  <nav className="fixed w-full z-50 bg-gradient-to-r from-[#04101D] via-[#061428] to-[#04101D]/95 backdrop-blur-xl border-b border-devotion-gold/15 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
+    <nav className="sticky top-0 w-full z-50 bg-[#06101E]/90 backdrop-blur-xl border-b border-white/5 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex-shrink-0 flex items-center gap-3">

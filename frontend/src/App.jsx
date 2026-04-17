@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import GlobalInstallPrompt from './components/GlobalInstallPrompt';
 import SplashScreen from './components/SplashScreen';
@@ -107,24 +108,25 @@ function AppShell() {
   );
 
   return (
-    <div className="app-shell flex min-h-screen flex-col relative text-white transition-all duration-1000">
+    <div className="app-shell flex justify-center min-h-[100dvh] bg-[#000000] overflow-hidden text-white transition-all duration-1000 relative">
       {!isAuthRoute && (
-        <>
+        <div className="fixed inset-0 z-0 hidden lg:block opacity-30 blur-sm pointer-events-none">
             <div
                 key={scenes[bgIndex].image}
-              className={`fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000 app-shell__background ${scenes[bgIndex].className}`}
+              className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 app-shell__background ${scenes[bgIndex].className}`}
                 style={{ backgroundImage: `url('${scenes[bgIndex].image}')` }}
               aria-label={scenes[bgIndex].symbolLabel}
             />
-          <div className="fixed inset-0 z-0 bg-[#06101E]/48 backdrop-blur-[1px]"></div>
-          <div className="fixed inset-0 z-0 opacity-20 pointer-events-none bg-gold-glow animate-pulse"></div>
-        </>
+        </div>
       )}
 
-      <div className="relative z-10 flex min-h-screen flex-col">
+      {/* Primary 480px Mobile Layout Container */}
+      <div className="relative z-10 w-full max-w-[480px] h-[100dvh] bg-[#06101E] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.8)] border-x border-white/5 overflow-hidden">
+        
         {!isAuthRoute && !isFullScreenRoute && <Navbar />}
         <GlobalInstallPrompt />
-        <main className="flex-grow">
+        
+        <main className="flex-1 overflow-y-auto hide-scrollbar relative z-0">
           <Suspense fallback={pageFallback}>
             <Routes>
               <Route path="/" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
@@ -155,7 +157,8 @@ function AppShell() {
             </Routes>
           </Suspense>
         </main>
-        {!isAuthRoute && !isFullScreenRoute && <Footer />}
+        
+        {!isAuthRoute && <BottomNav />}
       </div>
     </div>
   );
