@@ -55,6 +55,8 @@ exports.chatMentor = async (req, res) => {
     }
 
     console.error('Error in chatMentor controller:', error.message || error);
-    return res.status(500).json({ reply: 'Failed to seek divine guidance. My spiritual network encountered an interruption.' });
+    return res.status(200).json({ 
+      reply: `Forgive me, but my connection to the divine source is currently disrupted. ${error.message ? `The spiritual reason provided is: "${error.message}"` : ''} Please verify that your Gemini API Key is exactly correct.` 
+    });
   }
 };
