@@ -74,3 +74,23 @@
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+@keyframes loaderProgress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+
+.animate-loader-progress {
+  width: 50%;
+  animation: loaderProgress 2s ease-in-out infinite;
+}

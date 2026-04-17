@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalInstallPrompt from './components/GlobalInstallPrompt';
+import SplashScreen from './components/SplashScreen';
 import OtaSyncService from './services/OtaSyncService';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './styles/app-shell.css';
@@ -92,14 +93,7 @@ function AppShell() {
   }, [isAuthRoute]);
 
   if (loading) {
-    return (
-      <div className="app-shell flex min-h-screen items-center justify-center text-white">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-spiritual-gold border-t-transparent"></div>
-          <p className="text-sm uppercase tracking-[0.2em] text-spiritual-textMuted">Loading...</p>
-        </div>
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   const pageFallback = (
