@@ -35,5 +35,10 @@
     "tailwindcss": "^3.4.19",
     "vite": "^8.0.0",
     "vite-plugin-pwa": "^1.2.0"
+  },
+  "overrides": {
+    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@latest",
+    "source-map": "^0.7.4",
+    "glob": "^13.0.6"
   }
 }
