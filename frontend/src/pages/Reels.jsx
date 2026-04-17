@@ -534,7 +534,7 @@ export default function Reels() {
            <PlusCircle className="w-5 h-5" /> Upload Reel
         </Link>
 
-      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full h-[100dvh] relative z-10 bg-black snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth" onScroll={handleScroll}>
+      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] mx-auto h-[100dvh] relative z-10 bg-black md:border-x md:border-white/10 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth" onScroll={handleScroll}>
         
         {reels.length > 0 ? reels.map((reel) => {
           const reelId = String(reel._id || reel.id || '');
@@ -610,7 +610,7 @@ export default function Reels() {
             )}
 
             {/* Overlays */}
-            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px]">
+            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px] md:pb-8">
                
                <div className="max-w-[80%] drop-shadow-lg">
                  <h2 className="text-xl font-bold mb-2 text-white">{reel.title}</h2>

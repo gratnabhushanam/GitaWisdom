@@ -108,22 +108,26 @@ function AppShell() {
   );
 
   return (
-    <div className="app-shell flex justify-center min-h-[100dvh] bg-[#000000] overflow-hidden text-white transition-all duration-1000 relative">
+    <div className="app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative">
       {!isAuthRoute && (
-        <div className="fixed inset-0 z-0 hidden lg:block opacity-30 blur-sm pointer-events-none">
+        <>
             <div
                 key={scenes[bgIndex].image}
-              className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 app-shell__background ${scenes[bgIndex].className}`}
+              className={`fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000 app-shell__background ${scenes[bgIndex].className}`}
                 style={{ backgroundImage: `url('${scenes[bgIndex].image}')` }}
               aria-label={scenes[bgIndex].symbolLabel}
             />
-        </div>
+          <div className="fixed inset-0 z-0 bg-[#06101E]/48 backdrop-blur-[1px]"></div>
+          <div className="fixed inset-0 z-0 opacity-20 pointer-events-none bg-gold-glow animate-pulse"></div>
+        </>
       )}
 
-      {/* Primary 480px Mobile Layout Container */}
-      <div className="relative z-10 w-full max-w-[480px] h-[100dvh] bg-[#06101E] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.8)] border-x border-white/5 overflow-hidden">
+      {/* Primary Responsive Layout Container */}
+      <div className="relative z-10 w-full min-h-[100dvh] flex flex-col flex-1">
         
-        {!isAuthRoute && !isFullScreenRoute && <Navbar />}
+        <div className={`${!isAuthRoute && isFullScreenRoute ? 'hidden md:block' : ''}`}>
+           {!isAuthRoute && <Navbar />}
+        </div>
         <GlobalInstallPrompt />
         
         <main className="flex-1 overflow-y-auto hide-scrollbar relative z-0">
@@ -158,6 +162,7 @@ function AppShell() {
           </Suspense>
         </main>
         
+        {!isAuthRoute && <Footer />}
         {!isAuthRoute && <BottomNav />}
       </div>
     </div>
