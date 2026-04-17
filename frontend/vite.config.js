@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['logo-om.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
         name: 'Gita Wisdom Devotion',
         short_name: 'Gita Wisdom',

@@ -5,6 +5,8 @@ import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalInstallPrompt from './components/GlobalInstallPrompt';
+import OtaSyncService from './services/OtaSyncService';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import './styles/app-shell.css';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -165,6 +167,30 @@ function AppShell() {
 }
 
 function App() {
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({
+    onRegistered(r) {
+      if (r) {
+        setInterval(() => {
+          r.update();
+        }, 60 * 60 * 1000); // Check for updates every hour
+      }
+    },
+    onRegisterError(error) {
+      console.error('SW registration error', error);
+    },
+  });
+
+  useEffect(() => {
+    if (needRefresh) {
+      updateServiceWorker(true);
+    }
+  }, [needRefresh, updateServiceWorker]);
+
+  useEffect(() => {
+      // Trigger background sync exactly once on app boot natively
+      OtaSyncService.syncContent();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

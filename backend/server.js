@@ -176,6 +176,7 @@ app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads')));
 // Routes
 
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/content', require('./routes/syncRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/stories', require('./routes/storyRoutes'));
 app.use('/api/videos', require('./routes/videoRoutes'));
