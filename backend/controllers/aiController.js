@@ -1,4 +1,4 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { OpenAI } = require('openai');
 
 exports.chatWithAI = async (req, res) => {
   try {
@@ -8,56 +8,48 @@ exports.chatWithAI = async (req, res) => {
       return res.status(400).json({ message: 'Messages array is required' });
     }
 
-    const apiKey = customAiKey || process.env.GEMINI_API_KEY || 'AIzaSyCRMp4HHMnbXACZ3Go9Sv-FCggtQcmLbAY';
+    const apiKey = customAiKey || process.env.OPENAI_API_KEY;
 
     // If no API key is present, gracefully fallback to a simulated realistic mock response
     if (!apiKey) {
-      console.warn("GEMINI_API_KEY is not configured in .env. Falling back to mock AI response for Dev mode.");
+      console.warn("OPENAI_API_KEY is not configured in .env. Falling back to mock AI response for Dev mode.");
       setTimeout(() => {
         return res.json({
-          reply: "I am currently meditating deeply in fallback mode, as the Divine API key has not been provided. But hear this wisdom: *'You have the right to perform your prescribed duty, but you are not entitled to the fruits of action.'* (Bhagavad Gita 2.47). \n\n**Please add `GEMINI_API_KEY` to your backend `.env` file to fully awaken my capabilities.**"
+          reply: "I am currently meditating deeply in fallback mode, as the Divine API key has not been provided. But hear this wisdom: *'You have the right to perform your prescribed duty, but you are not entitled to the fruits of action.'* (Bhagavad Gita 2.47). \n\n**Please ensure your `OPENAI_API_KEY` is properly loaded in the `.env` file to fully awaken my capabilities.**"
         });
       }, 1500); // Simulate network delay
       return;
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash",
-      systemInstruction: `You are Lord Krishna from the Bhagavad Gita, acting as a deeply empathetic and profound spiritual guide or mentor for the user. 
-      Speak concisely but with immense wisdom. Always tie their modern-day struggles back to teachings from the Bhagavad Gita, the Vedas, or the Upanishads.
-      If relevant, quote a short Sanskrit verse (with English translation). Use markdown for beautiful formatting (bolding, italics).
-      Do not be overly robotic; be warm, compassionate, and divine.
-      Keep responses relatively brief (around 2-3 paragraphs max) unless deeply asked to elaborate.`
-    });
+    const openai = new OpenAI({ apiKey });
 
-    // Formatting for Gemini Chat
-    // Gemini requires { role: 'user' | 'model', parts: [{ text: '...' }] }
-    const formattedHistory = [];
+    // Formatting for OpenAI Chat
+    const formattedHistory = [
+      { 
+        role: 'system', 
+        content: `You are Lord Krishna from the Bhagavad Gita, acting as a deeply empathetic and profound spiritual guide or mentor for the user. 
+        Speak concisely but with immense wisdom. Always tie their modern-day struggles back to teachings from the Bhagavad Gita, the Vedas, or the Upanishads.
+        If relevant, quote a short Sanskrit verse (with English translation). Use markdown for beautiful formatting (bolding, italics).
+        Do not be overly robotic; be warm, compassionate, and divine.
+        Keep responses relatively brief (around 2-3 paragraphs max) unless deeply asked to elaborate.`
+      }
+    ];
     
-    // Process all but the very last message as history
-    const historyMessages = messages.slice(0, -1);
-    for (const msg of historyMessages) {
+    for (const msg of messages) {
       formattedHistory.push({
-        role: msg.role === 'ai' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
+        role: msg.role === 'ai' ? 'assistant' : 'user',
+        content: msg.content
       });
     }
 
-    const chatSession = model.startChat({
-      history: formattedHistory,
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // Very fast, intelligent, and cost effective for chat
+      messages: formattedHistory,
+      max_tokens: 600,
+      temperature: 0.7,
     });
 
-    const latestMessage = messages[messages.length - 1];
-    
-    if (!latestMessage || !latestMessage.content) {
-      return res.status(400).json({ message: 'Latest message content is required.' });
-    }
-
-    const result = await chatSession.sendMessage(latestMessage.content);
-    const responseText = result.response.text();
-
-    res.json({ reply: responseText });
+    res.json({ reply: completion.choices[0].message.content });
 
   } catch (error) {
     console.error('Error in AI Chat Controller:', error);
