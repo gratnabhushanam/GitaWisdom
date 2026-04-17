@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'Gita Wisdom Devotion',
         short_name: 'Gita Wisdom',
         description: 'Immersive divine spiritual journey and reels',
-        theme_color: '#08111f',
-        background_color: '#08111f',
+        theme_color: '#06101E',
+        background_color: '#06101E',
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [

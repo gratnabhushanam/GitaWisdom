@@ -6,8 +6,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#facc15",
-  "background_color": "#0b1d2a",
+  "theme_color": "#06101E",
+  "background_color": "#06101E",
   "icons": [
     {
       "src": "/logo-om.png",

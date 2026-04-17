@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo-om.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="theme-color" content="#facc15" />
+      <meta name="theme-color" content="#06101E" />
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,9 +14,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Ramabhadra&display=swap" rel="stylesheet">
     <title>Gita Wisdom - Devotional Learning</title>
+    <style>
+      .initial-loader {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #06101E;
+      }
+      .initial-loader img {
+        width: 120px;
+        height: auto;
+        animation: pulse 2s infinite ease-in-out;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+    </style>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; background-color: #06101E;">
+    <div id="root">
+      <div class="initial-loader">
+        <img src="/logo-om.png" alt="Loading Gita Wisdom..." />
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
