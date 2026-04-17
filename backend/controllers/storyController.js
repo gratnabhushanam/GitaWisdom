@@ -134,20 +134,24 @@ exports.updateStory = async (req, res) => {
     }
 
     if (useMongoStore()) {
-      const story = await StoryMongo.findById(String(id));
+      const updatedData = {
+        ...req.body,
+        title: incomingTitle || req.body.title, // Use patched titles
+        seriesTitle: req.body.seriesTitle || 'Bhagavad Gita',
+        bgmEnabled: typeof req.body.bgmEnabled === 'boolean' ? req.body.bgmEnabled : true,
+        bgmPreset: req.body.bgmPreset || 'temple',
+      };
+
+      const story = await StoryMongo.findByIdAndUpdate(
+        String(id),
+        { $set: updatedData },
+        { new: true, runValidators: true }
+      );
+      
       if (!story) {
         return res.status(404).json({ message: 'Story not found' });
       }
 
-      Object.assign(story, {
-        ...req.body,
-        title: incomingTitle || story.title,
-        seriesTitle: req.body.seriesTitle || story.seriesTitle || 'Bhagavad Gita',
-        bgmEnabled: typeof req.body.bgmEnabled === 'boolean' ? req.body.bgmEnabled : story.bgmEnabled !== false,
-        bgmPreset: req.body.bgmPreset || story.bgmPreset || 'temple',
-      });
-
-      await story.save();
       return res.json(mapStory(story));
     }
 

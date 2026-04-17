@@ -214,6 +214,11 @@ function AdminDashboardContent() {
 
   const handleAddContent = async (e) => {
     e.preventDefault();
+    
+    if (activeTab === 'stories' && editingStoryId) {
+       if (!window.confirm("Are you sure you want to save changes to this chapter?")) return;
+    }
+
     setLoading(true);
     let endpoint = '';
     let payload = {};
@@ -266,9 +271,15 @@ function AdminDashboardContent() {
 
 
       if (activeTab === 'stories' && editingStoryId) {
-        await axios.patch(endpoint, payload, {
+        const { data: updatedStory } = await axios.patch(endpoint, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        // Optimistic native UI update without network refresh
+        setData(prev => ({
+           ...prev,
+           stories: prev.stories.map(st => (String(st._id || st.id) === String(editingStoryId)) ? updatedStory : st)
+        }));
       } else if (activeTab === 'videos' && videosUploadType === 'video') {
         // 1. Upload video
         const videoRes = await axios.post(endpoint, payload, {
@@ -293,16 +304,25 @@ function AdminDashboardContent() {
           }
         }
       } else {
-        await axios.post(endpoint, payload, {
+        const { data: newlyCreated } = await axios.post(endpoint, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        if (activeTab === 'stories') {
+           setData(prev => ({ ...prev, stories: [newlyCreated, ...prev.stories] }));
+        } else if (activeTab === 'movies') {
+           setData(prev => ({ ...prev, movies: [newlyCreated, ...prev.movies] }));
+        }
       }
 
       setMessage({ type: 'success', text: activeTab === 'stories' && editingStoryId ? 'Story updated successfully!' : `${publishLabel} published successfully!` });
       setShowAddModal(false);
       resetForms();
       setVideoQuizList([]);
-      await fetchAdminData();
+      
+      if (activeTab === 'videos' || activeTab === 'quiz' || activeTab === 'reels' || activeTab === 'users' || activeTab === 'dashboard') {
+         await fetchAdminData();
+      }
     } catch (error) {
       setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to publish content' });
     } finally {
@@ -830,7 +850,10 @@ function AdminDashboardContent() {
                       {filteredStories.map((story) => (
                         <div key={story._id || story.id} className="p-6 rounded-2xl border border-white/10 bg-white/5">
                           <h4 className="text-white font-bold text-lg mb-2">{story.title}</h4>
-                          <p className="text-xs text-gray-400 mb-3">{story.seriesTitle || 'Bhagavad Gita'} • Chapter {story.chapter || 1} • {(story.language || 'english')} • {(story.tags || []).join(', ') || 'No tags'}</p>
+                          <p className="text-xs text-gray-400 mb-3">
+                            {story.seriesTitle || 'Bhagavad Gita'} • Chapter {story.chapter || 1} • {(story.language || 'english')}
+                            <br/><span className="text-devotion-gold/60 mt-1 inline-block">Updated: {story.updatedAt ? new Date(story.updatedAt).toLocaleDateString() : 'N/A'}</span>
+                          </p>
                           <div className="mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
                             <div className="mb-2 flex flex-wrap gap-2">
                               <span className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${story.titleTelugu ? 'border-devotion-gold/40 text-devotion-gold' : 'border-white/10 text-white/35'}`}>TE</span>

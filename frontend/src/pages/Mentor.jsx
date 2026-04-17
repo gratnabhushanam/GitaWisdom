@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { Target, AlertTriangle, MessageSquarePlus, Wind, Zap, PlayCircle, BookOpen, X, Bookmark, Volume2, Pause, ChevronRight, FileText, Film, Key } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -29,8 +29,17 @@ export default function Mentor() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const messagesEndRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages, isAiLoading]);
 
   const handleNavigateToContent = (item, type) => {
     if (type === 'story') {
@@ -105,8 +114,8 @@ export default function Mentor() {
     setIsAiLoading(true);
     
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/ai/chat`, {
-        messages: updatedMessages
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
+        message: chatInput.trim()
       }, API_REQUEST_CONFIG);
       
       const aiReply = { role: 'ai', content: response.data.reply || 'Divine connectivity interrupted.' };
@@ -541,6 +550,7 @@ export default function Mentor() {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             <div className="mt-6 border-t border-white/10 pt-6">

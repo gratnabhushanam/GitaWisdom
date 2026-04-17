@@ -192,6 +192,7 @@ app.use('/api/quiz', require('./routes/quizRoutes'));
 app.use('/api/forums', require('./routes/forumRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/debug', require('./routes/debugRoutes'));
 
 console.log('Routes registered');
