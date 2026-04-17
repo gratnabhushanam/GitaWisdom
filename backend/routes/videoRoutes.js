@@ -19,6 +19,7 @@ const {
 	deleteVideo,
 	grantStreamingToken,
 	toggleSaveReel,
+	getSavedReels,
 } = require('../controllers/videoController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
@@ -39,6 +40,7 @@ router.get('/kids', apiCache(30), getKidsVideos);
 router.get('/user-reels', apiCache(30), getUserReels);
 router.post('/user-reels', protect, uploadReelVideo.single('video'), uploadUserReel);
 router.get('/user-reels/me', protect, getMyReels);
+router.get('/user-reels/saved/:userId', protect, getSavedReels);
 router.get('/user-reels/moderation', protect, admin, getUserReelModerationQueue);
 router.patch('/user-reels/:id/moderate', protect, admin, moderateUserReel);
 router.post('/user-reels/:id/like', protect, toggleUserReelLike);

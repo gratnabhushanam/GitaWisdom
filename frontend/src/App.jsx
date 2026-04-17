@@ -10,6 +10,7 @@ import SplashScreen from './components/SplashScreen';
 import OtaSyncService from './services/OtaSyncService';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './styles/app-shell.css';
+import LayoutWrapper from './components/LayoutWrapper';
 
 const Home = lazy(() => import('./pages/Home'));
 const Stories = lazy(() => import('./pages/Stories'));
@@ -130,36 +131,38 @@ function AppShell() {
         </div>
         <GlobalInstallPrompt />
         
-        <main className="flex-1 overflow-y-auto hide-scrollbar relative z-0">
-          <Suspense fallback={pageFallback}>
-            <Routes>
-              <Route path="/" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/register/verify-otp" element={<RegisterVerifyOtp />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/home" element={user ? <Home /> : <Navigate to="/login" replace />} />
-              <Route path="/stories" element={user ? <Stories /> : <Navigate to="/login" replace />} />
-              <Route path="/chapters" element={user ? <Stories /> : <Navigate to="/login" replace />} />
-              <Route path="/videos" element={user ? <Videos /> : <Navigate to="/login" replace />} />
-              <Route path="/sloka" element={user ? <Sloka /> : <Navigate to="/login" replace />} />
-              <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
-              <Route path="/install" element={<InstallApp />} />
-              <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
-              <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
-              <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />
-              <Route path="/satsangs" element={user ? <Satsangs /> : <Navigate to="/login" replace />} />
-              <Route path="/daily-sloka" element={user ? <DailySloka /> : <Navigate to="/login" replace />} />
-              <Route path="/reels" element={user ? <Reels /> : <Navigate to="/login" replace />} />
-              <Route path="/kids" element={user ? <KidsMode /> : <Navigate to="/login" replace />} />
-              <Route path="/search" element={user ? <Search /> : <Navigate to="/login" replace />} />
-              <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
-              <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
-              <Route path="/upload-reel" element={user ? <UploadReel /> : <Navigate to="/login" replace />} />
-              <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
-              <Route path="*" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
-            </Routes>
-          </Suspense>
+        <main className="flex-1 relative z-0">
+          <LayoutWrapper>
+            <Suspense fallback={pageFallback}>
+              <Routes>
+                <Route path="/" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/register/verify-otp" element={<RegisterVerifyOtp />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/home" element={user ? <Home /> : <Navigate to="/login" replace />} />
+                <Route path="/stories" element={user ? <Stories /> : <Navigate to="/login" replace />} />
+                <Route path="/chapters" element={user ? <Stories /> : <Navigate to="/login" replace />} />
+                <Route path="/videos" element={user ? <Videos /> : <Navigate to="/login" replace />} />
+                <Route path="/sloka" element={user ? <Sloka /> : <Navigate to="/login" replace />} />
+                <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
+                <Route path="/install" element={<InstallApp />} />
+                <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
+                <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
+                <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />
+                <Route path="/satsangs" element={user ? <Satsangs /> : <Navigate to="/login" replace />} />
+                <Route path="/daily-sloka" element={user ? <DailySloka /> : <Navigate to="/login" replace />} />
+                <Route path="/reels" element={user ? <Reels /> : <Navigate to="/login" replace />} />
+                <Route path="/kids" element={user ? <KidsMode /> : <Navigate to="/login" replace />} />
+                <Route path="/search" element={user ? <Search /> : <Navigate to="/login" replace />} />
+                <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
+                <Route path="/movies" element={user ? <Movies /> : <Navigate to="/login" replace />} />
+                <Route path="/upload-reel" element={user ? <UploadReel /> : <Navigate to="/login" replace />} />
+                <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
+                <Route path="*" element={<Navigate to={user ? '/kids' : '/login'} replace />} />
+              </Routes>
+            </Suspense>
+          </LayoutWrapper>
         </main>
         
         {!isAuthRoute && <Footer />}

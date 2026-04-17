@@ -513,9 +513,35 @@ exports.toggleSaveReel = async (req, res) => {
     
     await user.save();
     
+    // Bi-directional tie to the Reel model
+    const VideoMongo = require('../models/mongo/VideoMongo');
+    const reel = await VideoMongo.findById(reelId);
+    if (reel) {
+       if (!reel.savedBy) reel.savedBy = [];
+       if (isSaved && !reel.savedBy.includes(String(userId))) {
+          reel.savedBy.push(String(userId));
+       } else if (!isSaved) {
+          reel.savedBy = reel.savedBy.filter(id => id !== String(userId));
+       }
+       await reel.save();
+    }
+    
     res.status(200).json({ message: isSaved ? 'Reel saved' : 'Reel unsaved', savedReels: user.savedReels, isSaved });
   } catch (err) {
     console.error('Save reel error:', err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getSavedReels = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const VideoMongo = require('../models/mongo/VideoMongo');
+    
+    // Search strictly across videos containing this user in savedBy mapping natively
+    const savedVideos = await VideoMongo.find({ savedBy: String(userId) }).sort({ createdAt: -1 }).lean();
+    res.json(savedVideos.map(mapVideo));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
