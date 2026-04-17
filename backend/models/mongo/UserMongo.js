@@ -35,6 +35,7 @@ const UserMongoSchema = new mongoose.Schema(
     settings: { type: Object, default: defaultSettings },
     benefits: { type: Object, default: defaultBenefits },
     bookmarkedSlokas: { type: [Number], default: [] },
+    savedReels: { type: [String], default: [] },
     japaCount: { type: Number, default: 0 },
     japaMalas: { type: Number, default: 0 },
   },

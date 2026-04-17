@@ -174,9 +174,8 @@ function AdminDashboardContent() {
         const { data: stories } = await axios.get('/api/stories', { headers });
         setData(prev => ({ ...prev, stories }));
       } else if (activeTab === 'videos') {
-        const [videosResponse, pendingResponse, quizResponse] = await Promise.all([
+        const [videosResponse, quizResponse] = await Promise.all([
           axios.get('/api/videos', { headers }),
-          axios.get(`/api/videos/user-reels/moderation?status=pending&contentType=${pendingContentFilter}`, { headers }),
           axios.get('/api/quiz/questions', { headers }),
         ]);
         setData(prev => ({
@@ -184,7 +183,9 @@ function AdminDashboardContent() {
           videos: Array.isArray(videosResponse.data) ? videosResponse.data : [],
           quizQuestions: Array.isArray(quizResponse.data) ? quizResponse.data : [],
         }));
-        setPendingUserReels(Array.isArray(pendingResponse.data) ? pendingResponse.data : []);
+      } else if (activeTab === 'reels') {
+        const { data: pendingResponse } = await axios.get(`/api/videos/user-reels/moderation?status=${pendingContentFilter === 'all' ? 'pending' : pendingContentFilter}&contentType=all`, { headers });
+        setPendingUserReels(Array.isArray(pendingResponse) ? pendingResponse : []);
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to fetch admin data. Please check your connection or try again later.' });
@@ -514,6 +515,7 @@ function AdminDashboardContent() {
             { id: 'movies', name: 'Movies', icon: <Film className="w-5 h-5" /> },
             { id: 'stories', name: 'Stories', icon: <BookOpen className="w-5 h-5" /> },
             { id: 'videos', name: 'Videos', icon: <Video className="w-5 h-5" /> },
+            { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-5 h-5 text-devotion-gold" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
           ].map(item => (
             <button
@@ -556,6 +558,7 @@ function AdminDashboardContent() {
                 { id: 'movies', name: 'Movies', icon: <Film className="w-4 h-4" /> },
                 { id: 'stories', name: 'Stories', icon: <BookOpen className="w-4 h-4" /> },
                 { id: 'videos', name: 'Videos', icon: <Video className="w-4 h-4" /> },
+                { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-4 h-4 text-devotion-gold" /> },
                 { id: 'users', name: 'Users', icon: <Users className="w-4 h-4" /> },
               ].map(item => (
                 <button
@@ -1060,6 +1063,98 @@ function AdminDashboardContent() {
                       </div>
                     )}
                   </div>
+               </div>
+            )}
+
+            {activeTab === 'reels' && (
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Reels <span className="text-devotion-gold">Moderation</span></h3>
+                     <div className="flex bg-black/40 p-1 rounded-xl">
+                        {['pending', 'approved', 'rejected'].map(status => (
+                           <button
+                             key={status}
+                             onClick={() => setPendingContentFilter(status)}
+                             className={`px-4 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all ${pendingContentFilter === status ? 'bg-devotion-gold text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                           >
+                              {status}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                  {pendingUserReels.length === 0 ? (
+                    <p className="text-gray-500 text-center py-12">No {pendingContentFilter} reels found.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-x-auto">
+                      {pendingUserReels.map((reel) => (
+                        <div key={reel._id || reel.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
+                          {reel.videoUrl && (
+                            <div className="mb-4 rounded-xl overflow-hidden border border-devotion-gold/20 aspect-[9/16] bg-black relative max-h-[400px]">
+                              <MediaPlayerHLS
+                                url={reel.videoUrl}
+                                hlsUrl={reel.hlsUrl}
+                                title={reel.title}
+                                className="w-full h-full object-cover"
+                                youtubeParams="autoplay=0&rel=0&modestbranding=1"
+                                controls
+                                instagramMode={true}
+                              />
+                            </div>
+                          )}
+                          <h4 className="text-white font-bold text-lg mb-2">{reel.title}</h4>
+                          <div className="flex items-center gap-2 mb-3 bg-black/30 p-2 rounded-lg border border-white/5">
+                             <div className="w-6 h-6 rounded-full bg-devotion-gold flex items-center justify-center text-black font-black text-[10px]">
+                                {reel.uploadedBy?.name?.[0]?.toUpperCase() || 'U'}
+                             </div>
+                             <div>
+                                <p className="text-[10px] font-black text-devotion-gold uppercase tracking-widest">{reel.uploadedBy?.name || 'Unknown Seeker'}</p>
+                                <p className="text-[9px] text-gray-500 uppercase">{reel.uploadedBy?.email || 'No email'}</p>
+                             </div>
+                          </div>
+                          <p className="text-sm text-gray-300 line-clamp-2 mb-4">{reel.description || 'No description provided'}</p>
+                          
+                          {pendingContentFilter === 'pending' && (
+                             <div className="mt-auto space-y-3 pt-4 border-t border-white/10">
+                               <input 
+                                 placeholder="Optional rejection note..."
+                                 className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-devotion-gold outline-none"
+                                 value={moderationNotes[reel._id || reel.id] || ''}
+                                 onChange={e => setModerationNotes({...moderationNotes, [reel._id || reel.id]: e.target.value})}
+                               />
+                               <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleModerateUserReel(reel._id || reel.id, 'approved')}
+                                    className="flex-1 bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleModerateUserReel(reel._id || reel.id, 'rejected')}
+                                    className="flex-1 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                  >
+                                    Reject
+                                  </button>
+                               </div>
+                             </div>
+                          )}
+                          
+                          {pendingContentFilter !== 'pending' && (
+                             <div className="mt-auto flex justify-between items-center pt-4 border-t border-white/10">
+                                <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${reel.moderationStatus === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                                   {reel.moderationStatus}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteContent('videos', reel._id || reel.id, reel.title || 'Untitled Reel')}
+                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[9px] font-black uppercase tracking-widest"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Dump
+                                </button>
+                             </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                </div>
             )}
          </div>

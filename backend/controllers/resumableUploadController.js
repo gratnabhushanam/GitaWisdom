@@ -122,7 +122,7 @@ async function handleResumableUpload(req, res) {
       }
     } else {
       console.warn('BLOB_READ_WRITE_TOKEN not found, falling back to local storage.');
-      masterPlaylistCdnUrl = `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8`;
+      masterPlaylistCdnUrl = hlsFiles.length > 0 ? `${backendUrl}/uploads/hls/${path.parse(fileName).name}/${path.parse(fileName).name}_master.m3u8` : '';
       videoCdnUrl = `${backendUrl}/uploads/reels/${fileName}`;
     }
 

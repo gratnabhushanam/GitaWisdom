@@ -140,20 +140,17 @@ export default function Reels() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(SAVED_REELS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(parsed) ? parsed : [];
-      const mine = list.filter((item) => Number(item.savedByUserId || 0) === currentUserId);
+      const dbSaved = Array.isArray(user?.savedReels) ? user.savedReels : [];
       const nextMap = {};
-      mine.forEach((item) => {
-        nextMap[String(item.reelId)] = true;
+      dbSaved.forEach(id => {
+         nextMap[String(id)] = true;
       });
       setSavedReelMap(nextMap);
     } catch (error) {
-      console.error('Failed to load saved reels:', error);
+      console.error('Failed to load saved reels natively:', error);
       setSavedReelMap({});
     }
-  }, [location?.state?.focusReelId, reels, currentUserId]);
+  }, [user]);
 
   useEffect(() => {
     if (!reels.length) {
@@ -375,43 +372,60 @@ export default function Reels() {
     }
   };
 
-  const handleSaveReel = (reel) => {
+  const handleSaveReel = async (reel) => {
     if (!currentUserId) {
-      alert('Please login to save reels.');
+      alert('Please login to save & download reels.');
       return;
     }
 
     const reelId = String(reel._id || reel.id);
     if (!reelId) return;
 
+    // Phase 1: Native Physical Download Override
     try {
-      const raw = localStorage.getItem(SAVED_REELS_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      const list = Array.isArray(parsed) ? parsed : [];
-      const exists = list.some((item) => String(item.reelId) === reelId && Number(item.savedByUserId || 0) === currentUserId);
+        let downloadUrl = reel.videoUrl || reel.youtubeUrl || reel.url;
+        if (downloadUrl && downloadUrl.includes('/uploads/')) {
+           const downloadUrlObj = new URL(downloadUrl, window.location.origin);
+           const token = localStorage.getItem('token');
+           if (token) downloadUrlObj.searchParams.set('token', token);
+           downloadUrlObj.searchParams.set('download', 'true');
+           
+           const a = document.createElement('a');
+           a.style.display = 'none';
+           a.href = downloadUrlObj.toString();
+           a.download = `GitaWisdom_Reel_${reel.title || reelId}.mp4`;
+           document.body.appendChild(a);
+           a.click();
+           document.body.removeChild(a);
+        } else if (downloadUrl) {
+           // Direct External URL Download Trigger
+           window.open(downloadUrl, '_blank');
+        }
+    } catch(err) { console.error('Failed to trigger native download action', err); }
 
-      const next = exists
-        ? list.filter((item) => !(String(item.reelId) === reelId && Number(item.savedByUserId || 0) === currentUserId))
-        : [
-            {
-              reelId,
-              title: reel.title || '',
-              description: reel.description || '',
-              videoUrl: reel.videoUrl || reel.youtubeUrl || reel.url || '',
-              tags: Array.isArray(reel.tags) ? reel.tags : [],
-              likesCount: Number(reel.likesCount || 0),
-              sharesCount: Number(reel.sharesCount || 0),
-              commentsCount: Number(reel.commentsCount || 0),
-              savedByUserId: currentUserId,
-              savedAt: new Date().toISOString(),
-            },
-            ...list,
-          ].slice(0, 400);
+    // Phase 2: Secure Database Backend Tracking Over JWT
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`/api/videos/user-reels/${reelId}/save`, {}, {
+         headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const nextMap = { ...savedReelMap };
+      if (response.data.isSaved) {
+         nextMap[reelId] = true;
+      } else {
+         delete nextMap[reelId];
+      }
+      setSavedReelMap(nextMap);
+      
+      // Optionally refresh global user context securely if desired
+      if (response.data.savedReels && typeof setUser === 'function') {
+         setUser({ ...user, savedReels: response.data.savedReels });
+      }
 
-      localStorage.setItem(SAVED_REELS_KEY, JSON.stringify(next));
-      setSavedReelMap((prev) => ({ ...prev, [reelId]: !exists }));
     } catch (error) {
-      console.error('Failed to save reel:', error);
+      console.error('Failed to sync saved reel into database:', error);
+      alert('Network Error tracking this save sequence in user history.');
     }
   };
 

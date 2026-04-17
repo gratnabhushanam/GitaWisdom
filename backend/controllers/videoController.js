@@ -489,3 +489,33 @@ exports.getUserReels = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.toggleSaveReel = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const reelId = req.params.id;
+    
+    const UserMongo = require('../models/mongo/UserMongo');
+    const user = await UserMongo.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (!user.savedReels) user.savedReels = [];
+    
+    const stringId = String(reelId);
+    let isSaved = false;
+    
+    if (!user.savedReels.includes(stringId)) {
+       user.savedReels.push(stringId);
+       isSaved = true;
+    } else {
+       user.savedReels = user.savedReels.filter(id => id !== stringId);
+    }
+    
+    await user.save();
+    
+    res.status(200).json({ message: isSaved ? 'Reel saved' : 'Reel unsaved', savedReels: user.savedReels, isSaved });
+  } catch (err) {
+    console.error('Save reel error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};

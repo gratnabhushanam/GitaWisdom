@@ -139,6 +139,11 @@ app.get('/uploads/reels/:filename', protectStreaming, (req, res) => {
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization',
       'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Encoding, Content-Length',
     };
+    
+    // Feature: Cross-Origin physical MP4 downloading
+    if (req.query.download === 'true') {
+      corsHeaders['Content-Disposition'] = `attachment; filename="${req.params.filename}"`;
+    }
 
     const range = req.headers.range;
     if (!range) {

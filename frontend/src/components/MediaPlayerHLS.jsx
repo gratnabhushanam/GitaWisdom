@@ -137,14 +137,22 @@ export default function MediaPlayer({
     const updateDuration = () => setDuration(video.duration || 0);
 
     // Feature: Auto Rotate Fullscreen (Mobile)
-    const handleOrientation = () => {
-      if (window.screen && window.screen.orientation) {
-        if (window.screen.orientation.angle === 90 || window.screen.orientation.angle === -90 || window.screen.orientation.angle === 270) {
-          if (video.requestFullscreen) {
-            video.requestFullscreen().catch(err => console.warn(err));
-          } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen().catch(err => console.warn(err));
+    const handleFullscreenChange = async () => {
+      // If entering fullscreen
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+          try {
+            await window.screen.orientation.lock('landscape');
+          } catch (e) {
+            console.warn('Orientation lock blocked natively on this device browser.', e);
           }
+        }
+      } else {
+        // Exiting fullscreen
+        if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
+          try {
+            window.screen.orientation.unlock();
+          } catch (e) {}
         }
       }
     };
@@ -152,13 +160,25 @@ export default function MediaPlayer({
     video.addEventListener('timeupdate', updateProgress);
     video.addEventListener('durationchange', updateDuration);
     video.addEventListener('loadedmetadata', updateDuration);
-    window.addEventListener("orientationchange", handleOrientation);
+    
+    // Bind native Fullscreen state listeners globally for iOS/Android
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    if (video) {
+        video.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
+        video.addEventListener('webkitendfullscreen', handleFullscreenChange);
+    }
 
     return () => {
       video.removeEventListener('timeupdate', updateProgress);
       video.removeEventListener('durationchange', updateDuration);
       video.removeEventListener('loadedmetadata', updateDuration);
-      window.removeEventListener("orientationchange", handleOrientation);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      if (video) {
+          video.removeEventListener('webkitbeginfullscreen', handleFullscreenChange);
+          video.removeEventListener('webkitendfullscreen', handleFullscreenChange);
+      }
     };
   }, [secureHlsUrl, resolvedUrl, loadingToken, playLimitSeconds]);
 
@@ -242,8 +262,9 @@ export default function MediaPlayer({
   return (
     <div className={`relative group overflow-hidden ${className}`}>
       <video
+        key={hlsFallbackActive ? 'fallback' : 'hls'}
         ref={videoRef}
-        className={`w-full ${instagramMode ? 'h-[100dvh] object-cover rounded-none' : 'h-auto rounded-xl'} shadow-lg`}
+        className={`w-full ${instagramMode ? 'h-[100dvh] object-cover rounded-none' : 'h-full aspect-video object-contain bg-black rounded-xl'} shadow-lg`}
         src={activeSource || resolvedUrl}
         autoPlay={effectiveShouldPlay}
         muted={muted}
