@@ -99,7 +99,7 @@ export default function Navbar() {
           <div className="flex-shrink-0 flex items-center gap-3">
             <Link to="/home" className="group flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center group-hover:drop-shadow-[0_0_12px_rgba(255,215,0,0.4)] transition-all">
-                <img src="/logo-om.png" alt="Gita Wisdom Logo" className="w-full h-full object-cover" />
+                <img src="/logo-om-v2.png" alt="Gita Wisdom Logo" className="w-full h-full object-cover" />
               </div>
               <span className="text-base font-bold bg-gradient-to-r from-devotion-gold to-[#FFE6A5] bg-clip-text text-transparent tracking-tight">
                 GitaWisdom
@@ -193,7 +193,49 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="lg:hidden">
+          <div className="lg:hidden flex items-center gap-2">
+            {user && (
+                 <div className="relative">
+                    <button 
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      className="group flex items-center justify-center w-8 h-8 rounded-lg hover:bg-devotion-gold/10 transition-colors relative"
+                    >
+                       <Bell className="w-5 h-5 text-gray-400 group-hover:text-devotion-gold transition-colors" />
+                       {unreadCount > 0 && (
+                         <span className="absolute top-1 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#06101E] animate-pulse"></span>
+                       )}
+                    </button>
+
+                    {showNotifications && (
+                      <div className="fixed top-14 left-4 right-4 sm:absolute sm:right-0 sm:left-auto sm:mt-3 sm:w-80 bg-[#081426] border border-devotion-gold/30 rounded-2xl shadow-2xl overflow-hidden py-2" style={{ zIndex: 9999 }}>
+                         <div className="px-4 py-2 flex justify-between items-center border-b border-white/5 mb-2">
+                            <span className="text-xs font-bold text-white uppercase tracking-widest">Notifications</span>
+                            {unreadCount > 0 && (
+                               <button onClick={handleMarkAsRead} className="text-[10px] text-devotion-gold hover:text-white uppercase tracking-[0.1em] font-bold">Mark all read</button>
+                            )}
+                         </div>
+                         <div className="max-h-[300px] overflow-y-auto px-2">
+                            {notifications.length === 0 ? (
+                               <div className="text-center py-6 text-gray-500">
+                                  <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                  <p className="text-xs font-medium uppercase tracking-[0.1em]">All caught up!</p>
+                               </div>
+                            ) : (
+                               notifications.map((n) => (
+                                 <div key={n._id} className={`p-3 rounded-xl mb-1 flex items-start gap-3 transition-colors ${!n.isRead && !n.read ? 'bg-devotion-gold/10 border border-devotion-gold/20' : 'hover:bg-white/5 border border-transparent'}`}>
+                                    <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.isRead && !n.read ? 'bg-devotion-gold' : 'bg-gray-600'}`}></div>
+                                    <div className="flex-1 min-w-0">
+                                       {n.title && <p className="text-xs font-bold text-white mb-0.5 truncate">{n.title}</p>}
+                                       <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{n.message || n.text}</p>
+                                    </div>
+                                 </div>
+                               ))
+                            )}
+                         </div>
+                      </div>
+                    )}
+                 </div>
+              )}
             <button 
               onClick={() => setIsOpen(!isOpen)}
               className="text-devotion-gold hover:text-white transition-colors"

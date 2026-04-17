@@ -132,3 +132,27 @@ exports.commentOnPost = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.deletePostComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    if (!useMongoStore()) return res.status(400).json({ message: 'MongoDB required' });
+
+    const post = await PostMongo.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const commentIndex = post.comments.findIndex(c => String(c._id) === String(commentId) || String(c.id) === String(commentId));
+    if (commentIndex === -1) return res.status(404).json({ message: 'Comment not found' });
+
+    const comment = post.comments[commentIndex];
+    if (String(comment.authorId) !== String(req.user.id || req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not allowed to delete this comment' });
+    }
+
+    post.comments.splice(commentIndex, 1);
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

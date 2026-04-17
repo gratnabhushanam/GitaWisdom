@@ -5,7 +5,7 @@ import { Users, Plus, MessageCircle, Heart, Search, ChevronRight, Trash2 } from 
 import { useNavigate } from 'react-router-dom';
 
 export default function Satsangs() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +14,8 @@ export default function Satsangs() {
   const [activeGroupPosts, setActiveGroupPosts] = useState([]);
   const [postContent, setPostContent] = useState('');
   const [newGroupForm, setNewGroupForm] = useState({ name: '', description: '', category: 'General' });
+  const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
+  const [commentInputs, setCommentInputs] = useState({});
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -109,6 +111,44 @@ export default function Satsangs() {
     } catch (error) {
       console.error('Like error:', error);
       alert('Must be logged in to like');
+    }
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const text = commentInputs[postId]?.trim();
+    if (!text) return;
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(`/api/forums/posts/${postId}/comment`, { text }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
+      setCommentInputs({ ...commentInputs, [postId]: '' });
+      try {
+        const pointsRes = await axios.post('/api/auth/profile/points', { points: 5 }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (pointsRes.data.user) {
+          setUser(pointsRes.data.user);
+        }
+      } catch (err) {}
+    } catch (error) {
+      console.error('Comment error', error);
+      alert('Failed to post comment');
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!window.confirm('Delete comment?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const { data } = await axios.delete(`/api/forums/posts/${postId}/comment/${commentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
+    } catch (error) {
+      console.error('Delete comment error', error);
+      alert('Failed to delete comment');
     }
   };
 
@@ -242,11 +282,67 @@ export default function Satsangs() {
                                   <Heart className={`w-4 h-4 ${post.likes?.includes(user?.id || user?._id) ? 'fill-current' : ''}`} /> 
                                   {post.likes?.length || 0}
                                </button>
-                               <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                               <button 
+                                 onClick={() => setActiveCommentsPostId(activeCommentsPostId === post._id ? null : post._id)}
+                                 className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white"
+                               >
                                   <MessageCircle className="w-4 h-4" />
                                   {post.comments?.length || 0}
-                               </div>
+                               </button>
                             </div>
+                            
+                            {activeCommentsPostId === post._id && (
+                              <div className="mt-4 pt-4 border-t border-white/10">
+                                {user && (
+                                  <div className="flex gap-2 mb-4">
+                                    <input
+                                      value={commentInputs[post._id] || ''}
+                                      onChange={(e) => setCommentInputs({ ...commentInputs, [post._id]: e.target.value })}
+                                      placeholder="Write a comment..."
+                                      className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-devotion-gold/50"
+                                    />
+                                    <button
+                                      onClick={() => handleCommentSubmit(post._id)}
+                                      disabled={!commentInputs[post._id]?.trim()}
+                                      className="bg-devotion-gold text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-yellow-400 disabled:opacity-50"
+                                    >
+                                      Send
+                                    </button>
+                                  </div>
+                                )}
+                                <div className="space-y-3 max-h-60 overflow-y-auto no-scrollbar">
+                                  {post.comments?.map(comment => (
+                                    <div key={comment._id || comment.id} className="bg-black/20 rounded-xl p-3 border border-white/5">
+                                      <div className="flex justify-between items-start mb-1">
+                                        <div className="flex items-center gap-2">
+                                          {comment.authorImage ? (
+                                            <img src={comment.authorImage} alt="User" className="w-6 h-6 rounded-full object-cover border border-devotion-gold/30" />
+                                          ) : (
+                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center font-bold text-[8px] uppercase text-white">
+                                              {getInitials(comment.authorName)}
+                                            </div>
+                                          )}
+                                          <p className="font-bold text-xs text-devotion-gold">{comment.authorName}</p>
+                                        </div>
+                                        {(String(comment.authorId) === String(user?.id || user?._id) || user?.role === 'admin') && (
+                                          <button
+                                            onClick={() => handleDeleteComment(post._id, comment._id || comment.id)}
+                                            className="text-red-400 hover:text-red-300 transition-colors"
+                                            title="Delete comment"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        )}
+                                      </div>
+                                      <p className="text-gray-300 text-xs mt-2">{comment.text}</p>
+                                    </div>
+                                  ))}
+                                  {(!post.comments || post.comments.length === 0) && (
+                                    <p className="text-xs text-gray-500 text-center py-2">No comments yet.</p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                          </div>
                        ))
                      )}

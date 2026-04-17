@@ -1,119 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Mail, Phone, Shield, BookOpen, Heart } from 'lucide-react';
+import { ArrowRight, Sparkles, Shield, Heart, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import heroImage from '../assets/hero.png';
 import '../styles/auth.css';
 
 export default function Login() {
-  const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
-  const [identifierValue, setIdentifierValue] = useState('');
-  const [step, setStep] = useState('INPUT'); // 'INPUT' | 'OTP'
-  const [otpArr, setOtpArr] = useState(['', '', '', '', '', '']);
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [timer, setTimer] = useState(300); // 5 mins
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const otpInputRefs = useRef([]);
-
-  const { sendOtpLogin, verifyOtpLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle countdowns
-  useEffect(() => {
-    let interval;
-    if (step === 'OTP' && timer > 0) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [step, timer]);
-
-  useEffect(() => {
-    let interval;
-    if (resendCooldown > 0) {
-      interval = setInterval(() => setResendCooldown(c => c - 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [resendCooldown]);
-
-  const handleSendOtp = async (event) => {
-    if (event) event.preventDefault();
-    setError('');
-
-    if (!identifierValue) {
-      setError(`Please enter your ${loginMethod === 'email' ? 'Email Address' : 'Phone Number'}`);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const payload = loginMethod === 'email' ? { email: identifierValue } : { phone: identifierValue };
-      await sendOtpLogin(payload);
-      setStep('OTP');
-      setTimer(300);
-      setResendCooldown(30);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
-      if (err.response?.status === 429) {
-        setResendCooldown(err.response?.data?.retryAfterSeconds || 30);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
-    const otpString = otpArr.join('');
-    if (otpString.length !== 6) {
-      setError('Please enter a full 6-digit OTP.');
+    setError('');
+
+    if (!formData.email || !formData.password) {
+      setError('Please enter both Email and Password');
       return;
     }
 
     setLoading(true);
-    setError('');
     try {
-      const payload = Object.assign(
-        loginMethod === 'email' ? { email: identifierValue } : { phone: identifierValue },
-        { otp: otpString }
-      );
-      
-      await verifyOtpLogin(payload);
+      await login(formData.email, formData.password);
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid OTP');
-      if (err.response?.data?.message === 'Too many attempts. Request a new OTP.') {
-          setStep('INPUT'); // Kick back
-      }
+      setError(err.response?.data?.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^[0-9]?$/.test(value)) return;
-    const newOtp = [...otpArr];
-    newOtp[index] = value;
-    setOtpArr(newOtp);
-
-    // Auto-advance
-    if (value && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otpArr[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -134,7 +53,7 @@ export default function Login() {
                   Gita Wisdom
                 </h1>
                 <p className="auth-quote max-w-xl text-lg leading-relaxed sm:text-xl">
-                  Enter securely with passwordless authentication. Quick verification using your phone or email.
+                  Enter securely with your registered account. Quick access to your spiritual path.
                 </p>
               </div>
 
@@ -142,12 +61,12 @@ export default function Login() {
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                   <Shield className="mb-3 h-5 w-5 text-[#f7d77d]" />
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/90">Highly Secure</p>
-                  <p className="mt-1 text-xs text-white/70">Using timed OTPs natively secured by hash encryption.</p>
+                  <p className="mt-1 text-xs text-white/70">Using natively secured hash encryption.</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                   <Heart className="mb-3 h-5 w-5 text-[#f7d77d]" />
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/90">Easy Entry</p>
-                  <p className="mt-1 text-xs text-white/70">No passwords to remember. One tap access.</p>
+                  <p className="mt-1 text-xs text-white/70">One tap access to your saved resources.</p>
                 </div>
               </div>
             </div>
@@ -175,117 +94,72 @@ export default function Login() {
               </Link>
             </div>
 
+            <div className="mb-5 rounded-2xl border border-[#f7d77d]/20 bg-[#f7d77d]/8 p-4 text-sm text-white/80">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold text-[#f7d77d] underline decoration-[#f7d77d]/40 underline-offset-4">
+                Sign up here
+              </Link>
+            </div>
+
             {error && (
               <div className="mb-5 rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-200">
                 {error}
               </div>
             )}
 
-            {step === 'INPUT' ? (
-                <div className="animate-fade-in-up">
-                    {/* Toggle Login Method */}
-                    <div className="flex bg-[#0d1520] rounded-xl p-1 mb-6 border border-white/10">
-                        <button 
-                            onClick={() => { setLoginMethod('email'); setIdentifierValue(''); setError(''); }}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${loginMethod === 'email' ? 'bg-[#1a2536] text-[#f7d77d] shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-                        >
-                            <Mail className="w-4 h-4" /> Email
-                        </button>
-                        <button 
-                            onClick={() => { setLoginMethod('phone'); setIdentifierValue(''); setError(''); }}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${loginMethod === 'phone' ? 'bg-[#1a2536] text-[#f7d77d] shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}
-                        >
-                            <Phone className="w-4 h-4" /> Phone
-                        </button>
+            <div className="animate-fade-in-up">
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                            Email Address
+                        </label>
+                        <input
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(event) => setFormData(c => ({...c, email: event.target.value}))}
+                            onFocus={() => setFocusedField('id')}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="arjuna@example.com"
+                            className={`auth-input ${focusedField === 'id' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                        />
+                    </div>
+                    <div>
+                        <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
+                          Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            value={formData.password}
+                            onChange={(event) => setFormData(c => ({...c, password: event.target.value}))}
+                            onFocus={() => setFocusedField('password')}
+                            onBlur={() => setFocusedField(null)}
+                            placeholder="••••••••"
+                            className={`auth-input pr-12 ${focusedField === 'password' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((value) => !value)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-white/55 transition-colors hover:text-[#f7d77d]"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                     </div>
 
-                    <form onSubmit={handleSendOtp} className="space-y-4">
-                        <div>
-                            <label className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-white/80">
-                                {loginMethod === 'email' ? 'Email Address' : 'Phone Number'}
-                            </label>
-                            <input
-                                type={loginMethod === 'email' ? 'email' : 'tel'}
-                                required
-                                value={identifierValue}
-                                onChange={(event) => setIdentifierValue(event.target.value)}
-                                onFocus={() => setFocusedField('id')}
-                                onBlur={() => setFocusedField(null)}
-                                placeholder={loginMethod === 'email' ? "arjuna@example.com" : "+91 9876543210"}
-                                className={`auth-input ${focusedField === 'id' ? 'shadow-[0_0_0_4px_rgba(255,215,0,0.12)]' : ''}`}
-                            />
-                        </div>
-
-                        <button type="submit" disabled={loading || resendCooldown > 0} className="auth-button mt-4 w-full px-5 py-3.5">
-                            {loading ? 'Sending OTP...' : (resendCooldown > 0 ? `Wait ${resendCooldown}s` : 'Send Verification Code')}
-                        </button>
-                    </form>
-                </div>
-            ) : (
-                <div className="animate-fade-in-up">
-                    <div className="mb-6">
-                        <p className="text-white/70 text-sm leading-relaxed mb-4">
-                            We've sent a 6-digit verification code to <strong className="text-[#f7d77d]">{identifierValue}</strong>.
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-white/50 mb-3">
-                            <span>Enter OTP</span>
-                            <span className={timer < 60 ? 'text-red-400' : 'text-[#f7d77d]'}>
-                                {timer > 0 ? formatTime(timer) : 'Code Expired'}
-                            </span>
-                        </div>
-
-                        <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            <div className="flex gap-2 justify-between">
-                                {otpArr.map((digit, i) => (
-                                    <input
-                                        key={i}
-                                        ref={(el) => (otpInputRefs.current[i] = el)}
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength="1"
-                                        value={digit}
-                                        onChange={(e) => handleOtpChange(i, e.target.value)}
-                                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                        className="w-12 h-14 bg-black/30 border border-white/20 rounded-xl text-center text-2xl font-bold text-white focus:border-[#f7d77d] focus:shadow-[0_0_0_4px_rgba(255,215,0,0.15)] outline-none transition-all"
-                                        autoFocus={i === 0}
-                                    />
-                                ))}
-                            </div>
-
-                            <button 
-                                type="submit" 
-                                disabled={loading || timer === 0 || otpArr.join('').length !== 6} 
-                                className="auth-button w-full px-5 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Verifying...' : 'Complete Login'}
-                            </button>
-                        </form>
-
-                        <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
-                            <button
-                                onClick={handleSendOtp}
-                                disabled={resendCooldown > 0 || loading}
-                                className="text-xs font-bold uppercase tracking-widest text-[#f7d77d] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : 'Resend Code'}
-                            </button>
-                            <button
-                                onClick={() => setStep('INPUT')}
-                                className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
-                            >
-                                Change {loginMethod === 'email' ? 'Email' : 'Phone'}
-                            </button>
-                        </div>
+                    <div className="text-right mt-1">
+                      <Link to="/forgot-password" className="text-[10px] uppercase font-semibold text-gray-400 hover:text-white transition-colors">
+                        Forgot Password?
+                      </Link>
                     </div>
-                </div>
-            )}
 
-            {step === 'INPUT' && (
-              <div className="mt-8 text-center text-sm text-white/50 border-t border-white/10 pt-6">
-                Passwordless authentication is heavily secured and replaces traditional passwords. By continuing, you agree to our spiritual guidelines.
-              </div>
-            )}
+                    <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5">
+                        {loading ? 'Please wait...' : 'Sign In'}
+                    </button>
+                </form>
+            </div>
 
           </div>
         </section>

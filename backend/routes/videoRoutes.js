@@ -13,6 +13,7 @@ const {
 	toggleUserReelLike,
 	shareUserReel,
 	addUserReelComment,
+	deleteUserReelComment,
 	updateMyReel,
 	deleteMyReel,
 	deleteVideo,
@@ -42,6 +43,7 @@ router.patch('/user-reels/:id/moderate', protect, admin, moderateUserReel);
 router.post('/user-reels/:id/like', protect, toggleUserReelLike);
 router.post('/user-reels/:id/share', protect, shareUserReel);
 router.post('/user-reels/:id/comments', protect, addUserReelComment);
+router.delete('/user-reels/:id/comments/:commentId', protect, deleteUserReelComment);
 router.patch('/user-reels/:id', protect, uploadReelVideo.single('video'), updateMyReel);
 router.delete('/user-reels/:id', protect, deleteMyReel);
 router.post('/', protect, admin, addVideo);

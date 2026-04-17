@@ -23,6 +23,7 @@ const VideoMongoSchema = new mongoose.Schema({
   moderationNote: { type: String, default: '' },
   contentType: { type: String, default: 'spiritual' },
   likesCount: { type: Number, default: 0 },
+  likedBy: { type: [String], default: [] },
   commentsCount: { type: Number, default: 0 },
   sharesCount: { type: Number, default: 0 },
   comments: [{

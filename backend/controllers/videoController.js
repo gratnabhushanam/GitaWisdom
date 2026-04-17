@@ -329,17 +329,39 @@ exports.deleteMyReel = async (req, res) => {
 exports.toggleUserReelLike = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = toIntId(req.user.id);
+    const userIdStr = String(req.user.id || req.user._id);
+    const userId = useMongoStore() ? userIdStr : toIntId(userIdStr);
+    
     const reel = useMongoStore()
       ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
       : await Video.findOne({ where: { id, isUserReel: true } });
     if (!reel) {
       return res.status(404).json({ message: 'Reel not found' });
     }
-    const likedBy = Array.isArray(reel.likedBy) ? reel.likedBy.map(toIntId) : [];
-    const hasLiked = likedBy.includes(userId);
-    reel.likedBy = hasLiked ? likedBy.filter((uid) => uid !== userId) : [...likedBy, userId];
-    reel.likesCount = reel.likedBy.length;
+    
+    const likedByArray = Array.isArray(reel.likedBy) ? reel.likedBy : [];
+    
+    let hasLiked = false;
+    let nextLikedBy = [];
+    if (useMongoStore()) {
+      hasLiked = likedByArray.some(uid => String(uid) === String(userIdStr));
+      if (hasLiked) {
+        nextLikedBy = likedByArray.filter(uid => String(uid) !== String(userIdStr));
+      } else {
+        nextLikedBy = [...likedByArray, String(userIdStr)];
+      }
+      reel.set('likedBy', nextLikedBy);
+    } else {
+      hasLiked = likedByArray.some(uid => toIntId(uid) === toIntId(userIdStr));
+      if (hasLiked) {
+        nextLikedBy = likedByArray.filter(uid => toIntId(uid) !== toIntId(userIdStr));
+      } else {
+        nextLikedBy = [...likedByArray, toIntId(userIdStr)];
+      }
+      reel.likedBy = nextLikedBy;
+    }
+
+    reel.likesCount = nextLikedBy.length;
     await reel.save();
     return res.json({ liked: !hasLiked, reel: mapVideo(reel) });
   } catch (error) {
@@ -392,6 +414,36 @@ exports.addUserReelComment = async (req, res) => {
     reel.commentsCount = reel.comments.length;
     await reel.save();
     return res.status(201).json(mapVideo(reel));
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteUserReelComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const reel = useMongoStore()
+      ? await VideoMongo.findOne({ _id: String(id), isUserReel: true })
+      : await Video.findOne({ where: { id, isUserReel: true } });
+    
+    if (!reel) return res.status(404).json({ message: 'Reel not found' });
+    
+    const comments = Array.isArray(reel.comments) ? reel.comments : [];
+    const commentIndex = comments.findIndex(c => String(c.id) === String(commentId));
+    
+    if (commentIndex === -1) return res.status(404).json({ message: 'Comment not found' });
+    
+    const comment = comments[commentIndex];
+    if (String(comment.userId) !== String(req.user.id || req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not allowed to delete this comment' });
+    }
+    
+    comments.splice(commentIndex, 1);
+    reel.comments = comments;
+    reel.commentsCount = comments.length;
+    await reel.save();
+    
+    return res.json({ message: 'Comment deleted', reel: mapVideo(reel) });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

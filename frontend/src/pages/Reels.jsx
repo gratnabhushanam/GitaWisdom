@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // Krishna-themed SVG asset for floating animation
 const FLOATING_KRISHNA = '/krishna-floating.svg';
 import axios from 'axios';
-import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause } from 'lucide-react';
+import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,7 @@ const REELS_SOUND_PREF_KEY = 'reels_sound_enabled_v1';
 
 export default function Reels() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [reels, setReels] = useState([]);
   const [pendingReels, setPendingReels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -277,7 +277,6 @@ export default function Reels() {
       }
     }
   };
-
   const handleCommentSubmit = async (reel) => {
     const reelId = reel._id || reel.id;
     const text = String(commentInputs[reelId] || '').trim();
@@ -318,12 +317,43 @@ export default function Reels() {
         { text },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      // Award points for interacting
+      try {
+        const pointsRes = await axios.post('/api/auth/profile/points', { points: 5 }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (pointsRes.data.user) {
+          setUser(pointsRes.data.user);
+        }
+      } catch (err) {
+        console.error('Points increment failed silently', err);
+      }
+      
       updateReelInState(response.data);
       setCommentInputs((prev) => ({ ...prev, [reelId]: '' }));
     } catch (error) {
       console.error('Error adding comment:', error);
     } finally {
       setSubmittingCommentId(null);
+    }
+  };
+
+  const handleDeleteComment = async (reel, commentId) => {
+    const reelId = reel._id || reel.id;
+    const confirmed = window.confirm('Delete your comment permanently?');
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(
+        `/api/videos/user-reels/${reelId}/comments/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      updateReelInState(response.data.reel);
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('Failed to delete comment.');
     }
   };
 
@@ -674,14 +704,24 @@ export default function Reels() {
                           <p className="text-[10px] text-[#9FD9F0] truncate">{comment.userEmail}</p>
                         )}
                         <p className="text-[11px] text-gray-200 mt-1 line-clamp-2">{comment.text}</p>
-                        {canViewCommenterProfile(reel) && (
-                          <button
-                            onClick={() => setSelectedCommentProfile({ ...comment })}
-                            className="mt-2 text-[10px] px-2 py-1 rounded-lg border border-[#D39A4A]/40 text-[#E6C38A] font-black uppercase tracking-widest"
-                          >
-                            View Profile
-                          </button>
-                        )}
+                        <div className="flex gap-2">
+                          {canViewCommenterProfile(reel) && (
+                            <button
+                              onClick={() => setSelectedCommentProfile({ ...comment })}
+                              className="mt-2 text-[10px] px-2 py-1 rounded-lg border border-[#D39A4A]/40 text-[#E6C38A] font-black uppercase tracking-widest"
+                            >
+                              View Profile
+                            </button>
+                          )}
+                          {(String(comment.userId) === String(user?.id || user?._id) || user?.role === 'admin') && reel.isUserReel && (
+                            <button
+                              onClick={() => handleDeleteComment(reel, comment.id || comment._id)}
+                              className="mt-2 text-[10px] px-2 py-1 flex items-center gap-1 rounded-lg border border-red-500/40 text-red-400 font-black uppercase tracking-widest"
+                            >
+                              <Trash2 className="w-3 h-3" /> Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )) : (
                       <p className="text-[10px] text-gray-500">No comments yet.</p>

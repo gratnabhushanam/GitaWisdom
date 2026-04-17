@@ -34,6 +34,7 @@ router.route('/profile').get(protect, getUserProfile).put(protect, updateUserPro
 router.get('/community', protect, getCommunityProfiles);
 router.post('/bookmarks', protect, toggleBookmark);
 router.post('/profile/japa', protect, require('../controllers/authController').updateJapaCounter);
+router.post('/profile/points', protect, require('../controllers/authController').addKarmaPoints);
 router.post('/streak', protect, require('../controllers/authController').updateStreak);
 
 // Admin Routes

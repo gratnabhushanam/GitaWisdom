@@ -73,6 +73,7 @@ function AppShell() {
   const location = useLocation();
   const { user, loading } = useAuth();
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
+  const isFullScreenRoute = location.pathname.startsWith('/reels');
 
   useEffect(() => {
      
@@ -121,7 +122,7 @@ function AppShell() {
       )}
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        {!isAuthRoute && <Navbar />}
+        {!isAuthRoute && !isFullScreenRoute && <Navbar />}
         <GlobalInstallPrompt />
         <main className="flex-grow">
           <Suspense fallback={pageFallback}>
@@ -154,7 +155,7 @@ function AppShell() {
             </Routes>
           </Suspense>
         </main>
-        {!isAuthRoute && <Footer />}
+        {!isAuthRoute && !isFullScreenRoute && <Footer />}
       </div>
     </div>
   );

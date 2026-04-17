@@ -1568,4 +1568,35 @@ exports.sendOtp = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
   // Empty unified stub - OTP is handled by register
   res.json({ success: true, token: 'mock' });
+};
+
+exports.addKarmaPoints = async (req, res) => {
+  try {
+    const { points } = req.body;
+    const { useMongoStore } = require('../utils/mongoStore');
+    
+    if (useMongoStore()) {
+      const UserMongo = require('../models/mongo/UserMongo');
+      const user = await UserMongo.findById(req.user.id || req.user._id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      
+      const currentPoints = user.benefits?.points || 0;
+      const amountToAdd = Math.min(Number(points) || 5, 20); // Cap per-request points for safety
+      
+      user.benefits = {
+        ...(user.benefits || {}),
+        points: currentPoints + amountToAdd
+      };
+      
+      // Mark modified specifically because it's a nested dictionary object in Mongoose
+      user.markModified('benefits');
+      await user.save();
+      
+      return res.json({ success: true, points: user.benefits.points, user: sanitizeUserForResponse(user) });
+    }
+    
+    return res.json({ success: true, message: 'SQLite points not explicitly mapped' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
