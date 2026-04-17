@@ -1120,7 +1120,6 @@ function AdminDashboardContent() {
                                 className="w-full h-full object-cover"
                                 youtubeParams="autoplay=0&rel=0&modestbranding=1"
                                 controls
-                                instagramMode={true}
                               />
                             </div>
                           )}
