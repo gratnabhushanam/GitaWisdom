@@ -669,67 +669,7 @@ export default function Reels() {
 
             </div>
 
-            {expandedCommentReel === (reel._id || reel.id) && (
-              <div className="relative z-20 px-4 pb-4">
-                <div className="bg-black/50 border border-white/10 rounded-2xl p-3">
-                  <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-[#D6D6D6] mb-2">
-                    <span>Likes {reel.likesCount || 0}</span>
-                    <span>Shares {reel.sharesCount || 0}</span>
-                    <span>Comments {reel.commentsCount || 0}</span>
-                  </div>
-                  <input
-                    value={commentInputs[reel._id || reel.id] || ''}
-                    onChange={(e) => setCommentInputs((prev) => ({ ...prev, [reel._id || reel.id]: e.target.value }))}
-                    placeholder="Add a spiritual comment"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 focus:outline-none"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-[10px] text-gray-500">Share your thought with devotion and respect.</p>
-                    <button
-                      onClick={() => handleCommentSubmit(reel)}
-                      disabled={submittingCommentId === (reel._id || reel.id)}
-                      className="text-[10px] px-3 py-1 rounded-lg border border-[#D39A4A]/40 text-[#E6C38A] font-black uppercase tracking-widest disabled:opacity-50"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="mt-3 max-h-36 overflow-y-auto no-scrollbar space-y-2">
-                    {(Array.isArray(reel.comments) && reel.comments.length > 0) ? reel.comments.slice(0, 6).map((comment) => (
-                      <div key={comment.id || `${comment.userId || 'u'}-${comment.createdAt || comment.text}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-[11px] font-bold text-white truncate">{comment.userName || 'Seeker'}</p>
-                          <p className="text-[9px] text-gray-400 uppercase tracking-wider">{comment.userRole || 'user'}</p>
-                        </div>
-                        {comment.userEmail && (
-                          <p className="text-[10px] text-[#9FD9F0] truncate">{comment.userEmail}</p>
-                        )}
-                        <p className="text-[11px] text-gray-200 mt-1 line-clamp-2">{comment.text}</p>
-                        <div className="flex gap-2">
-                          {canViewCommenterProfile(reel) && (
-                            <button
-                              onClick={() => setSelectedCommentProfile({ ...comment })}
-                              className="mt-2 text-[10px] px-2 py-1 rounded-lg border border-[#D39A4A]/40 text-[#E6C38A] font-black uppercase tracking-widest"
-                            >
-                              View Profile
-                            </button>
-                          )}
-                          {(String(comment.userId) === String(user?.id || user?._id) || user?.role === 'admin') && reel.isUserReel && (
-                            <button
-                              onClick={() => handleDeleteComment(reel, comment.id || comment._id)}
-                              className="mt-2 text-[10px] px-2 py-1 flex items-center gap-1 rounded-lg border border-red-500/40 text-red-400 font-black uppercase tracking-widest"
-                            >
-                              <Trash2 className="w-3 h-3" /> Delete
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )) : (
-                      <p className="text-[10px] text-gray-500">No comments yet.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* (Comment section extracted to global Bottom Sheet Drawer) */}
 
           </div>
         );}) : (
@@ -737,7 +677,87 @@ export default function Reels() {
             <p className="text-gray-500">No reels found. Check back later.</p>
           </div>
         )}
-        
+        </div>
+
+        {/* Global Bottom Sheet Drawer for Comments */}
+        <div 
+          className={`absolute bottom-0 left-0 w-full bg-[#0b1220]/95 backdrop-blur-xl border-t border-[#D39A4A]/20 rounded-t-3xl z-[100] flex flex-col transition-transform duration-300 ease-in-out shadow-[0_-20px_50px_rgba(0,0,0,0.8)] ${
+            expandedCommentReel ? 'translate-y-0' : 'translate-y-full'
+          }`}
+          style={{ height: '70dvh', touchAction: 'none' }}
+        >
+          <div className="w-full flex justify-center pt-4 pb-2 cursor-pointer" onClick={() => setExpandedCommentReel(null)}>
+            <div className="w-12 h-1.5 bg-gray-500/50 rounded-full"></div>
+          </div>
+          
+          {expandedCommentReel && (() => {
+             const reel = reels.find(r => (r._id || r.id) === expandedCommentReel);
+             if (!reel) return null;
+             return (
+                <div className="flex-1 overflow-y-auto px-5 pb-[100px]">
+                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-[#D6D6D6] mb-4">
+                    <span>{reel.commentsCount || 0} Comments</span>
+                    <span className="text-gray-500">{reel.likesCount || 0} Likes</span>
+                  </div>
+                  
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
+                    <input
+                      value={commentInputs[reel._id || reel.id] || ''}
+                      onChange={(e) => setCommentInputs((prev) => ({ ...prev, [reel._id || reel.id]: e.target.value }))}
+                      placeholder="Add a spiritual comment..."
+                      className="w-full bg-transparent text-sm text-white placeholder:text-gray-500 focus:outline-none"
+                    />
+                    <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/10">
+                      <p className="text-[10px] text-gray-500 italic">Be respectful and divine.</p>
+                      <button
+                        onClick={() => handleCommentSubmit(reel)}
+                        disabled={submittingCommentId === (reel._id || reel.id)}
+                        className="text-[10px] px-4 py-1.5 rounded-lg border border-[#D39A4A]/40 bg-[#D39A4A]/10 text-[#E6C38A] font-black uppercase tracking-widest disabled:opacity-50"
+                      >
+                        Publish
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {(Array.isArray(reel.comments) && reel.comments.length > 0) ? reel.comments.map((comment) => (
+                      <div key={comment.id || `${comment.userId || 'u'}-${comment.createdAt || comment.text}`} className="rounded-xl border border-white/5 bg-transparent p-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-[11px] font-bold text-[#E6C38A] truncate">{comment.userName || 'Seeker'}</p>
+                          <p className="text-[8px] text-gray-500 uppercase tracking-wider">{new Date(comment.createdAt || Date.now()).toLocaleDateString()}</p>
+                        </div>
+                        <p className="text-sm text-gray-200 mt-1 leading-snug">{comment.text}</p>
+                        
+                        <div className="flex gap-2 mt-2">
+                          {canViewCommenterProfile(reel) && (
+                            <button
+                              onClick={() => setSelectedCommentProfile({ ...comment })}
+                              className="text-[9px] text-gray-400 font-bold uppercase tracking-widest hover:text-white transition-colors"
+                            >
+                              Profile
+                            </button>
+                          )}
+                          {(String(comment.userId) === String(user?.id || user?._id) || user?.role === 'admin') && reel.isUserReel && (
+                            <button
+                              onClick={() => handleDeleteComment(reel, comment.id || comment._id)}
+                              className="text-[9px] text-red-500 font-bold uppercase tracking-widest hover:text-red-400 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="h-24 flex items-center justify-center">
+                        <p className="text-xs text-gray-500">Be the first to share your devotion.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+             );
+          })()}
+        </div>
+
       </div>
 
       {selectedCommentProfile && (
