@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo-om.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
+      includeAssets: ['logo-om-v2.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
         name: 'Gita Wisdom Devotion',
         short_name: 'Gita Wisdom',
@@ -19,12 +19,12 @@ export default defineConfig({
         orientation: 'portrait-primary',
         icons: [
           {
-            src: 'logo-om.png',
+            src: 'logo-om-v2.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'logo-om.png',
+            src: 'logo-om-v2.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

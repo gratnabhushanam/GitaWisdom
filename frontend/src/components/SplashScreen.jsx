@@ -11,7 +11,7 @@ export default function SplashScreen() {
       <div className="relative z-10 flex flex-col items-center animate-fade-in-up">
         <div className="relative w-32 h-32 sm:w-40 sm:h-40 mb-8 rounded-full shadow-[0_0_60px_rgba(247,215,125,0.2)]">
             <img 
-              src="/logo-om.png" 
+              src="/logo-om-v2.png" 
               alt="Gita Wisdom Logo" 
               className="w-full h-full object-contain animate-pulse-slow drop-shadow-[0_0_15px_rgba(247,215,125,0.5)]"
             />
