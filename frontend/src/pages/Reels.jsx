@@ -614,9 +614,9 @@ export default function Reels() {
             )}
 
             {/* Overlays */}
-            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px] md:pb-8">
+            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px] md:pb-8 w-full pointer-events-none">
                
-               <div className="max-w-[80%] drop-shadow-lg">
+               <div className="flex-1 pr-4 drop-shadow-lg pointer-events-auto">
                  <h2 className="text-xl font-bold mb-2 text-white">{reel.title}</h2>
                  <p className="text-sm font-light line-clamp-2 text-gray-200">{reel.description || 'Gita wisdom in 60 seconds.'}</p>
                  <div className="flex items-center gap-2 mt-4 text-[#E6C38A]">
@@ -632,7 +632,7 @@ export default function Reels() {
                  </div>
                </div>
 
-               <div className="flex flex-col gap-6 items-center">
+               <div className="flex flex-col gap-6 items-center shrink-0 w-12 pointer-events-auto">
                  <button className="flex flex-col items-center gap-1 group" onClick={() => handleToggleLike(reel)}>
                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/20 transition-all transform hover:scale-110">
                      <img src="/ram-symbol.svg" alt="Like" className="w-6 h-6 object-contain drop-shadow-[0_0_6px_rgba(255,215,0,0.5)]" />

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Resumable/chunked upload utility for large files
 // Usage: await resumableUpload({ file, url, headers, chunkSize, onProgress })
-export async function resumableUpload({ file, url, headers = {}, chunkSize = 30 * 1024 * 1024, onProgress }) {
+export async function resumableUpload({ file, url, headers = {}, chunkSize = 2 * 1024 * 1024, onProgress }) {
   const totalChunks = Math.ceil(file.size / chunkSize);
   const safeName = encodeURIComponent(file.name);
   const uploadId = `${file.size}-${file.lastModified}-${safeName.substring(0, 50)}`;
