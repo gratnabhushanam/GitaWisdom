@@ -57,11 +57,26 @@ export default function MediaPlayer({
   const cdnVideoUrl = getAbsoluteUrl(url || '');
   const effectiveShouldPlay = typeof shouldPlay === 'boolean' ? shouldPlay : autoPlay;
 
-  // Fetch secure HLS token — falls back gracefully if endpoint is missing
+  // Fetch secure HLS token — only for local /uploads/ URLs, skip for external URLs
   useEffect(() => {
     let cancelled = false;
     async function fetchToken() {
       if (!cdnHlsUrl && !cdnVideoUrl) return;
+      
+      // External URLs (Cloudinary, YouTube, Google Drive, etc.) don't need tokens
+      const isLocalUrl = (u) => u && (u.includes('/uploads/') || u.includes('/api/'));
+      const needsToken = isLocalUrl(cdnHlsUrl) || isLocalUrl(cdnVideoUrl);
+      
+      if (!needsToken) {
+        // External MP4 — set URLs directly, no token needed
+        if (!cancelled) {
+          setSecureHlsUrl(cdnHlsUrl);
+          setSecureVideoUrl(cdnVideoUrl);
+          setLoadingToken(false);
+        }
+        return;
+      }
+      
       setLoadingToken(true);
       try {
         const videoId = extractVideoId(cdnHlsUrl) || extractVideoId(cdnVideoUrl) || 'anonymous';
@@ -71,13 +86,15 @@ export default function MediaPlayer({
         const data = await res.json();
         if (!data?.token) throw new Error('no token');
         
-        if (cdnHlsUrl) {
+        if (cdnHlsUrl && isLocalUrl(cdnHlsUrl)) {
           const hlsUrlObj = new URL(cdnHlsUrl, window.location.origin);
           hlsUrlObj.searchParams.set('token', data.token);
           if (!cancelled) setSecureHlsUrl(hlsUrlObj.toString());
+        } else {
+          if (!cancelled) setSecureHlsUrl(cdnHlsUrl);
         }
         
-        if (cdnVideoUrl && !isYoutubeUrl(cdnVideoUrl) && cdnVideoUrl.includes('/uploads/')) {
+        if (cdnVideoUrl && !isYoutubeUrl(cdnVideoUrl) && isLocalUrl(cdnVideoUrl)) {
           const videoUrlObj = new URL(cdnVideoUrl, window.location.origin);
           videoUrlObj.searchParams.set('token', data.token);
           if (!cancelled) setSecureVideoUrl(videoUrlObj.toString());
@@ -294,12 +311,19 @@ export default function MediaPlayer({
         ref={videoRef}
         className={`w-full ${instagramMode ? 'h-[100dvh] object-cover rounded-none' : 'h-full aspect-video object-contain bg-black rounded-xl'} shadow-lg`}
         src={activeSource || resolvedUrl}
+        crossOrigin="anonymous"
         autoPlay={effectiveShouldPlay}
         muted={muted}
         loop={loop}
         controls={instagramMode ? false : controls}
         playsInline={playsInline}
-        onError={() => console.warn('Video failed to play')}
+        preload="metadata"
+        onError={() => {
+          console.warn('Video failed to play, trying fallback');
+          if (!hlsFallbackActive && secureHlsUrl) {
+            setHlsFallbackActive(true);
+          }
+        }}
         onEnded={onEnded}
         title={title}
       />
