@@ -111,28 +111,6 @@ exports.updateStory = async (req, res) => {
       || req.body.titleHindi
       || req.body.titleTelugu;
 
-    if (isMockMode()) {
-      const existingStories = mockContentStore.listStories();
-      const storyIndex = existingStories.findIndex((story) => Number(story.id) === Number(id));
-      if (storyIndex === -1) {
-        return res.status(404).json({ message: 'Story not found' });
-      }
-
-      const updated = {
-        ...existingStories[storyIndex],
-        ...req.body,
-        title: incomingTitle || existingStories[storyIndex].title,
-        seriesTitle: req.body.seriesTitle || existingStories[storyIndex].seriesTitle || 'Bhagavad Gita',
-        bgmEnabled: typeof req.body.bgmEnabled === 'boolean' ? req.body.bgmEnabled : existingStories[storyIndex].bgmEnabled !== false,
-        bgmPreset: req.body.bgmPreset || existingStories[storyIndex].bgmPreset || 'temple',
-        id: existingStories[storyIndex].id,
-        updatedAt: new Date().toISOString(),
-      };
-
-      mockContentStore.replaceStory(Number(id), updated);
-      return res.json(mapStory(updated));
-    }
-
     if (useMongoStore()) {
       const updatedData = {
         ...req.body,

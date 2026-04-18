@@ -287,7 +287,7 @@ export default function Stories() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06101E] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#06101E] pt-28 pb-28 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
       {CHAPTER_BACKGROUND_SCENES.map((scene, index) => (
         <div
           key={scene.image}
@@ -416,8 +416,8 @@ export default function Stories() {
           style={{ backgroundImage: `${theme.overlay}, url('${chapterScene}')` }}
         >
           <div
-            className={`w-full max-w-3xl my-4 rounded-[2rem] ${theme.border} p-6 sm:p-10 shadow-[0_30px_100px_rgba(0,0,0,0.45)] bg-cover bg-center relative max-h-[92vh] overflow-y-auto`}
-            style={{ backgroundImage: `${theme.card}, url('${chapterScene}')` }}
+            className={`w-full max-w-3xl my-4 mb-28 rounded-[2rem] ${theme.border} p-6 sm:p-10 shadow-[0_30px_100px_rgba(0,0,0,0.45)] bg-cover bg-center relative`}
+            style={{ backgroundImage: `${theme.card}, url('${chapterScene}')`, paddingBottom: 'calc(40px + env(safe-area-inset-bottom, 0px))' }}
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
