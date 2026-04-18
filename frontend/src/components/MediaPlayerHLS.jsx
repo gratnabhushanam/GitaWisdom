@@ -38,7 +38,9 @@ export default function MediaPlayer({
   const [loadingToken, setLoadingToken] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef(null);
+  const containerRef = useRef(null);
   const [hlsFallbackActive, setHlsFallbackActive] = useState(false);
 
   const getAbsoluteUrl = (inputUrl) => {
@@ -138,21 +140,26 @@ export default function MediaPlayer({
 
     // Feature: Auto Rotate Fullscreen (Mobile)
     const handleFullscreenChange = async () => {
-      // If entering fullscreen
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+      const inFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      setIsFullscreen(inFullscreen);
+      
+      if (inFullscreen) {
+        // Entering fullscreen — lock to landscape
+        if (window.screen?.orientation?.lock) {
           try {
             await window.screen.orientation.lock('landscape');
           } catch (e) {
-            console.warn('Orientation lock blocked natively on this device browser.', e);
+            try {
+              await window.screen.orientation.lock('landscape-primary');
+            } catch (e2) {
+              console.warn('Orientation lock not supported on this device.', e2);
+            }
           }
         }
       } else {
-        // Exiting fullscreen
-        if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
-          try {
-            window.screen.orientation.unlock();
-          } catch (e) {}
+        // Exiting fullscreen — unlock orientation
+        if (window.screen?.orientation?.unlock) {
+          try { window.screen.orientation.unlock(); } catch (e) {}
         }
       }
     };
@@ -230,6 +237,27 @@ export default function MediaPlayer({
     }
   };
 
+  // Fullscreen + Rotate toggle for mobile
+  const toggleFullscreen = async () => {
+    const target = containerRef.current || videoRef.current;
+    if (!target) return;
+    
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        // Exit fullscreen
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        // Enter fullscreen
+        if (target.requestFullscreen) await target.requestFullscreen();
+        else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+        else if (videoRef.current?.webkitEnterFullscreen) videoRef.current.webkitEnterFullscreen(); // iOS Safari
+      }
+    } catch (e) {
+      console.warn('Fullscreen toggle failed:', e);
+    }
+  };
+
   // Advanced tools panel
   const AdvancedTools = () => (
     <div className="absolute top-2 right-2 z-20 flex flex-col gap-2 bg-black/80 rounded-xl p-2 border border-devotion-gold/30 shadow-xl">
@@ -260,7 +288,7 @@ export default function MediaPlayer({
   // Empty failed array so we never rip the video out of the layout
 
   return (
-    <div className={`relative group overflow-hidden ${className}`}>
+    <div ref={containerRef} className={`relative group overflow-hidden ${className}`}>
       <video
         key={hlsFallbackActive ? 'fallback' : 'hls'}
         ref={videoRef}
@@ -284,8 +312,17 @@ export default function MediaPlayer({
       </button>
       {showTools && <AdvancedTools />}
       {(secureHlsUrl || resolvedUrl) && !instagramMode && (
-        <div className="absolute bottom-2 right-2 bg-black/70 text-devotion-gold text-xs px-3 py-1 rounded-full font-bold shadow-lg">
-          {secureHlsUrl ? 'HLS / CDN' : 'CDN'}
+        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+          <button
+            onClick={toggleFullscreen}
+            className="bg-black/70 text-white hover:text-devotion-gold text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1.5 transition-colors border border-white/20 hover:border-devotion-gold/50"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen & Rotate'}
+          >
+            {isFullscreen ? '✕' : '⤢'} {isFullscreen ? 'Exit' : 'Rotate'}
+          </button>
+          <div className="bg-black/70 text-devotion-gold text-xs px-3 py-1 rounded-full font-bold shadow-lg">
+            {secureHlsUrl ? 'HLS / CDN' : 'CDN'}
+          </div>
         </div>
       )}
       {instagramMode && duration > 0 && (
