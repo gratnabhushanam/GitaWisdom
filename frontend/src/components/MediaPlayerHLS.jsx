@@ -223,37 +223,6 @@ export default function MediaPlayer({
 
   if (!cdnVideoUrl && !cdnHlsUrl) return null;
 
-  // YouTube embed
-  if (isYoutubeUrl(secureVideoUrl || cdnVideoUrl)) {
-    const embedUrl = getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl);
-    const videoId = getYoutubeVideoId(cdnVideoUrl);
-    const params = new URLSearchParams(youtubeParams);
-    if (loop && videoId && !params.has('playlist')) {
-      params.set('playlist', videoId);
-    }
-    const queryString = params.toString();
-    const src = queryString ? `${embedUrl}?${queryString}` : embedUrl;
-    return (
-      <iframe
-        className={className}
-        src={src}
-        title={title || 'YouTube player'}
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-      />
-    );
-  }
-
-  const handleSeek = (e) => {
-    const video = videoRef.current;
-    if (video) {
-        const newTime = parseFloat(e.target.value);
-        video.currentTime = newTime;
-        setProgress(newTime);
-    }
-  };
-
   // Fullscreen + Rotate toggle for mobile
   const toggleFullscreen = async () => {
     const target = containerRef.current || videoRef.current;
@@ -272,6 +241,53 @@ export default function MediaPlayer({
       }
     } catch (e) {
       console.warn('Fullscreen toggle failed:', e);
+    }
+  };
+
+  // YouTube embed
+  if (isYoutubeUrl(secureVideoUrl || cdnVideoUrl)) {
+    const embedUrl = getYoutubeEmbedUrl(secureVideoUrl || cdnVideoUrl);
+    const videoId = getYoutubeVideoId(cdnVideoUrl);
+    const params = new URLSearchParams(youtubeParams);
+    if (loop && videoId && !params.has('playlist')) {
+      params.set('playlist', videoId);
+    }
+    const queryString = params.toString();
+    const src = queryString ? `${embedUrl}?${queryString}` : embedUrl;
+    return (
+      <div ref={containerRef} className={`relative group overflow-hidden ${className}`}>
+        <iframe
+          className="w-full h-full absolute inset-0"
+          src={src}
+          title={title || 'YouTube player'}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+        {!instagramMode && (
+          <div className="absolute bottom-2 right-12 flex items-center gap-2 pointer-events-none group-hover:pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={toggleFullscreen}
+              className="bg-black/70 text-white hover:text-devotion-gold text-xs px-3 py-1.5 rounded-full font-bold shadow-lg flex items-center gap-1.5 transition-colors border border-white/20 hover:border-devotion-gold/50 pointer-events-auto"
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen & Rotate'}
+            >
+              {isFullscreen ? '✕' : '⤢'} {isFullscreen ? 'Exit' : 'Rotate'}
+            </button>
+            <div className="bg-[#ff0000]/80 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg pointer-events-auto">
+              YouTube
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const handleSeek = (e) => {
+    const video = videoRef.current;
+    if (video) {
+        const newTime = parseFloat(e.target.value);
+        video.currentTime = newTime;
+        setProgress(newTime);
     }
   };
 
