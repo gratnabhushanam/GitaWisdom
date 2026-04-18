@@ -65,3 +65,30 @@ exports.deleteMovie = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateMovie = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (useMongoStore()) {
+      const movie = await MovieMongo.findByIdAndUpdate(
+        String(id),
+        { $set: req.body },
+        { new: true, runValidators: true }
+      );
+      if (!movie) {
+        return res.status(404).json({ message: 'Movie not found' });
+      }
+      return res.json(mapMovie(movie));
+    }
+
+    const movie = await Movie.findByPk(id);
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+    await movie.update(req.body);
+    return res.json(mapMovie(movie));
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};

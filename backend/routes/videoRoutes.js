@@ -20,6 +20,7 @@ const {
 	grantStreamingToken,
 	toggleSaveReel,
 	getSavedReels,
+	updateVideo,
 } = require('../controllers/videoController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const { uploadReelVideo } = require('../middleware/uploadMiddleware');
@@ -51,6 +52,7 @@ router.delete('/user-reels/:id/comments/:commentId', protect, deleteUserReelComm
 router.patch('/user-reels/:id', protect, uploadReelVideo.single('video'), updateMyReel);
 router.delete('/user-reels/:id', protect, deleteMyReel);
 router.post('/', protect, admin, addVideo);
+router.patch('/:id', protect, admin, updateVideo);
 router.delete('/:id', protect, admin, deleteVideo);
 
 module.exports = router;

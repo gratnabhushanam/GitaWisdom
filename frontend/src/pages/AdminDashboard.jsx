@@ -71,6 +71,8 @@ function AdminDashboardContent() {
     correctOption: 'B',
   });
   const [editingStoryId, setEditingStoryId] = useState(null);
+  const [editingMovieId, setEditingMovieId] = useState(null);
+  const [editingVideoId, setEditingVideoId] = useState(null);
 
   // Handle resumable video file upload
   const handleVideoFileChange = async (e) => {
@@ -228,7 +230,7 @@ function AdminDashboardContent() {
       const token = localStorage.getItem('token');
       
       if (activeTab === 'movies') {
-        endpoint = '/api/movies';
+        endpoint = editingMovieId ? `/api/movies/${editingMovieId}` : '/api/movies';
         payload = { ...movieForm, tags: movieForm.tags.split(',').map(tag => tag.trim()) };
       } else if (activeTab === 'stories') {
         endpoint = editingStoryId ? `/api/stories/${editingStoryId}` : '/api/stories';
@@ -260,6 +262,9 @@ function AdminDashboardContent() {
           };
         } else {
           endpoint = '/api/videos';
+          if (editingVideoId) {
+            endpoint = `/api/videos/${editingVideoId}`;
+          }
           payload = {
             ...videoForm,
             collectionTitle: String(videoForm.collectionTitle || '').trim() || 'Bhagavad Gita',
@@ -274,11 +279,25 @@ function AdminDashboardContent() {
         const { data: updatedStory } = await axios.patch(endpoint, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        // Optimistic native UI update without network refresh
         setData(prev => ({
            ...prev,
            stories: prev.stories.map(st => (String(st._id || st.id) === String(editingStoryId)) ? updatedStory : st)
+        }));
+      } else if (activeTab === 'movies' && editingMovieId) {
+        const { data: updatedMovie } = await axios.patch(endpoint, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setData(prev => ({
+           ...prev,
+           movies: prev.movies.map(m => (String(m._id || m.id) === String(editingMovieId)) ? updatedMovie : m)
+        }));
+      } else if (activeTab === 'videos' && editingVideoId && videosUploadType === 'video') {
+        const { data: updatedVideo } = await axios.patch(endpoint, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setData(prev => ({
+           ...prev,
+           videos: prev.videos.map(v => (String(v._id || v.id) === String(editingVideoId)) ? updatedVideo : v)
         }));
       } else if (activeTab === 'videos' && videosUploadType === 'video') {
         // 1. Upload video
@@ -315,7 +334,7 @@ function AdminDashboardContent() {
         }
       }
 
-      setMessage({ type: 'success', text: activeTab === 'stories' && editingStoryId ? 'Story updated successfully!' : `${publishLabel} published successfully!` });
+      setMessage({ type: 'success', text: (editingStoryId || editingMovieId || editingVideoId) ? 'Updated successfully!' : `${publishLabel} published successfully!` });
       setShowAddModal(false);
       resetForms();
       setVideoQuizList([]);
@@ -412,11 +431,15 @@ function AdminDashboardContent() {
     });
     setVideosUploadType('video');
     setEditingStoryId(null);
+    setEditingMovieId(null);
+    setEditingVideoId(null);
   };
 
   const handleEditStory = (story) => {
     setActiveTab('stories');
     setEditingStoryId(story._id || story.id);
+    setEditingMovieId(null);
+    setEditingVideoId(null);
     setStoryForm({
       title: story.title || '',
       titleTelugu: story.titleTelugu || '',
@@ -435,6 +458,41 @@ function AdminDashboardContent() {
       language: story.language || 'english',
       thumbnail: story.thumbnail || '',
       tags: Array.isArray(story.tags) ? story.tags.join(', ') : (story.tags || ''),
+    });
+    setShowAddModal(true);
+  };
+
+  const handleEditMovie = (movie) => {
+    setActiveTab('movies');
+    setEditingMovieId(movie._id || movie.id);
+    setEditingStoryId(null);
+    setEditingVideoId(null);
+    setMovieForm({
+      title: movie.title || '',
+      description: movie.description || '',
+      videoUrl: movie.videoUrl || '',
+      thumbnail: movie.thumbnail || '',
+      releaseYear: movie.releaseYear || 2025,
+      ownerHistory: movie.ownerHistory || '',
+      tags: Array.isArray(movie.tags) ? movie.tags.join(', ') : (movie.tags || ''),
+    });
+    setShowAddModal(true);
+  };
+
+  const handleEditVideo = (video) => {
+    setActiveTab('videos');
+    setEditingVideoId(video._id || video.id);
+    setEditingStoryId(null);
+    setEditingMovieId(null);
+    setVideosUploadType('video');
+    setVideoForm({
+      title: video.title || '',
+      description: video.description || '',
+      videoUrl: video.videoUrl || '',
+      category: video.category || 'reels',
+      collectionTitle: video.collectionTitle || 'Bhagavad Gita',
+      isKids: video.isKids || false,
+      tags: Array.isArray(video.tags) ? video.tags.join(', ') : (video.tags || ''),
     });
     setShowAddModal(true);
   };
@@ -804,12 +862,20 @@ function AdminDashboardContent() {
                           <h4 className="text-white font-bold text-lg mb-2">{movie.title}</h4>
                           <p className="text-xs text-gray-400 mb-3">{movie.releaseYear || 'N/A'} • {(movie.tags || []).join(', ') || 'No tags'}</p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{movie.description || 'No description'}</p>
-                          <button
-                            onClick={() => handleDeleteContent('movies', movie._id || movie.id, movie.title || 'Untitled')}
-                            className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                          >
-                            <Trash2 className="w-4 h-4" /> Delete
-                          </button>
+                          <div className="mt-auto flex gap-2">
+                            <button
+                              onClick={() => handleEditMovie(movie)}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Pencil className="w-4 h-4" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteContent('movies', movie._id || movie.id, movie.title || 'Untitled')}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1031,12 +1097,20 @@ function AdminDashboardContent() {
                           <h4 className="text-white font-bold text-lg mb-2">{video.title}</h4>
                           <p className="text-xs text-gray-400 mb-3">{video.collectionTitle || 'Bhagavad Gita'} • {video.category || 'General'} • {video.isKids ? 'Kids' : 'All Ages'}</p>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{video.description || 'No description'}</p>
-                          <button
-                            onClick={() => handleDeleteContent('videos', video._id || video.id, video.title || 'Untitled')}
-                            className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
-                          >
-                            <Trash2 className="w-4 h-4" /> Delete
-                          </button>
+                          <div className="mt-auto flex gap-2">
+                            <button
+                              onClick={() => handleEditVideo(video)}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Pencil className="w-4 h-4" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteContent('videos', video._id || video.id, video.title || 'Untitled')}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1197,7 +1271,7 @@ function AdminDashboardContent() {
               </button>
 
               <h2 className="text-5xl font-serif font-black text-white mb-12 text-center uppercase tracking-tighter">
-                {activeTab === 'stories' && editingStoryId ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : currentContentLabel)}</span>
+                {(editingStoryId || editingMovieId || editingVideoId) ? 'Edit' : 'Publish'} <span className="text-devotion-gold">{activeTab === 'stories' ? 'Story' : activeTab === 'movies' ? 'Movie' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'Quiz Question' : currentContentLabel)}</span>
               </h2>
 
               <form onSubmit={handleAddContent} className="space-y-10">
@@ -1517,7 +1591,7 @@ function AdminDashboardContent() {
                     {loading ? <div className="w-6 h-6 border-2 border-devotion-darkBlue border-t-transparent rounded-full animate-spin"></div> : (
                       <>
                         <Upload className="w-6 h-6 group-hover:scale-125 transition-transform" />
-                        {activeTab === 'stories' && editingStoryId ? 'UPDATE STORY' : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : 'PUBLISH TO DIVINE LIBRARY')}
+                        {(editingStoryId || editingMovieId || editingVideoId) ? `UPDATE ${activeTab === 'stories' ? 'STORY' : activeTab === 'movies' ? 'MOVIE' : 'VIDEO'}` : (activeTab === 'videos' && videosUploadType === 'quiz' ? 'PUBLISH QUIZ QUESTION' : 'PUBLISH TO DIVINE LIBRARY')}
                       </>
                     )}
                  </button>

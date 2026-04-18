@@ -545,3 +545,35 @@ exports.getSavedReels = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateVideo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, videoUrl, hlsUrl, category, collectionTitle, isKids, tags } = req.body;
+
+    const updatedData = {
+      ...(title && { title }),
+      ...(description !== undefined && { description }),
+      ...(videoUrl && { videoUrl }),
+      ...(hlsUrl !== undefined && { hlsUrl }),
+      ...(category && { category }),
+      ...(collectionTitle && { collectionTitle }),
+      ...(typeof isKids === 'boolean' && { isKids }),
+      ...(Array.isArray(tags) && { tags }),
+    };
+
+    const video = await VideoMongo.findByIdAndUpdate(
+      String(id),
+      { $set: updatedData },
+      { new: true, runValidators: true }
+    );
+
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    return res.json(mapVideo(video));
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
