@@ -73,6 +73,24 @@ function AdminDashboardContent() {
   const [editingStoryId, setEditingStoryId] = useState(null);
   const [editingMovieId, setEditingMovieId] = useState(null);
   const [editingVideoId, setEditingVideoId] = useState(null);
+  const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'system' });
+
+  const handleBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastForm.title || !broadcastForm.body) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/admin/notifications/broadcast', broadcastForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Broadcast sent successfully!' });
+      setBroadcastForm({ title: '', body: '', type: 'system' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send broadcast.' });
+    } finally {
+      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    }
+  };
 
   // Handle resumable video file upload
   const handleVideoFileChange = async (e) => {
@@ -397,6 +415,25 @@ function AdminDashboardContent() {
     }
   };
 
+  const handleClearCache = async () => {
+    const confirmed = window.confirm('Are you sure you want to globally clear the backend API cache? This will cause the next immediate requests to fetch from the database.');
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.post('/api/admin/clear-cache', {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessage({ type: 'success', text: 'Global API Cache cleared successfully!' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to clear cache' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    }
+  };
+
   const resetForms = () => {
     setMovieForm({ title: '', description: '', videoUrl: '', thumbnail: '', releaseYear: 2025, ownerHistory: '', tags: '' });
     setStoryForm({
@@ -595,6 +632,7 @@ function AdminDashboardContent() {
             { id: 'videos', name: 'Videos', icon: <Video className="w-5 h-5" /> },
             { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-5 h-5 text-devotion-gold" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
+            { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-5 h-5 text-purple-400" /> },
           ].map(item => (
             <button
               key={item.id}
@@ -638,6 +676,7 @@ function AdminDashboardContent() {
                 { id: 'videos', name: 'Videos', icon: <Video className="w-4 h-4" /> },
                 { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-4 h-4 text-devotion-gold" /> },
                 { id: 'users', name: 'Users', icon: <Users className="w-4 h-4" /> },
+                { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-4 h-4 text-purple-400" /> },
               ].map(item => (
                 <button
                   key={item.id}
@@ -786,6 +825,24 @@ function AdminDashboardContent() {
                       ))}
                    </div>
                 </div>
+
+                 <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl mt-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                           <h3 className="text-2xl font-serif font-black text-white uppercase tracking-widest flex items-center gap-4">
+                              <Database className="text-devotion-gold" /> System Health & Performance
+                           </h3>
+                           <p className="text-gray-400 text-sm mt-2">Manage the platform's in-memory API caching system.</p>
+                        </div>
+                        <button
+                          onClick={handleClearCache}
+                          disabled={loading}
+                          className="bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500 hover:text-white transition-all px-8 py-4 rounded-2xl font-black tracking-widest uppercase text-xs flex items-center gap-2"
+                        >
+                          <Flame className="w-4 h-4" /> Clear API Cache
+                        </button>
+                    </div>
+                 </div>
               </div>
             )}
 
@@ -1200,11 +1257,11 @@ function AdminDashboardContent() {
                           <h4 className="text-white font-bold text-lg mb-2">{reel.title}</h4>
                           <div className="flex items-center gap-2 mb-3 bg-black/30 p-2 rounded-lg border border-white/5">
                              <div className="w-6 h-6 rounded-full bg-devotion-gold flex items-center justify-center text-black font-black text-[10px]">
-                                {reel.uploadedBy?.name?.[0]?.toUpperCase() || 'U'}
+                                {(reel.uploadedBy?.name?.[0] || reel.uploaderName?.[0] || reel.uploader?.name?.[0] || 'U').toUpperCase()}
                              </div>
                              <div>
-                                <p className="text-[10px] font-black text-devotion-gold uppercase tracking-widest">{reel.uploadedBy?.name || 'Unknown Seeker'}</p>
-                                <p className="text-[9px] text-gray-500 uppercase">{reel.uploadedBy?.email || 'No email'}</p>
+                                <p className="text-[10px] font-black text-devotion-gold uppercase tracking-widest">{reel.uploadedBy?.name || reel.uploaderName || reel.uploader?.name || 'Unknown Seeker'}</p>
+                                <p className="text-[9px] text-gray-500 uppercase">{reel.uploadedBy?.email || reel.uploaderEmail || reel.uploader?.email || 'No email'}</p>
                              </div>
                           </div>
                           <p className="text-sm text-gray-300 line-clamp-2 mb-4">{reel.description || 'No description provided'}</p>
@@ -1251,6 +1308,68 @@ function AdminDashboardContent() {
                       ))}
                     </div>
                   )}
+               </div>
+            )}
+            
+            {activeTab === 'notifications' && (
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Global <span className="text-devotion-gold">Broadcast</span></h3>
+                  </div>
+                  
+                  <div className="max-w-3xl mx-auto bg-black/20 p-8 rounded-3xl border border-devotion-gold/20">
+                     <p className="text-gray-400 mb-8 text-sm">Send an instant notification to all active users. This will appear in their in-app notifications menu and as a native push notification if enabled.</p>
+                     
+                     <form onSubmit={handleBroadcast} className="space-y-6">
+                        <div>
+                           <label className="block text-[10px] font-black text-devotion-gold uppercase tracking-[0.2em] mb-2">Notification Title</label>
+                           <input 
+                             required
+                             value={broadcastForm.title}
+                             onChange={e => setBroadcastForm({...broadcastForm, title: e.target.value})}
+                             placeholder="E.g., Special Weekend Gita Class"
+                             className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:border-devotion-gold outline-none transition-all"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-black text-devotion-gold uppercase tracking-[0.2em] mb-2">Message Body</label>
+                           <textarea 
+                             required
+                             rows="4"
+                             value={broadcastForm.body}
+                             onChange={e => setBroadcastForm({...broadcastForm, body: e.target.value})}
+                             placeholder="E.g., Join us this Sunday at 10 AM for a special decoding of Chapter 2..."
+                             className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white placeholder-gray-600 focus:border-devotion-gold outline-none transition-all resize-none"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-black text-devotion-gold uppercase tracking-[0.2em] mb-2">Notification Type</label>
+                           <div className="flex gap-4">
+                              {['system', 'content', 'custom'].map(type => (
+                                 <label key={type} className={`flex-1 flex items-center justify-center p-3 rounded-xl border cursor-pointer transition-all ${broadcastForm.type === type ? 'border-devotion-gold bg-devotion-gold/10 text-devotion-gold' : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'}`}>
+                                    <input 
+                                      type="radio" 
+                                      name="notifType" 
+                                      value={type}
+                                      checked={broadcastForm.type === type}
+                                      onChange={() => setBroadcastForm({...broadcastForm, type})}
+                                      className="hidden"
+                                    />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{type}</span>
+                                 </label>
+                              ))}
+                           </div>
+                        </div>
+                        
+                        <button 
+                          type="submit"
+                          disabled={!broadcastForm.title || !broadcastForm.body}
+                          className="w-full bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue py-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(255,215,0,0.2)] hover:shadow-[0_0_50px_rgba(255,215,0,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <AlertCircle className="w-4 h-4" /> Broadcast Notification
+                        </button>
+                     </form>
+                  </div>
                </div>
             )}
          </div>
@@ -1464,10 +1583,11 @@ function AdminDashboardContent() {
                          <input type="checkbox" className="w-6 h-6 rounded bg-white/5 border-white/10 text-devotion-gold" checked={videoForm.isKids} onChange={e => setVideoForm({...videoForm, isKids: e.target.checked})} />
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold">Show in Kids Mode?</label>
                       </div>
-                   </div>
+                    </div>
                    {/* Embedded Quiz Builder for Video */}
-                   <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">
-                     <h3 className="text-lg font-black text-devotion-gold mb-2">Related Quizzes (Optional)</h3>
+                   {videoForm.category !== 'reels' && (
+                     <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">
+                       <h3 className="text-lg font-black text-devotion-gold mb-2">Related Quizzes (Optional)</h3>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
                        <div className="space-y-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Question</label>
@@ -1523,6 +1643,7 @@ function AdminDashboardContent() {
                        </div>
                      )}
                    </div>
+                   )}
                    </>
                  )}
 

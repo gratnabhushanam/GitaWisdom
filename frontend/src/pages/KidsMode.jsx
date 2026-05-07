@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link, useLocation } from 'react-router-dom';
 import { Play, Star, Award, BookOpen, X, Sparkles, Heart } from 'lucide-react';
@@ -37,6 +37,7 @@ export default function KidsMode() {
     const [, setLoading] = useState(true);
     const [selectedVideo, setSelectedVideo] = useState(null);
     const [showQuiz, setShowQuiz] = useState(false);
+    const [quizResult, setQuizResult] = useState(null);
 
     // Favorites state (localStorage)
     const [favorites, setFavorites] = useState(() => {
@@ -74,78 +75,81 @@ export default function KidsMode() {
 
     return (
       <>
-        <div className="min-h-screen bg-[#06101E] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative">
-          {/* Sparkle overlay */}
-          <div className="pointer-events-none fixed inset-0 z-20 animate-sparkle-bg" />
-          {/* Interactive radial background */}
-          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.10),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.22),transparent_28%)]"></div>
+        <div className="min-h-screen bg-[#020610] pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative">
+          <style>{`
+            @keyframes krishna-float {
+              0% { transform: translateY(0) scale(1); }
+              50% { transform: translateY(-32px) scale(1.04); }
+              100% { transform: translateY(0) scale(1); }
+            }
+            .animate-krishna-float {
+              animation: krishna-float 4s ease-in-out infinite;
+            }
+            @keyframes sparkle-bg {
+              0%, 100% { opacity: 0.18; }
+              50% { opacity: 0.32; }
+            }
+            .animate-sparkle-bg {
+              background: repeating-radial-gradient(circle at 60% 30%, #FFD70044 0 2px, transparent 3px 100px), repeating-radial-gradient(circle at 20% 80%, #FFD70033 0 1.5px, transparent 2.5px 100px);
+              animation: sparkle-bg 3.5s ease-in-out infinite;
+            }
+            @keyframes float-streak {
+              0% { transform: translate(-100px, 100px) rotate(45deg); opacity: 0; }
+              50% { opacity: 0.4; }
+              100% { transform: translate(100vw, -100vh) rotate(45deg); opacity: 0; }
+            }
+            .light-streak {
+              position: absolute;
+              width: 300px;
+              height: 2px;
+              background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
+              animation: float-streak 8s linear infinite;
+              filter: blur(4px);
+              pointer-events: none;
+            }
+          `}</style>
 
-          <div className="relative max-w-4xl mx-auto text-center mb-16 animate-fade-in-up">
-            <style>{`
-              @keyframes krishna-float {
-                0% { transform: translateY(0) scale(1); }
-                50% { transform: translateY(-32px) scale(1.04); }
-                100% { transform: translateY(0) scale(1); }
-              }
-              .animate-krishna-float {
-                animation: krishna-float 4s ease-in-out infinite;
-              }
-              @keyframes sparkle-bg {
-                0%, 100% { opacity: 0.18; }
-                50% { opacity: 0.32; }
-              }
-              .animate-sparkle-bg {
-                background: repeating-radial-gradient(circle at 60% 30%, #FFD70044 0 2px, transparent 3px 100px), repeating-radial-gradient(circle at 20% 80%, #FFD70033 0 1.5px, transparent 2.5px 100px);
-                animation: sparkle-bg 3.5s ease-in-out infinite;
-              }
-            `}</style>
-            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-6">
+          {/* Cinematic Deep Dark Background */}
+          <div className="absolute inset-0 bg-[#020610] z-0"></div>
+          
+          {/* Sacred Geometry & Radial Glows */}
+          <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top_right,rgba(255,159,28,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(0,50,100,0.4),transparent_50%)]"></div>
+          
+          {/* Subtle Om Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden opacity-[0.03]">
+             <span className="text-[60vw] font-black text-white mix-blend-overlay">ॐ</span>
+          </div>
+
+          {/* Sparkle Particles & Light Streaks */}
+          <div className="pointer-events-none absolute inset-0 z-10 animate-sparkle-bg" />
+          <div className="light-streak" style={{ top: '80%', left: '-10%', animationDelay: '0s' }}></div>
+          <div className="light-streak" style={{ top: '40%', left: '-20%', animationDelay: '3s' }}></div>
+          <div className="light-streak" style={{ top: '100%', left: '30%', animationDelay: '5s' }}></div>
+
+          <div className="relative z-20 max-w-4xl mx-auto text-center mb-16 animate-fade-in-up">
+            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-6 shadow-[0_0_20px_rgba(255,215,0,0.2)]">
               <span className="flex items-center gap-2"><Sparkles className="w-4 h-4" /><span>Kids Mode</span></span>
             </div>
-            <h1 className="text-6xl md:text-8xl font-serif font-black text-devotion-gold drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] mb-6 uppercase tracking-tight">
+            <h1 className="text-6xl md:text-8xl font-serif font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-[#FFD700] to-white drop-shadow-[0_10px_30px_rgba(255,215,0,0.3)] mb-6 uppercase tracking-tight">
               Little Krishna
             </h1>
             <div className="inline-block relative">
               <p className="text-xl md:text-2xl text-gray-300 font-serif italic border-b border-devotion-gold/30 pb-4">
                 Gentle stories, songs, and lessons for young hearts.
               </p>
-              <div className="absolute -right-12 -top-12 text-5xl opacity-60">ॐ</div>
             </div>
           </div>
 
           <div className="relative max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {videos.map((video, index) => (
-              <div 
-                key={video._id}
-                className={`p-8 rounded-[2.5rem] border backdrop-blur-3xl bg-gradient-to-br transition-all duration-500 transform hover:-translate-y-3 cursor-pointer group relative overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.45)] ${colors[index % colors.length]}`}
-                onClick={() => setSelectedVideo(video)}
-              >
-                <div className="absolute -top-10 -right-10 text-white/10 text-[10rem] group-hover:rotate-12 transition-transform select-none">🕉️</div>
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="w-20 h-20 bg-devotion-gold/10 rounded-3xl flex items-center justify-center text-5xl mb-6 border border-devotion-gold/20 group-hover:scale-110 transition-transform rotate-3">
-                    <Play className="w-10 h-10 text-devotion-gold fill-current ml-1" />
-                  </div>
-                  <h3 className="text-3xl font-serif font-black text-white mb-4 leading-tight drop-shadow-md">
-                    Chapter {video.chapter}: {video.title}
-                  </h3>
-                  <p className="text-gray-300 font-light text-lg mb-8 line-clamp-2 leading-relaxed">
-                    {video.description || "Join Krishna for a fun adventure!"}
-                  </p>
-                  <div className="mt-auto flex items-center justify-between">
-                    <button className="bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-3 rounded-full font-black text-sm uppercase tracking-[0.2em] flex items-center gap-3 shadow-[0_10px_30px_rgba(255,215,0,0.18)] group-hover:shadow-[0_14px_34px_rgba(255,215,0,0.24)] transition-all active:translate-y-1">
-                      Watch Now <Play className="w-5 h-5 fill-current" />
-                    </button>
-                    <button
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 ${isFavorite(video) ? 'border-devotion-gold bg-devotion-gold/20 text-devotion-gold' : 'border-white/20 bg-white/5 text-white/60'} font-black text-xs uppercase tracking-widest transition-all hover:scale-105`}
-                      title={isFavorite(video) ? 'Remove from favorites' : 'Add to favorites'}
-                      onClick={e => { e.stopPropagation(); toggleFavorite(video); }}
-                    >
-                      <Heart className={`w-5 h-5 ${isFavorite(video) ? 'fill-devotion-gold' : 'fill-none'}`} />
-                      {isFavorite(video) ? 'Favorited' : 'Favorite'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <TeaserCard
+                key={video._id || video.id || index}
+                video={video}
+                index={index}
+                isFavorite={isFavorite}
+                toggleFavorite={toggleFavorite}
+                onSelect={setSelectedVideo}
+              />
             ))}
             {videos.length === 0 && (
               <div className="col-span-full bg-glass-gradient backdrop-blur-3xl p-16 rounded-[3rem] border border-devotion-gold/20 text-center shadow-2xl">
@@ -162,6 +166,7 @@ export default function KidsMode() {
             video={selectedVideo}
             onClose={() => setSelectedVideo(null)}
             setShowQuiz={setShowQuiz}
+            setQuizResult={setQuizResult}
             isFavorite={isFavorite}
             toggleFavorite={toggleFavorite}
           />
@@ -169,6 +174,7 @@ export default function KidsMode() {
         {showQuiz && selectedVideo && (
           <QuizModal
             onClose={() => { setShowQuiz(false); setSelectedVideo(null); }}
+            setResult={setQuizResult}
           />
         )}
       </>
@@ -350,6 +356,157 @@ function QuizModal({ onClose, setResult }) {
             Done
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TeaserCard({ video, isFavorite, toggleFavorite, onSelect, index }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    setIsDesktop(window.innerWidth > 768);
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleMouseMove = (e) => {
+    if (!isDesktop) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10; // max 10 deg
+    const rotateY = ((x - centerX) / centerX) * 10;
+    setMousePos({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (isDesktop) {
+      hoverTimeoutRef.current = setTimeout(() => setShowVideo(true), 600); // 600ms delay for auto-play
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setShowVideo(false);
+    clearTimeout(hoverTimeoutRef.current);
+    setMousePos({ x: 0, y: 0 });
+  };
+
+  const extractYoutubeId = (url) => { 
+    if (!url) return null;
+    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); 
+    return match ? match[1] : null; 
+  };
+  
+  const videoUrl = video.videoUrl || video.youtubeUrl || video.url || '';
+  const ytId = extractYoutubeId(videoUrl);
+  // Prefer provided thumbnail, fallback to YT maxresdefault, then to placeholder
+  const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/krishna-line-art.svg');
+  // Simple logic to show 'New' badge for first two items
+  const isNew = index < 2;
+
+  return (
+    <div 
+      className="relative preserve-3d transition-transform duration-300 ease-out cursor-pointer h-[480px] landscape:h-[340px] md:landscape:h-[480px]"
+      style={{ 
+        transform: isHovered && isDesktop ? `perspective(1000px) rotateX(${mousePos.x}deg) rotateY(${mousePos.y}deg) scale3d(1.02, 1.02, 1.02)` : 'perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        zIndex: isHovered ? 50 : 1
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => onSelect(video)}
+    >
+      {/* Golden Glowing Border Effect */}
+      <div 
+        className="absolute -inset-1 bg-gradient-to-r from-devotion-gold via-[#FF9F1C] to-devotion-gold rounded-[2.5rem] blur-md transition-opacity duration-500 pointer-events-none" 
+        style={{ opacity: isHovered ? 0.6 : 0 }}
+      ></div>
+      
+      {/* Main Card Container */}
+      <div className="relative h-full w-full bg-[#0A1A2F] rounded-[2.5rem] border border-devotion-gold/30 overflow-hidden shadow-2xl backface-hidden flex flex-col group">
+        
+        {/* Thumbnail or Video Background */}
+        <div className="absolute inset-0 z-0 bg-black">
+          <img 
+            src={thumbUrl} 
+            alt={video.title}
+            className={`w-full h-full object-cover opacity-80 transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
+          />
+          
+          {showVideo && ytId && (
+            <div className="absolute inset-0 z-10 bg-black animate-fade-in-up">
+              <iframe
+                src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${ytId}`}
+                className="w-full h-[150%] -translate-y-[15%] object-cover pointer-events-none opacity-80"
+                allow="autoplay; encrypted-media"
+                frameBorder="0"
+                title="Teaser Preview"
+              />
+            </div>
+          )}
+          
+          {/* Gradient Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/60 to-transparent z-20 transition-opacity duration-500 group-hover:opacity-90"></div>
+        </div>
+
+        {/* Shimmer Light Sweep */}
+        {isHovered && (
+          <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[2.5rem]">
+             <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+          </div>
+        )}
+
+        {/* Top Badges */}
+        <div className="absolute top-6 left-0 flex justify-between w-full px-6 z-30 translate-z-20">
+          <div className="flex gap-2">
+            {isNew && (
+              <span className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                New
+              </span>
+            )}
+            {video.duration && (
+              <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full">
+                {video.duration}
+              </span>
+            )}
+          </div>
+          <button
+            className={`flex items-center justify-center w-10 h-10 rounded-full border border-white/20 backdrop-blur-md transition-all ${isFavorite(video) ? 'bg-devotion-gold/20 text-devotion-gold border-devotion-gold' : 'bg-black/40 text-white/80 hover:bg-white/20'}`}
+            title={isFavorite(video) ? 'Remove from favorites' : 'Add to favorites'}
+            onClick={e => { e.stopPropagation(); toggleFavorite(video); }}
+          >
+            <Heart className={`w-5 h-5 ${isFavorite(video) ? 'fill-devotion-gold stroke-devotion-gold' : 'fill-none stroke-current'}`} />
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="mt-auto p-8 relative z-30 translate-z-30 flex flex-col items-center text-center">
+          <div className={`w-16 h-16 landscape:w-12 landscape:h-12 md:landscape:w-16 md:landscape:h-16 bg-devotion-gold/20 backdrop-blur-lg rounded-full flex items-center justify-center border border-devotion-gold/40 mb-6 landscape:mb-2 md:landscape:mb-6 transition-all duration-500 shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isHovered ? 'scale-110 bg-devotion-gold text-devotion-darkBlue shadow-[0_0_50px_rgba(255,215,0,0.6)]' : 'text-devotion-gold'}`}>
+             <Play className="w-8 h-8 landscape:w-6 landscape:h-6 md:landscape:w-8 md:landscape:h-8 ml-1 fill-current" />
+          </div>
+          
+          <h3 className="text-2xl md:text-3xl landscape:text-xl md:landscape:text-3xl font-serif font-black text-white mb-3 landscape:mb-1 md:landscape:mb-3 leading-tight drop-shadow-xl tracking-tight">
+            {video.chapter ? `Ch ${video.chapter}: ` : ''}{video.title}
+          </h3>
+          
+          <p className="text-gray-300 font-light text-sm landscape:text-xs md:landscape:text-sm mb-6 landscape:mb-2 md:landscape:mb-6 line-clamp-2 landscape:line-clamp-1 md:landscape:line-clamp-2 leading-relaxed opacity-80">
+            {video.description || "Join Krishna for a magical animated adventure!"}
+          </p>
+
+          <button className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-300 shadow-2xl ${isHovered ? 'bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-devotion-darkBlue scale-105' : 'bg-white/10 border border-white/20 text-white backdrop-blur-md'}`}>
+            Watch Adventure
+          </button>
+        </div>
       </div>
     </div>
   );

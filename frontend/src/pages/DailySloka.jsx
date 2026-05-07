@@ -1,515 +1,42 @@
-import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import { Bell, Volume2, Pause, BookOpen, Share2, Copy, CheckCircle, Bookmark, Trash2, ChevronLeft, CalendarDays } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
-import { requestNotificationPermission, sendNotification } from '../utils/notificationService';
+import React, { useState } from 'react';
+import { Bell, Volume2, Pause, BookOpen, Share2, Copy, CheckCircle, Bookmark, Trash2, ChevronLeft, CalendarDays, Settings, X } from 'lucide-react';
+import { useDailySloka } from '../hooks/useDailySloka';
 
 export default function DailySloka() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-  const API_KEY = String(import.meta.env.VITE_APP_API_KEY || import.meta.env.VITE_PERMANENT_API_KEY || '').trim();
-  const API_ORIGIN = API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:8888` : 'http://localhost:8888');
-  const API_REQUEST_CONFIG = { headers: { 'x-api-key': API_KEY } };
-  const HISTORY_KEY = 'daily_sloka_history_v1';
-  const SAVED_VERSES_KEY = 'daily_saved_verses_v1';
-  const MIN_DAILY_DATE_KEY = '2026-01-01';
-  const formatLocalDateKey = (date = new Date()) => {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-  const getTodayDateKey = () => formatLocalDateKey();
-  const todayDateKey = getTodayDateKey();
-  const defaultDateKey = todayDateKey < MIN_DAILY_DATE_KEY ? MIN_DAILY_DATE_KEY : todayDateKey;
-  const [dailySloka, setDailySloka] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [language, setLanguage] = useState('english');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [notificationEnabled, setNotificationEnabled] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [voices, setVoices] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [savedVerses, setSavedVerses] = useState([]);
-  const [saveStatus, setSaveStatus] = useState('');
-  const [playbackSource, setPlaybackSource] = useState(null);
-  const [selectedDateKey, setSelectedDateKey] = useState(defaultDateKey);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const location = useLocation();
-  const audioRef = useRef(null);
+  const {
+    dailySloka,
+    loading,
+    language,
+    setLanguage,
+    isPlaying,
+    notificationEnabled,
+    copied,
+    history,
+    savedVerses,
+    saveStatus,
+    playbackSource,
+    selectedDateKey,
+    showCalendar,
+    setShowCalendar,
+    MIN_DAILY_DATE_KEY,
+    getTodayDateKey,
+    openPreviousDay,
+    handleDateSelection,
+    enableNotifications,
+    toggleAudio,
+    copyToClipboard,
+    shareSloka,
+    handleToggleSaveVerse,
+    handleLoadSavedVerse,
+    handleRemoveSavedVerse,
+    getMeaningByLanguage,
+    getVerseKey,
+    stopPlayback
+  } = useDailySloka();
 
-  const isSpeechSupported = typeof window !== 'undefined' && 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance !== 'undefined';
-
-  useEffect(() => {
-    // Load voices
-    if (isSpeechSupported) {
-      const loadVoices = () => {
-        const availableVoices = window.speechSynthesis.getVoices();
-        if (Array.isArray(availableVoices) && availableVoices.length) {
-          setVoices(availableVoices);
-        }
-      };
-      loadVoices();
-      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
-      return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (isSpeechSupported) {
-      window.speechSynthesis.cancel();
-    }
-  }, [isSpeechSupported]);
-
-  useEffect(() => {
-    const savedVerse = location.state && location.state.savedVerse;
-    if (savedVerse && hasValidSloka(savedVerse)) {
-      setDailySloka({
-        ...savedVerse,
-        localizedMeaning: {
-          english: savedVerse.englishMeaning || '',
-          hindi: savedVerse.hindiMeaning || savedVerse.englishMeaning || '',
-          telugu: savedVerse.teluguMeaning || savedVerse.englishMeaning || '',
-        },
-      });
-      setLoading(false);
-      setSaveStatus('Loaded saved verse');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-    } else {
-      fetchDailySloka();
-    }
-
-    checkNotificationStatus();
-    loadHistory();
-    loadSavedVerses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state]);
-
-  const hasValidSloka = (payload) => Boolean(payload && typeof payload.sanskrit === 'string' && payload.sanskrit.trim().length > 0);
-
-  const loadHistory = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/slokas/daily/history`, API_REQUEST_CONFIG);
-      const apiItems = response.data && Array.isArray(response.data.items) ? response.data.items : [];
-      if (apiItems.length) {
-        setHistory(apiItems);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(apiItems));
-        return;
-      }
-    } catch (error) {
-      console.error('Failed to load API daily history, using local cache:', error);
-    }
-
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      setHistory(Array.isArray(parsed) ? parsed : []);
-    } catch (error) {
-      console.error('Failed to load daily sloka history:', error);
-      setHistory([]);
-    }
-  };
-
-  const loadSavedVerses = () => {
-    try {
-      const raw = localStorage.getItem(SAVED_VERSES_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      setSavedVerses(Array.isArray(parsed) ? parsed : []);
-    } catch (error) {
-      console.error('Failed to load saved daily verses:', error);
-      setSavedVerses([]);
-    }
-  };
-
-  const getVerseKey = (item) => `${item.chapter || '0'}:${item.verse || '0'}:${String(item.sanskrit || '').trim()}`;
-
-  const saveHistory = async (entry) => {
-    try {
-      await axios.post(`${API_BASE_URL}/api/slokas/daily/history`, entry, API_REQUEST_CONFIG);
-    } catch (error) {
-      console.error('Failed to save daily history to API, using local cache:', error);
-    }
-
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      const base = Array.isArray(parsed) ? parsed : [];
-      const deduped = base.filter((item) => item.dailyKey !== entry.dailyKey && item.id !== entry.id);
-      const next = [entry, ...deduped].slice(0, 30);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-      setHistory(next);
-    } catch (error) {
-      console.error('Failed to save daily sloka history:', error);
-    }
-  };
-
-  const shiftDateKey = (dateKey, offsetDays) => {
-    const parsed = new Date(dateKey);
-    const safe = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-    safe.setDate(safe.getDate() + offsetDays);
-    const yyyy = safe.getFullYear();
-    const mm = String(safe.getMonth() + 1).padStart(2, '0');
-    const dd = String(safe.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const clampDateKey = (dateKey) => {
-    const safeDateKey = String(dateKey || '').trim();
-    if (!safeDateKey) return selectedDateKey;
-    const todayKey = getTodayDateKey();
-    if (safeDateKey > todayKey) return todayKey;
-    if (safeDateKey < MIN_DAILY_DATE_KEY) return MIN_DAILY_DATE_KEY;
-    return safeDateKey;
-  };
-
-  const fetchDailySloka = async (dateKey = selectedDateKey) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/slokas/daily?date=${encodeURIComponent(dateKey)}`, API_REQUEST_CONFIG);
-      const payload = response.data;
-      if (hasValidSloka(payload)) {
-        setDailySloka(payload);
-        await saveHistory({
-          id: payload.id,
-          chapter: payload.chapter,
-          verse: payload.verse,
-          sanskrit: payload.sanskrit,
-          englishMeaning: payload.englishMeaning || (payload.localizedMeaning && payload.localizedMeaning.english) || '',
-          dailyKey: dateKey || payload.dailyKey || new Date().toISOString().slice(0, 10),
-          viewedAt: new Date().toISOString(),
-        });
-      } else {
-        setDailySloka(null);
-      }
-    } catch (error) {
-      console.error('Error fetching daily sloka:', error);
-      setDailySloka(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const openPreviousDay = async () => {
-    stopPlayback();
-    if (selectedDateKey <= MIN_DAILY_DATE_KEY) {
-      setSaveStatus('Calendar starts from 2026-01-01');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-      return;
-    }
-    const previousDate = shiftDateKey(selectedDateKey, -1);
-    setSelectedDateKey(previousDate);
-    await fetchDailySloka(previousDate);
-  };
-
-  const handleDateSelection = async (event) => {
-    const pickedDate = String(event.target.value || '').trim();
-    if (!pickedDate) return;
-    const todayKey = getTodayDateKey();
-    if (pickedDate > todayKey) {
-      setSaveStatus('Future dates are disabled');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-    }
-    if (pickedDate < MIN_DAILY_DATE_KEY) {
-      setSaveStatus('Calendar starts from 2026-01-01');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-    }
-
-    const normalizedDate = clampDateKey(pickedDate);
-    if (normalizedDate !== pickedDate) {
-      event.target.value = normalizedDate;
-    }
-
-    stopPlayback();
-    setSelectedDateKey(normalizedDate);
-    await fetchDailySloka(normalizedDate);
-  };
-
-  const checkNotificationStatus = async () => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    const hasPermission = Notification.permission === 'granted';
-    setNotificationEnabled(hasPermission);
-  };
-
-  const enableNotifications = async () => {
-    const permission = await requestNotificationPermission();
-    setNotificationEnabled(permission === 'granted');
-    if (permission === 'granted' && dailySloka) {
-      sendNotification('Daily Sloka', {
-        body: dailySloka.sanskrit,
-        tag: 'daily-sloka',
-        requireInteraction: false,
-      });
-    }
-  };
-
-  const getMeaningByLanguage = (sloka, lang) => {
-    if (!sloka) return '';
-    const localized = sloka.localizedMeaning || {};
-    if (lang === 'telugu') {
-      return localized.telugu || sloka.teluguMeaning || sloka.englishMeaning || '';
-    }
-    if (lang === 'hindi') {
-      return localized.hindi || sloka.hindiMeaning || sloka.englishMeaning || '';
-    }
-    return localized.english || sloka.englishMeaning || '';
-  };
-
-  const getAudioByLanguage = (sloka, lang) => {
-    if (!sloka) return '';
-    const audioByLanguage = sloka.audioByLanguage || {};
-    return audioByLanguage[lang] || sloka.audioUrl || '';
-  };
-
-  const resolveAudioUrl = (rawUrl) => {
-    const value = String(rawUrl || '').trim();
-    if (!value) return '';
-    if (/^https?:\/\//i.test(value)) return value;
-    if (value.startsWith('/')) return `${API_ORIGIN}${value}`;
-    return value;
-  };
-
-  const getSpeechLang = (lang) => {
-    if (lang === 'hindi') return 'hi-IN';
-    if (lang === 'telugu') return 'te-IN';
-    return 'en-US';
-  };
-
-  const getSpeechText = (sloka, lang) => {
-    if (!sloka) return '';
-    const meaning = getMeaningByLanguage(sloka, lang);
-    return `${sloka.sanskrit}\n\n${meaning}`.trim();
-  };
-
-  const getSpeechVoice = (lang) => {
-    const voiceLanguageHints = {
-      english: ['en-us', 'en-gb', 'en-in'],
-      hindi: ['hi-in', 'hi'],
-      telugu: ['te-in', 'te'],
-    };
-    const hints = voiceLanguageHints[lang] || voiceLanguageHints.english;
-    for (const hint of hints) {
-      const byLang = voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith(hint));
-      if (byLang) return byLang;
-      const byName = voices.find((voice) => String(voice.name || '').toLowerCase().includes(hint.replace('-', '')));
-      if (byName) return byName;
-    }
-    return voices.find((voice) => voice.default) || voices[0] || null;
-  };
-
-  const stopPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-    if (isSpeechSupported) {
-      window.speechSynthesis.cancel();
-    }
-    setIsPlaying(false);
-    setPlaybackSource(null);
-  };
-
-  const startSpeechPlayback = (lang = language) => {
-    if (!isSpeechSupported) {
-      return false;
-    }
-
-    const speechText = getSpeechText(dailySloka, lang);
-    if (!speechText) {
-      return false;
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.lang = getSpeechLang(lang);
-    const selectedVoice = getSpeechVoice(lang);
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    utterance.onend = () => setIsPlaying(false);
-    utterance.onerror = () => setIsPlaying(false);
-    setIsPlaying(true);
-    setPlaybackSource('speech');
-    window.speechSynthesis.speak(utterance);
-    return true;
-  };
-
-  const startPlayback = async (lang = language) => {
-    stopPlayback();
-
-    const speechText = getSpeechText(dailySloka, lang);
-    if (!speechText) {
-      setSaveStatus('Audio unavailable for this verse');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-      return;
-    }
-    
-    setPlaybackSource('loading');
-
-    try {
-      const ttsResponse = await axios.post(`${API_BASE_URL}/api/ai/tts`, {
-        text: speechText,
-        voiceType: 'narrator'
-      }, {
-        ...API_REQUEST_CONFIG,
-        responseType: 'arraybuffer'
-      });
-
-      const blob = new Blob([ttsResponse.data], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(blob);
-      const newAudio = new Audio(audioUrl);
-      
-      audioRef.current = newAudio;
-      setPlaybackSource('api');
-      setIsPlaying(true);
-      
-      newAudio.play().catch(e => {
-        console.error('Audio api playback failed:', e);
-        audioRef.current = null;
-        fallbackToSpeechPlayback(lang);
-      });
-
-      newAudio.onended = () => {
-        setIsPlaying(false);
-        setPlaybackSource(null);
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-      };
-      
-      newAudio.onerror = () => {
-        URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-        fallbackToSpeechPlayback(lang);
-      };
-
-    } catch (apiError) {
-      if (apiError.response && apiError.response.status === 501) {
-         console.log('ElevenLabs API key not configured. Falling back to OS Speech Synthesis.');
-      } else {
-         console.warn('TTS API Error:', apiError);
-      }
-      fallbackToSpeechPlayback(lang);
-    }
-  };
-
-  const fallbackToSpeechPlayback = (lang) => {
-    const audioUrl = resolveAudioUrl(getAudioByLanguage(dailySloka, lang));
-    if (audioUrl) {
-      const newAudio = new Audio(audioUrl);
-      audioRef.current = newAudio;
-      setIsPlaying(true);
-      setPlaybackSource('file');
-      newAudio.play().catch(() => fallToNativeSpeech(lang));
-      newAudio.onended = () => { audioRef.current = null; setIsPlaying(false); setPlaybackSource(null); };
-      newAudio.onerror = () => fallToNativeSpeech(lang);
-      return;
-    }
-    fallToNativeSpeech(lang);
-  };
-
-  const fallToNativeSpeech = (lang) => {
-    const started = startSpeechPlayback(lang);
-    if (!started) {
-      setIsPlaying(false);
-      setPlaybackSource(null);
-      setSaveStatus('Audio unavailable for this verse on this browser');
-      window.setTimeout(() => setSaveStatus(''), 2000);
-    }
-  };
-
-  const toggleAudio = () => {
-    if (isPlaying) {
-      stopPlayback();
-    } else {
-      startPlayback(language);
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (!dailySloka) return;
-    const meaning = getMeaningByLanguage(dailySloka, language);
-    const text = `${dailySloka.sanskrit}\n\n${meaning}`;
-    if (typeof navigator === 'undefined' || !navigator.clipboard) return;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareSloka = async () => {
-    if (!dailySloka || typeof navigator === 'undefined' || !navigator.share) return;
-    const meaning = getMeaningByLanguage(dailySloka, language);
-    try {
-      await navigator.share({
-        title: 'Daily Sloka from Gita Wisdom',
-        text: `${dailySloka.sanskrit}\n\n${meaning}`,
-        url: window.location.href,
-      });
-    } catch (err) {
-      console.log('Share failed:', err);
-    }
-  };
-
-  const handleToggleSaveVerse = () => {
-    if (!dailySloka) return;
-
-    const verseKey = getVerseKey(dailySloka);
-    const exists = savedVerses.some((item) => item.verseKey === verseKey);
-
-    const entry = {
-      verseKey,
-      chapter: dailySloka.chapter || null,
-      verse: dailySloka.verse || null,
-      sanskrit: dailySloka.sanskrit || '',
-      englishMeaning: dailySloka.englishMeaning || (dailySloka.localizedMeaning && dailySloka.localizedMeaning.english) || '',
-      dailyKey: dailySloka.dailyKey || new Date().toISOString().slice(0, 10),
-      savedAt: new Date().toISOString(),
-    };
-
-    const next = exists
-      ? savedVerses.filter((item) => item.verseKey !== verseKey)
-      : [entry, ...savedVerses].slice(0, 80);
-
-    setSavedVerses(next);
-    localStorage.setItem(SAVED_VERSES_KEY, JSON.stringify(next));
-    setSaveStatus(exists ? 'Verse removed from saved list' : 'Verse saved successfully');
-
-    window.setTimeout(() => {
-      setSaveStatus('');
-    }, 2000);
-  };
-
-  const handleLoadSavedVerse = (item) => {
-    if (!item) return;
-
-    stopPlayback();
-
-    setDailySloka((prev) => ({
-      ...(prev || {}),
-      ...item,
-      localizedMeaning: {
-        english: item.englishMeaning || '',
-        hindi: item.hindiMeaning || item.englishMeaning || '',
-        telugu: item.teluguMeaning || item.englishMeaning || '',
-      },
-    }));
-
-    setSaveStatus('Saved verse loaded');
-    window.setTimeout(() => setSaveStatus(''), 2000);
-  };
-
-  const handleRemoveSavedVerse = (verseKey) => {
-    const next = savedVerses.filter((item) => item.verseKey !== verseKey);
-    setSavedVerses(next);
-    localStorage.setItem(SAVED_VERSES_KEY, JSON.stringify(next));
-    setSaveStatus('Saved verse removed');
-    window.setTimeout(() => setSaveStatus(''), 2000);
-  };
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
+  const [customElevenLabsKey, setCustomElevenLabsKey] = useState(() => localStorage.getItem('elevenlabsApiKey') || '');
 
   if (loading) {
     return (
@@ -557,6 +84,12 @@ export default function DailySloka() {
             <span className="px-4 py-2 rounded-xl border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black uppercase tracking-widest">
               {selectedDateKey}
             </span>
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest transition-all"
+            >
+              <Settings className="w-4 h-4" /> API Config
+            </button>
           </div>
           
           {/* Collapsible Calendar */}
@@ -796,6 +329,59 @@ export default function DailySloka() {
           </div>
         </div>
       </div>
+
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0A1A2F] border border-devotion-gold/30 rounded-3xl p-8 max-w-md w-full relative shadow-[0_0_50px_rgba(255,215,0,0.1)]">
+            <button 
+              onClick={() => setShowSettingsModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-serif text-devotion-gold mb-6 uppercase tracking-widest font-black">API Configuration</h2>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-devotion-gold text-xs font-black uppercase tracking-widest mb-2">DeepSeek / OpenAI AI Key</label>
+                <input
+                  type="password"
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder="sk-..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-devotion-gold focus:ring-1 focus:ring-devotion-gold outline-none transition-all font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-devotion-gold text-xs font-black uppercase tracking-widest mb-2">ElevenLabs API Key (TTS)</label>
+                <input
+                  type="password"
+                  value={customElevenLabsKey}
+                  onChange={(e) => setCustomElevenLabsKey(e.target.value)}
+                  placeholder="sk_..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-devotion-gold focus:ring-1 focus:ring-devotion-gold outline-none transition-all font-mono text-sm"
+                />
+              </div>
+              
+              <button
+                onClick={() => {
+                  localStorage.setItem('geminiApiKey', customApiKey);
+                  localStorage.setItem('elevenlabsApiKey', customElevenLabsKey);
+                  setShowSettingsModal(false);
+                }}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-[#06101E] font-black uppercase tracking-widest text-xs hover:scale-[1.02] transition-transform shadow-lg"
+              >
+                Save Keys
+              </button>
+            </div>
+            
+            <p className="mt-6 text-[10px] text-gray-400 text-center leading-relaxed">
+              These keys are stored locally in your browser and are used for custom AI features and narration.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

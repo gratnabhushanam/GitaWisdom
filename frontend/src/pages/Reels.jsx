@@ -1,484 +1,122 @@
-import React, { useState, useEffect, useRef } from 'react';
-// Krishna-themed SVG asset for floating animation
-const FLOATING_KRISHNA = '/krishna-floating.svg';
-import axios from 'axios';
+import React, { useEffect, useCallback } from 'react';
 import { Music, PlusCircle, Bookmark, Volume2, VolumeX, Play, Pause, Trash2 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
-import { useAuth } from '../context/AuthContext';
+import { useReels } from '../hooks/useReels';
 
 const REELS_BACKGROUND_SCENES = [
   '/scene-krishna.svg',
   '/scene-ram.svg',
   '/scene-hanuman.svg',
 ];
-const SAVED_REELS_KEY = 'saved_reels_v1';
-const REELS_SOUND_PREF_KEY = 'reels_sound_enabled_v1';
 
 export default function Reels() {
-  const location = useLocation();
-  const { user, setUser } = useAuth();
-  const [reels, setReels] = useState([]);
-  const [pendingReels, setPendingReels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [commentInputs, setCommentInputs] = useState({});
-  const [submittingCommentId, setSubmittingCommentId] = useState(null);
-  const [moderatingId, setModeratingId] = useState(null);
-  const [bgIndex, setBgIndex] = useState(0);
-  const [likedReelMap, setLikedReelMap] = useState({});
-  const [expandedCommentReel, setExpandedCommentReel] = useState(null);
-  const [savedReelMap, setSavedReelMap] = useState({});
-  const [selectedCommentProfile, setSelectedCommentProfile] = useState(null);
-  const [activeReelId, setActiveReelId] = useState('');
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const [likePopReelId, setLikePopReelId] = useState('');
-  const [pausedReelId, setPausedReelId] = useState('');
-  const reelsFeedRef = useRef(null);
-  const likePopTimerRef = useRef(null);
-  const singleTapTimerRef = useRef(null);
-  const lastTapRef = useRef({ reelId: '', time: 0 });
+  const {
+    user,
+    reels,
+    pendingReels,
+    loading,
+    error,
+    commentInputs,
+    setCommentInputs,
+    submittingCommentId,
+    moderatingId,
+    bgIndex,
+    expandedCommentReel,
+    setExpandedCommentReel,
+    savedReelMap,
+    selectedCommentProfile,
+    setSelectedCommentProfile,
+    activeReelId,
+    soundEnabled,
+    setSoundEnabled,
+    likePopReelId,
+    pausedReelId,
+    reelsFeedRef,
+    canViewCommenterProfile,
+    handleToggleLike,
+    handleShare,
+    handleCommentSubmit,
+    handleDeleteComment,
+    handleModeration,
+    handleSaveReel,
+    setActiveReelId,
+    setPausedReelId,
+    handleVideoSurfaceTap
+  } = useReels();
 
-  const currentUserId = Number(user?.id || user?._id || 0);
-
-  const isReelOwner = (reel) => {
-    const ownerId = Number(reel?.uploadedBy || 0);
-    return Boolean(ownerId && currentUserId && ownerId === currentUserId);
-  };
-
-  const canViewCommenterProfile = (reel) => Boolean(user?.role === 'admin' || isReelOwner(reel));
-
-  useEffect(() => {
-    // Fetch reels and pending moderation reels
-    const fetchReels = async () => {
-      try {
-        const [curatedResponse, userReelsResponse] = await Promise.all([
-          axios.get('/api/videos/reels').catch((err) => err.response || err),
-          axios.get('/api/videos/user-reels').catch((err) => err.response || err),
-        ]);
-
-        // Detect if either response is a login page (HTML) or 401/403
-        const isAuthError = (resp) => {
-          if (!resp) return true;
-          if (resp.status === 401 || resp.status === 403) return true;
-          if (typeof resp.data === 'string' && resp.data.includes('<form') && resp.data.includes('SIGN IN')) return true;
-          return false;
-        };
-
-        if (isAuthError(curatedResponse) || isAuthError(userReelsResponse)) {
-          setError('You must be logged in to view reels. Please sign in.');
-          setReels([]);
-          return;
-        }
-
-        const curatedData = Array.isArray(curatedResponse.data) ? curatedResponse.data : [];
-        const userReelsData = Array.isArray(userReelsResponse.data) ? userReelsResponse.data : [];
-
-        const safeUserReels = userReelsData.filter(
-          (reel) =>
-            reel.isUserReel &&
-            reel.moderationStatus === 'approved' &&
-            String(reel.contentType || 'other') === 'spiritual'
-        );
-
-        const mergedReels = [...safeUserReels, ...curatedData];
-        setReels(mergedReels);
-      } catch (err) {
-        setError('Failed to load reels. Please try again later.');
-        console.error('Error fetching reels:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchPendingModeration = async () => {
-      if (user?.role !== 'admin') {
-        setPendingReels([]);
-        return;
-      }
-      try {
-        const response = await axios.get('/api/videos/user-reels?status=pending');
-        setPendingReels(response.data || []);
-      } catch (err) {
-        console.error('Failed to fetch pending reels:', err);
-        setPendingReels([]);
-      }
-    };
-
-    fetchReels();
-    fetchPendingModeration();
-  }, [user?.role]);
-
-  // Sound preference effect
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(REELS_SOUND_PREF_KEY);
-      if (raw === null) {
-        const isLikelyMobile = (() => {
-          if (typeof window === 'undefined') return false;
-          const touchDevice = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-          const narrowViewport = window.innerWidth <= 768;
-          return touchDevice || narrowViewport;
-        })();
-        setSoundEnabled(!isLikelyMobile);
-        return;
-      }
-      setSoundEnabled(raw === 'true');
-    } catch (error) {
-      console.error('Failed to load reel sound preference:', error);
-      setSoundEnabled(false);
+  // Desktop Navigation & IntersectionObserver Setup
+  const scrollToReel = useCallback((index) => {
+    if (!reelsFeedRef.current || !reels || index < 0 || index >= reels.length) return;
+    const target = reelsFeedRef.current.children[index];
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, []);
+  }, [reels, reelsFeedRef]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(REELS_SOUND_PREF_KEY, String(soundEnabled));
-    } catch (error) {
-      console.error('Failed to save reel sound preference:', error);
-    }
-  }, [soundEnabled]);
-
-  useEffect(() => {
-    try {
-      const dbSaved = Array.isArray(user?.savedReels) ? user.savedReels : [];
-      const nextMap = {};
-      dbSaved.forEach(id => {
-         nextMap[String(id)] = true;
-      });
-      setSavedReelMap(nextMap);
-    } catch (error) {
-      console.error('Failed to load saved reels natively:', error);
-      setSavedReelMap({});
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!reels.length) {
-      setActiveReelId('');
-      return;
-    }
-
-    const firstId = String(reels[0]._id || reels[0].id || '');
-    setActiveReelId(firstId);
-    setPausedReelId('');
-  }, [reels]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % REELS_BACKGROUND_SCENES.length);
-    }, 4500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => () => {
-    if (likePopTimerRef.current) {
-      clearTimeout(likePopTimerRef.current);
-    }
-    if (singleTapTimerRef.current) {
-      clearTimeout(singleTapTimerRef.current);
-    }
-  }, []);
-
-  useEffect(() => {
-    const focusReelId = location?.state?.focusReelId;
-    if (!focusReelId || !reels.length) return;
-
-    const targetIndex = reels.findIndex((item) => String(item._id || item.id) === String(focusReelId));
-    if (targetIndex === -1) return;
-
     const container = reelsFeedRef.current;
-    if (!container) return;
-
-    const target = container.children[targetIndex];
-    if (!target || typeof target.scrollIntoView !== 'function') return;
-
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [location?.state?.focusReelId, reels]);
-
-  const updateReelInState = (updatedReel) => {
-    setReels((prev) => prev.map((reel) => ((reel._id || reel.id) === (updatedReel._id || updatedReel.id) ? updatedReel : reel)));
-  };
-
-  const triggerLikePop = (reelId) => {
-    const normalizedId = String(reelId || '');
-    if (!normalizedId) return;
-
-    if (likePopTimerRef.current) {
-      clearTimeout(likePopTimerRef.current);
-    }
-
-    setLikePopReelId(normalizedId);
-    likePopTimerRef.current = setTimeout(() => {
-      setLikePopReelId('');
-      likePopTimerRef.current = null;
-    }, 700);
-  };
-
-  const handleToggleLike = async (reel) => {
-    const reelId = reel._id || reel.id;
-    triggerLikePop(reelId);
-
-    if (!reel.isUserReel) {
-      const alreadyLiked = Boolean(likedReelMap[reelId]);
-      setLikedReelMap((prev) => ({ ...prev, [reelId]: !alreadyLiked }));
-      setReels((prev) =>
-        prev.map((item) => {
-          const itemId = item._id || item.id;
-          if (itemId !== reelId) return item;
-          const nextLikes = Math.max(0, Number(item.likesCount || 0) + (alreadyLiked ? -1 : 1));
-          return { ...item, likesCount: nextLikes };
-        })
-      );
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`/api/videos/user-reels/${reelId}/like`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      updateReelInState(response.data.reel);
-    } catch (error) {
-      console.error('Error liking reel:', error);
-    }
-  };
-
-  const handleShare = async (reel) => {
-    const reelId = reel._id || reel.id;
-    try {
-      if (reel.isUserReel) {
-        const token = localStorage.getItem('token');
-        await axios.post(`/api/videos/user-reels/${reelId}/share`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-
-      const shareText = `${reel.title}\n\n${reel.description || 'Gita wisdom reel'}`;
-      if (navigator.share) {
-        await navigator.share({ title: reel.title, text: shareText, url: reel.videoUrl || reel.url });
-      } else {
-        await navigator.clipboard.writeText(`${shareText}\n${reel.videoUrl || reel.url || ''}`);
-      }
-
-      setReels((prev) =>
-        prev.map((item) => {
-          const itemId = item._id || item.id;
-          if (itemId !== reelId) return item;
-          return { ...item, sharesCount: Number(item.sharesCount || 0) + 1 };
-        })
-      );
-    } catch (error) {
-      if (error?.name !== 'AbortError') {
-        console.error('Error sharing reel:', error);
-      }
-    }
-  };
-  const handleCommentSubmit = async (reel) => {
-    const reelId = reel._id || reel.id;
-    const text = String(commentInputs[reelId] || '').trim();
-    if (!text) return;
-
-    if (!reel.isUserReel) {
-      setReels((prev) =>
-        prev.map((item) => {
-          const itemId = item._id || item.id;
-          if (itemId !== reelId) return item;
-          const nextComments = [
-            {
-              id: Date.now(),
-              userName: user?.name || 'Devotee',
-              userEmail: user?.email || null,
-              userProfilePicture: user?.profilePicture || null,
-              text,
-              createdAt: new Date().toISOString(),
-            },
-            ...(Array.isArray(item.comments) ? item.comments : []),
-          ];
-          return {
-            ...item,
-            comments: nextComments,
-            commentsCount: Number(item.commentsCount || 0) + 1,
-          };
-        })
-      );
-      setCommentInputs((prev) => ({ ...prev, [reelId]: '' }));
-      return;
-    }
-
-    try {
-      setSubmittingCommentId(reelId);
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `/api/videos/user-reels/${reelId}/comments`,
-        { text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      // Award points for interacting
-      try {
-        const pointsRes = await axios.post('/api/auth/profile/points', { points: 5 }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (pointsRes.data.user) {
-          setUser(pointsRes.data.user);
-        }
-      } catch (err) {
-        console.error('Points increment failed silently', err);
-      }
-      
-      updateReelInState(response.data);
-      setCommentInputs((prev) => ({ ...prev, [reelId]: '' }));
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    } finally {
-      setSubmittingCommentId(null);
-    }
-  };
-
-  const handleDeleteComment = async (reel, commentId) => {
-    const reelId = reel._id || reel.id;
-    const confirmed = window.confirm('Delete your comment permanently?');
-    if (!confirmed) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(
-        `/api/videos/user-reels/${reelId}/comments/${commentId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      updateReelInState(response.data.reel);
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-      alert('Failed to delete comment.');
-    }
-  };
-
-  const handleModeration = async (reelId, status) => {
-    try {
-      setModeratingId(reelId);
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `/api/videos/user-reels/${reelId}/moderate`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setPendingReels((prev) => prev.filter((item) => (item._id || item.id) !== reelId));
-    } catch (error) {
-      console.error('Error moderating reel:', error);
-    } finally {
-      setModeratingId(null);
-    }
-  };
-
-  const handleSaveReel = async (reel) => {
-    if (!currentUserId) {
-      alert('Please login to save & download reels.');
-      return;
-    }
-
-    const reelId = String(reel._id || reel.id);
-    if (!reelId) return;
-
-    // Phase 1: Native Physical Download Override
-    try {
-        let downloadUrl = reel.videoUrl || reel.youtubeUrl || reel.url;
-        if (downloadUrl && downloadUrl.includes('/uploads/')) {
-           const downloadUrlObj = new URL(downloadUrl, window.location.origin);
-           const token = localStorage.getItem('token');
-           if (token) downloadUrlObj.searchParams.set('token', token);
-           downloadUrlObj.searchParams.set('download', 'true');
-           
-           const a = document.createElement('a');
-           a.style.display = 'none';
-           a.href = downloadUrlObj.toString();
-           a.download = `GitaWisdom_Reel_${reel.title || reelId}.mp4`;
-           document.body.appendChild(a);
-           a.click();
-           document.body.removeChild(a);
-        } else if (downloadUrl) {
-           // Direct External URL Download Trigger
-           window.open(downloadUrl, '_blank');
-        }
-    } catch(err) { console.error('Failed to trigger native download action', err); }
-
-    // Phase 2: Secure Database Backend Tracking Over JWT
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`/api/videos/user-reels/${reelId}/save`, {}, {
-         headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const nextMap = { ...savedReelMap };
-      if (response.data.isSaved) {
-         nextMap[reelId] = true;
-      } else {
-         delete nextMap[reelId];
-      }
-      setSavedReelMap(nextMap);
-      
-      // Optionally refresh global user context securely if desired
-      if (response.data.savedReels && typeof setUser === 'function') {
-         setUser({ ...user, savedReels: response.data.savedReels });
-      }
-
-    } catch (error) {
-      console.error('Failed to sync saved reel into database:', error);
-      alert('Network Error tracking this save sequence in user history.');
-    }
-  };
-
-  const handleScroll = (e) => {
-    const container = e.currentTarget;
     if (!container || !reels.length) return;
 
-    const reelHeight = container.clientHeight || 1;
-    const index = Math.max(0, Math.min(reels.length - 1, Math.round(container.scrollTop / reelHeight)));
-    const current = reels[index];
-    const nextActiveId = String(current?._id || current?.id || '');
-    if (nextActiveId && nextActiveId !== activeReelId) {
-      setActiveReelId(nextActiveId);
-      setPausedReelId('');
-    }
-  };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute('data-index'));
+            const reel = reels[index];
+            if (reel) {
+               const nextActiveId = String(reel._id || reel.id || '');
+               if (nextActiveId !== activeReelId) {
+                  setActiveReelId(nextActiveId);
+                  setPausedReelId('');
+               }
+            }
+          }
+        });
+      },
+      { root: container, threshold: 0.6 }
+    );
 
-  const handleVideoTap = (reelId) => {
-    const normalizedId = String(reelId || '');
-    if (!normalizedId) return;
-    if (normalizedId !== activeReelId) return;
+    Array.from(container.children).forEach((child) => observer.observe(child));
+    return () => observer.disconnect();
+  }, [reels, activeReelId, setActiveReelId, setPausedReelId, reelsFeedRef]);
 
-    setPausedReelId((prev) => (prev === normalizedId ? '' : normalizedId));
-  };
+  useEffect(() => {
+    const container = reelsFeedRef.current;
+    if (!container || !reels.length) return;
 
-  const handleVideoSurfaceTap = (reel, reelId) => {
-    const normalizedId = String(reelId || '');
-    if (!normalizedId) return;
-
-    const now = Date.now();
-    const lastTap = lastTapRef.current;
-    const isDoubleTap = lastTap.reelId === normalizedId && (now - Number(lastTap.time || 0)) <= 280;
-
-    if (isDoubleTap) {
-      if (singleTapTimerRef.current) {
-        clearTimeout(singleTapTimerRef.current);
-        singleTapTimerRef.current = null;
+    let wheelTimeout;
+    const handleWheel = (e) => {
+      // Small deltas might be trackpad, but we intercept wheel to enforce 1-by-1 snapping on desktop
+      // Mobile touchmove is ignored so native snapping works
+      if (Math.abs(e.deltaY) > 20) {
+        e.preventDefault();
+        if (wheelTimeout) return;
+        const activeIndex = reels.findIndex(r => String(r._id || r.id) === activeReelId);
+        if (e.deltaY > 0) scrollToReel(activeIndex + 1);
+        else scrollToReel(activeIndex - 1);
+        wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
       }
-      lastTapRef.current = { reelId: '', time: 0 };
-      handleToggleLike(reel);
-      return;
-    }
+    };
 
-    lastTapRef.current = { reelId: normalizedId, time: now };
-    if (singleTapTimerRef.current) {
-      clearTimeout(singleTapTimerRef.current);
-    }
-    singleTapTimerRef.current = setTimeout(() => {
-      handleVideoTap(normalizedId);
-      singleTapTimerRef.current = null;
-      lastTapRef.current = { reelId: '', time: 0 };
-    }, 280);
-  };
+    const handleKeyDown = (e) => {
+      const activeIndex = reels.findIndex(r => String(r._id || r.id) === activeReelId);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        scrollToReel(activeIndex + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        scrollToReel(activeIndex - 1);
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [reels, activeReelId, scrollToReel, reelsFeedRef]);
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
@@ -555,14 +193,18 @@ export default function Reels() {
           </div>
         </div>
 
-      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] mx-auto h-[100dvh] relative z-10 bg-black md:border-x md:border-white/10 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth pb-16 md:pb-0" onScroll={handleScroll}>
+      <div ref={reelsFeedRef} data-reels-feed="true" className="w-full md:max-w-[420px] landscape:max-w-none mx-auto h-[100dvh] relative z-10 bg-black md:border-x md:border-white/10 landscape:border-0 snap-y snap-mandatory overflow-y-scroll no-scrollbar scroll-smooth pb-16 md:pb-0 landscape:pb-0">
         
-        {reels.length > 0 ? reels.map((reel) => {
+        {reels.length > 0 ? reels.map((reel, index) => {
           const reelId = String(reel._id || reel.id || '');
           const isActive = reelId === activeReelId;
           const isPausedByTap = pausedReelId === reelId;
           const shouldPlay = isActive && !isPausedByTap;
 
+          // Lazy Loading & Memory Optimization Logic
+          const activeIndex = reels.findIndex(r => String(r._id || r.id) === activeReelId);
+          const distance = Math.abs(index - activeIndex);
+          const shouldRenderVideo = distance <= 2; // Unload videos more than 2 swipes away
 
           // Handler for auto-play next reel or launch quiz
           const handleVideoEnd = () => {
@@ -572,26 +214,36 @@ export default function Reels() {
           };
 
           return (
-          <div key={reel._id || reel.id} className="h-[100dvh] w-full relative snap-center flex flex-col justify-end bg-black">
+          <div key={reelId} data-index={index} className="h-[100dvh] w-full relative snap-center flex flex-col justify-end bg-black">
 
             {/* Background Video (single active playback only) */}
             <div className="absolute inset-0 z-0">
                <div className="w-full h-full bg-gradient-to-t from-black/80 via-transparent to-black/20 absolute z-10 pointer-events-none"></div>
-               <MediaPlayerHLS
-                 key={`${reelId}-${isActive ? 'active' : 'inactive'}-${shouldPlay ? 'play' : 'pause'}-${soundEnabled ? 'sound' : 'mute'}`}
-                 url={reel.videoUrl || reel.youtubeUrl || reel.url}
-                 hlsUrl={reel.hlsUrl}
-                 title={reel.title}
-                 className="w-full h-full object-cover"
-                 youtubeParams={`autoplay=${shouldPlay ? 1 : 0}&mute=${shouldPlay && soundEnabled ? 0 : 1}&controls=1&loop=1&playsinline=1`}
-                 autoPlay={shouldPlay}
-                 shouldPlay={shouldPlay}
-                 muted={!shouldPlay || !soundEnabled}
-                 loop={false}
-                 controls={false}
-                 instagramMode={isActive}
-                 onEnded={handleVideoEnd}
-               />
+               {shouldRenderVideo ? (
+                 <MediaPlayerHLS
+                   key={`${reelId}-${isActive ? 'active' : 'inactive'}-${shouldPlay ? 'play' : 'pause'}-${soundEnabled ? 'sound' : 'mute'}`}
+                   url={reel.videoUrl || reel.youtubeUrl || reel.url}
+                   hlsUrl={reel.hlsUrl}
+                   title={reel.title}
+                   className="w-full h-full object-cover"
+                   youtubeParams={`autoplay=${shouldPlay ? 1 : 0}&mute=${shouldPlay && soundEnabled ? 0 : 1}&controls=1&loop=1&playsinline=1`}
+                   autoPlay={shouldPlay}
+                   shouldPlay={shouldPlay}
+                   muted={!shouldPlay || !soundEnabled}
+                   loop={false}
+                   controls={false}
+                   instagramMode={isActive}
+                   onEnded={handleVideoEnd}
+                   preload={distance === 0 ? "auto" : "metadata"}
+                 />
+               ) : (
+                 <div className="w-full h-full bg-black flex items-center justify-center">
+                    <div className="animate-pulse flex flex-col items-center gap-4">
+                       <div className="w-16 h-16 border-4 border-devotion-gold/30 border-t-devotion-gold rounded-full animate-spin"></div>
+                       <p className="text-devotion-gold/70 text-xs font-bold uppercase tracking-widest">Loading...</p>
+                    </div>
+                 </div>
+               )}
             </div>
 
             <button
@@ -631,7 +283,7 @@ export default function Reels() {
             )}
 
             {/* Overlays */}
-            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px] md:pb-8 w-full pointer-events-none">
+            <div className="relative z-20 px-4 flex justify-between items-end pb-[88px] md:pb-8 landscape:pb-4 w-full pointer-events-none landscape:px-12">
                
                <div className="flex-1 pr-4 drop-shadow-lg pointer-events-auto">
                  <h2 className="text-xl font-bold mb-2 text-white">{reel.title}</h2>
@@ -649,7 +301,7 @@ export default function Reels() {
                  </div>
                </div>
 
-               <div className="flex flex-col gap-6 items-center shrink-0 w-12 pointer-events-auto">
+               <div className="flex flex-col landscape:flex-row gap-6 landscape:gap-4 items-center shrink-0 w-12 landscape:w-auto pointer-events-auto">
                  <button className="flex flex-col items-center gap-1 group" onClick={() => handleToggleLike(reel)}>
                    <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/20 transition-all transform hover:scale-110">
                      <img src="/ram-symbol.svg" alt="Like" className="w-6 h-6 object-contain drop-shadow-[0_0_6px_rgba(255,215,0,0.5)]" />
@@ -768,12 +420,13 @@ export default function Reels() {
                               Profile
                             </button>
                           )}
-                          {(String(comment.userId) === String(user?.id || user?._id) || user?.role === 'admin') && reel.isUserReel && (
+                          {(String(comment.userId) === String(user?.id || user?._id) || user?.role === 'admin') && (
                             <button
                               onClick={() => handleDeleteComment(reel, comment.id || comment._id)}
-                              className="text-[9px] text-red-500 font-bold uppercase tracking-widest hover:text-red-400 transition-colors"
+                              className="flex items-center gap-1 text-[9px] text-red-500 font-bold uppercase tracking-widest hover:text-red-400 transition-colors"
+                              title="Delete comment"
                             >
-                              Delete
+                              <Trash2 className="w-3 h-3" /> Delete
                             </button>
                           )}
                         </div>

@@ -31,6 +31,7 @@ export default function MediaPlayer({
   onEnded,
   instagramMode = false,
   playLimitSeconds = null,
+  preload = "metadata",
 }) {
   const [showTools, setShowTools] = useState(false);
   const [secureHlsUrl, setSecureHlsUrl] = useState('');
@@ -333,7 +334,7 @@ export default function MediaPlayer({
         loop={loop}
         controls={instagramMode ? false : controls}
         playsInline={playsInline}
-        preload="metadata"
+        preload={preload}
         onError={() => {
           console.warn('Video failed to play, trying fallback');
           if (!hlsFallbackActive && secureHlsUrl) {

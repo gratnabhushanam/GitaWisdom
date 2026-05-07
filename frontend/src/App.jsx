@@ -36,64 +36,10 @@ const Satsangs = lazy(() => import('./pages/Satsangs'));
 const InstallApp = lazy(() => import('./pages/InstallApp'));
 
 function AppShell() {
-  const scenes = [
-    {
-      className: 'app-background-0',
-      image: '/scene-krishna.svg',
-      symbolLabel: 'Krishna',
-    },
-    {
-      className: 'app-background-1',
-      image: '/scene-ram.svg',
-      symbolLabel: 'Ram',
-    },
-    {
-      className: 'app-background-2',
-      image: '/scene-hanuman.svg',
-      symbolLabel: 'Hanuman',
-    },
-  ];
-
-  const getSceneIndexForPath = (pathname) => {
-      if (pathname === '/daily-sloka') return 0;
-    if (pathname === '/home' || pathname === '/profile') {
-      return 0;
-    }
-
-    if (pathname === '/stories' || pathname === '/chapters' || pathname === '/videos' || pathname === '/movies') {
-      return 1;
-    }
-
-    if (pathname === '/student' || pathname === '/mentor' || pathname === '/reels' || pathname === '/kids' || pathname === '/upload-reel' || pathname === '/admin') {
-      return 2;
-    }
-
-    return 0;
-  };
-
-  const [bgIndex, setBgIndex] = useState(0);
   const location = useLocation();
   const { user, loading } = useAuth();
   const isAuthRoute = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/register/verify-otp' || location.pathname === '/forgot-password';
   const isFullScreenRoute = location.pathname.startsWith('/reels');
-
-  useEffect(() => {
-     
-    setBgIndex(getSceneIndexForPath(location.pathname));
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (isAuthRoute) {
-      return undefined;
-    }
-
-    const interval = setInterval(() => {
-      setBgIndex((prevIndex) => (prevIndex + 1) % scenes.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthRoute]);
 
   if (loading) {
     return <SplashScreen />;
@@ -112,13 +58,7 @@ function AppShell() {
     <div className="app-shell flex justify-center min-h-[100dvh] bg-[#06101E] overflow-x-hidden text-white transition-all duration-1000 relative">
       {!isAuthRoute && (
         <>
-            <div
-                key={scenes[bgIndex].image}
-              className={`fixed inset-0 z-0 bg-cover bg-center transition-all duration-1000 app-shell__background ${scenes[bgIndex].className}`}
-                style={{ backgroundImage: `url('${scenes[bgIndex].image}')` }}
-              aria-label={scenes[bgIndex].symbolLabel}
-            />
-          <div className="fixed inset-0 z-0 bg-[#06101E]/48 backdrop-blur-[1px]"></div>
+          <div className="fixed inset-0 z-0 bg-[#06101E]"></div>
           <div className="fixed inset-0 z-0 opacity-20 pointer-events-none bg-gold-glow animate-pulse"></div>
         </>
       )}

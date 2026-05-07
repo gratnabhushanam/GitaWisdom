@@ -7,7 +7,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      },
       includeAssets: ['logo-om-v2.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
         name: 'Gita Wisdom Devotion',
@@ -16,7 +22,7 @@ export default defineConfig({
         theme_color: '#06101E',
         background_color: '#06101E',
         display: 'standalone',
-        orientation: 'portrait-primary',
+        orientation: 'any',
         icons: [
           {
             src: 'logo-om-v2.png',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video } from 'lucide-react';
+import { User, Mail, Bell, Shield, Heart, Flame, Trophy, Settings, LogOut, Camera, Edit2, Check, ExternalLink, Sparkles, BookOpen, Share2, Bookmark, Video, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { requestNotificationPermission } from '../utils/notificationService';
@@ -58,6 +58,7 @@ export default function Profile() {
   const [newInterest, setNewInterest] = useState('');
   const [savingPersonalization, setSavingPersonalization] = useState(false);
   const [personalizationStatus, setPersonalizationStatus] = useState('');
+  const [activeSavedTab, setActiveSavedTab] = useState('verses');
 
   const fileInputRef = React.useRef(null);
 
@@ -109,7 +110,7 @@ export default function Profile() {
 
   useEffect(() => {
     try {
-      const currentUserId = Number(user?.id || user?._id || 0);
+      const currentUserId = user ? String(user.id || user._id) : null;
       if (!currentUserId) {
         setSavedReels([]);
         return;
@@ -118,7 +119,7 @@ export default function Profile() {
       const raw = localStorage.getItem(SAVED_REELS_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       const list = Array.isArray(parsed) ? parsed : [];
-      const mine = list.filter((item) => Number(item.savedByUserId || 0) === currentUserId);
+      const mine = list.filter((item) => String(item.savedByUserId) === currentUserId);
       setSavedReels(mine);
     } catch (error) {
       console.error('Error loading saved reels:', error);
@@ -365,7 +366,8 @@ export default function Profile() {
   };
 
   const removeSavedReel = (reelId) => {
-    const currentUserId = Number(user?.id || user?._id || 0);
+    const currentUserId = user ? String(user.id || user._id) : null;
+    if (!currentUserId) return;
     const next = savedReels.filter((item) => String(item.reelId) !== String(reelId));
     setSavedReels(next);
 
@@ -374,7 +376,7 @@ export default function Profile() {
       const parsed = raw ? JSON.parse(raw) : [];
       const list = Array.isArray(parsed) ? parsed : [];
       const updated = list.filter(
-        (item) => !(String(item.reelId) === String(reelId) && Number(item.savedByUserId || 0) === currentUserId)
+        (item) => !(String(item.reelId) === String(reelId) && String(item.savedByUserId) === currentUserId)
       );
       localStorage.setItem(SAVED_REELS_KEY, JSON.stringify(updated));
     } catch (error) {
@@ -639,166 +641,185 @@ export default function Profile() {
           </section>
 
           <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
-             <div className="flex items-center gap-4 mb-8">
-                <Bookmark className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Saved Verses</h3>
+             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 border-b border-white/10 pb-6">
+                <div className="flex items-center gap-4">
+                   <Bookmark className="text-devotion-gold w-8 h-8" />
+                   <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Saved Content</h3>
+                </div>
+                <div className="flex bg-black/40 p-1.5 rounded-2xl overflow-x-auto hide-scrollbar">
+                   {[
+                     { id: 'verses', label: 'Verses', icon: <BookOpen className="w-4 h-4" /> },
+                     { id: 'reels', label: 'Reels', icon: <Video className="w-4 h-4" /> },
+                     { id: 'daily', label: 'Daily & Mentor', icon: <Bookmark className="w-4 h-4" /> }
+                   ].map(tab => (
+                     <button
+                       key={tab.id}
+                       onClick={() => setActiveSavedTab(tab.id)}
+                       className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all whitespace-nowrap ${activeSavedTab === tab.id ? 'bg-devotion-gold text-devotion-darkBlue shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                     >
+                        {tab.icon} {tab.label}
+                     </button>
+                   ))}
+                </div>
              </div>
 
-             {savedLoading ? (
-               <div className="py-16 flex justify-center">
-                 <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-devotion-gold"></div>
-               </div>
-             ) : savedVerses.length === 0 ? (
-               <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                 No saved verses yet. Use Save Verse on Daily Sloka or Mentor pages.
-               </div>
-             ) : (
-               <div className="grid grid-cols-1 gap-5">
-                 {savedVerses.map((sloka) => (
-                   <div key={sloka.id || sloka._id} className="bg-devotion-darkBlue/40 rounded-2xl border border-white/10 p-6">
-                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                       <div className="space-y-3">
-                         <div className="flex items-center gap-3 text-devotion-gold font-black text-xs uppercase tracking-widest">
-                           <BookOpen className="w-4 h-4" />
-                           Chapter {sloka.chapter} • Verse {sloka.verse}
+             {/* Verses Tab */}
+             {activeSavedTab === 'verses' && (
+               savedLoading ? (
+                 <div className="py-16 flex justify-center">
+                   <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-devotion-gold"></div>
+                 </div>
+               ) : savedVerses.length === 0 ? (
+                 <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+                   No saved verses yet. Use Save Verse on Daily Sloka or Mentor pages.
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 gap-5">
+                   {savedVerses.map((sloka) => (
+                     <div key={sloka.id || sloka._id} className="bg-devotion-darkBlue/40 rounded-2xl border border-white/10 p-6">
+                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                         <div className="space-y-3">
+                           <div className="flex items-center gap-3 text-devotion-gold font-black text-xs uppercase tracking-widest">
+                             <BookOpen className="w-4 h-4" />
+                             Chapter {sloka.chapter} • Verse {sloka.verse}
+                           </div>
+                           <p className="text-white font-serif text-xl leading-relaxed">{sloka.sanskrit}</p>
+                           <p className="text-gray-300 text-sm leading-relaxed">{renderMeaning(sloka)}</p>
                          </div>
-                         <p className="text-white font-serif text-xl leading-relaxed">{sloka.sanskrit}</p>
-                         <p className="text-gray-300 text-sm leading-relaxed">{renderMeaning(sloka)}</p>
-                       </div>
 
-                       <div className="flex items-center gap-3">
+                         <div className="flex items-center gap-3">
+                           <button
+                             onClick={() => handleShareSavedVerse(sloka)}
+                             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-xs font-black uppercase tracking-widest"
+                           >
+                             <Share2 className="w-4 h-4" /> Share
+                           </button>
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )
+             )}
+
+             {/* Reels Tab */}
+             {activeSavedTab === 'reels' && (
+               savedReels.length === 0 ? (
+                 <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+                   No saved reels yet. Tap Save on any reel to collect it here.
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   {savedReels.slice(0, 30).map((reel) => (
+                     <div key={`${reel.reelId}-${reel.savedAt}`} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                       <h4 className="text-white font-bold text-lg line-clamp-1 mb-2">{reel.title || 'Saved Reel'}</h4>
+                       <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
+                       <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-4">
+                         ❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0} • ↗ {reel.sharesCount || 0}
+                       </p>
+                       <div className="flex gap-2">
                          <button
-                           onClick={() => handleShareSavedVerse(sloka)}
-                           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition-colors text-xs font-black uppercase tracking-widest"
+                           onClick={() => openSavedReel(reel.reelId)}
+                           className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
                          >
-                           <Share2 className="w-4 h-4" /> Share
+                           Watch
+                         </button>
+                         <button
+                           onClick={() => removeSavedReel(reel.reelId)}
+                           className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
+                         >
+                           Remove
                          </button>
                        </div>
                      </div>
-                   </div>
-                 ))}
-               </div>
+                   ))}
+                 </div>
+               )
              )}
-          </section>
 
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
-             <div className="flex items-center gap-4 mb-8">
-                <Bookmark className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Saved Daily & Mentor Verses</h3>
-             </div>
-
-             {dailySavedVerses.length === 0 && mentorSavedVerses.length === 0 ? (
-               <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                 No locally saved verses yet. Save verses from Daily Sloka or Mentor pages.
-               </div>
-             ) : (
-               <div className="space-y-8">
-                 {dailySavedVerses.length > 0 && (
-                   <div>
-                     <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Daily Sloka Saves</h4>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       {dailySavedVerses.slice(0, 8).map((item) => (
-                         <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                           <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
-                             {item.chapter && item.verse ? `Chapter ${item.chapter} • Verse ${item.verse}` : item.dailyKey || 'Daily Verse'}
-                           </p>
-                           <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
-                           <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
-                           <div className="flex gap-2">
-                             <button
-                               onClick={() => navigate('/daily-sloka', { state: { savedVerse: item } })}
-                               className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                             >
-                               Open
-                             </button>
-                             <button
-                               onClick={() => removeDailySavedVerse(item.verseKey)}
-                               className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                             >
-                               Remove
-                             </button>
+             {/* Daily & Mentor Tab */}
+             {activeSavedTab === 'daily' && (
+               dailySavedVerses.length === 0 && mentorSavedVerses.length === 0 ? (
+                 <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+                   No locally saved verses yet. Save verses from Daily Sloka or Mentor pages.
+                 </div>
+               ) : (
+                 <div className="space-y-8">
+                   {dailySavedVerses.length > 0 && (
+                     <div>
+                       <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Daily Sloka Saves</h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         {dailySavedVerses.slice(0, 8).map((item) => (
+                           <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                             <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
+                               {item.chapter && item.verse ? `Chapter ${item.chapter} • Verse ${item.verse}` : item.dailyKey || 'Daily Verse'}
+                             </p>
+                             <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
+                             <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={() => navigate('/daily-sloka', { state: { savedVerse: item } })}
+                                 className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
+                               >
+                                 Open
+                               </button>
+                               <button
+                                 onClick={() => removeDailySavedVerse(item.verseKey)}
+                                 className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
+                               >
+                                 Remove
+                               </button>
+                             </div>
                            </div>
-                         </div>
-                       ))}
+                         ))}
+                       </div>
                      </div>
-                   </div>
-                 )}
+                   )}
 
-                 {mentorSavedVerses.length > 0 && (
-                   <div>
-                     <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Mentor Saves</h4>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       {mentorSavedVerses.slice(0, 8).map((item) => (
-                         <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                           <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2">{item.problem || 'mentor'}</p>
-                           <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
-                           <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
-                           <div className="flex gap-2">
-                             <button
-                               onClick={() => navigate('/mentor', { state: { savedVerse: item } })}
-                               className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                             >
-                               Open
-                             </button>
-                             <button
-                               onClick={() => removeMentorSavedVerse(item.verseKey)}
-                               className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                             >
-                               Remove
-                             </button>
+                   {mentorSavedVerses.length > 0 && (
+                     <div>
+                       <h4 className="text-devotion-gold font-black text-xs uppercase tracking-[0.2em] mb-4">Mentor Saves</h4>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         {mentorSavedVerses.slice(0, 8).map((item) => (
+                           <div key={item.verseKey} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                             <p className="text-[10px] uppercase tracking-[0.2em] text-devotion-gold mb-2">{item.problem || 'mentor'}</p>
+                             <p className="text-sm text-white line-clamp-2 italic mb-2">{item.sanskrit}</p>
+                             <p className="text-xs text-gray-300 line-clamp-2 mb-3">{item.englishMeaning}</p>
+                             <div className="flex gap-2">
+                               <button
+                                 onClick={() => navigate('/mentor', { state: { savedVerse: item } })}
+                                 className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
+                               >
+                                 Open
+                               </button>
+                               <button
+                                 onClick={() => removeMentorSavedVerse(item.verseKey)}
+                                 className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
+                               >
+                                 Remove
+                               </button>
+                             </div>
                            </div>
-                         </div>
-                       ))}
+                         ))}
+                       </div>
                      </div>
-                   </div>
-                 )}
-               </div>
+                   )}
+                 </div>
+               )
              )}
           </section>
-
           <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
-             <div className="flex items-center gap-4 mb-8">
-                <Bookmark className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Saved Reels</h3>
-             </div>
-
-             {savedReels.length === 0 ? (
-               <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                 No saved reels yet. Tap Save on any reel to collect it here.
-               </div>
-             ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                 {savedReels.slice(0, 30).map((reel) => (
-                   <div key={`${reel.reelId}-${reel.savedAt}`} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                     <h4 className="text-white font-bold text-lg line-clamp-1 mb-2">{reel.title || 'Saved Reel'}</h4>
-                     <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
-                     <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-4">
-                       ❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0} • ↗ {reel.sharesCount || 0}
-                     </p>
-                     <div className="flex gap-2">
-                       <button
-                         onClick={() => openSavedReel(reel.reelId)}
-                         className="flex-1 px-3 py-2 rounded-lg border border-devotion-gold/30 text-devotion-gold text-[10px] font-black uppercase tracking-widest hover:bg-devotion-gold/10"
-                       >
-                         Watch
-                       </button>
-                       <button
-                         onClick={() => removeSavedReel(reel.reelId)}
-                         className="px-3 py-2 rounded-lg border border-red-500/30 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10"
-                       >
-                         Remove
-                       </button>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             )}
-          </section>
-
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 p-10 shadow-2xl">
-             <div className="flex items-center gap-4 mb-8">
-                <Video className="text-devotion-gold w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Your Uploaded Reels</h3>
+             <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                   <Video className="text-devotion-gold w-8 h-8" />
+                   <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Your Uploaded Reels</h3>
+                </div>
+                <button
+                  onClick={() => navigate('/upload-reel')}
+                  className="flex items-center gap-2 bg-devotion-gold text-devotion-darkBlue px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-colors"
+                >
+                   <Camera className="w-4 h-4" /> New Reel
+                </button>
              </div>
 
              {myReelsLoading ? (
@@ -807,202 +828,97 @@ export default function Profile() {
                </div>
              ) : myReels.length === 0 ? (
                <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-gray-400">
-                 You have not uploaded reels yet. Share a spiritual reel from Upload Reel page.
+                 You haven't uploaded any reels yet.
                </div>
              ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                  {myReels.map((reel) => (
-                   <div key={reel._id || reel.id} className="bg-devotion-darkBlue/40 rounded-2xl border border-white/10 p-5 space-y-3">
-                     <div className="flex items-start justify-between gap-3">
-                       <h4 className="text-white font-bold text-lg line-clamp-1">{reel.title}</h4>
-                       <div className="flex gap-2">
-                         <button
-                           onClick={() => openEditReel(reel)}
-                           className="px-3 py-1 rounded-lg border border-white/20 text-gray-300 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-widest"
-                         >
-                           Edit
-                         </button>
-                         <button
-                           onClick={() => deleteReel(reel._id || reel.id)}
-                           disabled={reelActionLoading}
-                           className="px-3 py-1 rounded-lg border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
-                         >
-                           Delete
-                         </button>
-                       </div>
-                     </div>
-                     <p className="text-sm text-gray-300 line-clamp-2">{reel.description || 'No description'}</p>
-                     <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-black">
-                       <span className={`px-3 py-1 rounded-full border ${reel.moderationStatus === 'approved' ? 'text-green-300 border-green-500/40 bg-green-500/10' : reel.moderationStatus === 'rejected' ? 'text-red-300 border-red-500/40 bg-red-500/10' : 'text-yellow-300 border-yellow-500/40 bg-yellow-500/10'}`}>
-                         {reel.moderationStatus || 'pending'}
-                       </span>
-                       <span className="text-gray-400">❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0}</span>
-                     </div>
-                     {reel.moderationStatus === 'pending' && (
-                       <p className="text-xs text-yellow-200 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2">
-                         Pending Review: Your reel is waiting for admin approval.
-                       </p>
-                     )}
-                     {reel.moderationStatus === 'approved' && (
-                       <p className="text-xs text-green-200 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
-                         Approved: Your reel is now visible in public spiritual reels. {reel.moderationNote ? `Admin note: ${reel.moderationNote}` : ''}
-                       </p>
-                     )}
-                     {reel.moderationStatus === 'rejected' && reel.moderationNote && (
-                       <p className="text-xs text-red-200 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
-                         Rejected by Admin: {reel.moderationNote}
-                       </p>
-                     )}
-                     {reel.moderationStatus === 'rejected' && !reel.moderationNote && (
-                       <p className="text-xs text-red-200 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
-                         Rejected by Admin.
-                       </p>
-                     )}
-
-                     {editingReelId === (reel._id || reel.id) && (
-                       <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+                   <div key={reel.id || reel._id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                     {editingReelId === (reel.id || reel._id) ? (
+                       <div className="space-y-4">
                          <input
+                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
                            value={reelForm.title}
-                           onChange={(e) => setReelForm((prev) => ({ ...prev, title: e.target.value }))}
+                           onChange={(e) => setReelForm({ ...reelForm, title: e.target.value })}
                            placeholder="Title"
-                           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-devotion-gold/40"
                          />
-                         <input
-                           type="file"
-                           accept="video/*"
-                             onChange={(e) => handleReelEditVideoSelection(e.target.files?.[0] || null)}
-                           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-devotion-gold/40"
-                         />
-                           {reelEditError && <p className="text-xs text-red-300">{reelEditError}</p>}
                          <textarea
-                           rows="2"
+                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
                            value={reelForm.description}
-                           onChange={(e) => setReelForm((prev) => ({ ...prev, description: e.target.value }))}
+                           onChange={(e) => setReelForm({ ...reelForm, description: e.target.value })}
                            placeholder="Description"
-                           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-devotion-gold/40"
                          />
                          <input
+                           className="w-full bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
                            value={reelForm.tags}
-                           onChange={(e) => setReelForm((prev) => ({ ...prev, tags: e.target.value }))}
-                           placeholder="Tags: krishna, gita"
-                           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-devotion-gold/40"
+                           onChange={(e) => setReelForm({ ...reelForm, tags: e.target.value })}
+                           placeholder="Tags (comma separated)"
                          />
-                         <div className="flex justify-end gap-2">
+                         
+                         {reelEditError && <p className="text-red-400 text-xs">{reelEditError}</p>}
+                         
+                         <div className="flex gap-2">
                            <button
-                             onClick={closeEditReel}
-                             className="px-3 py-2 rounded-xl border border-white/10 text-gray-300 text-[10px] font-black uppercase tracking-widest"
+                             disabled={reelActionLoading}
+                             onClick={() => saveEditedReel(reel.id || reel._id)}
+                             className="flex-1 bg-devotion-gold text-devotion-darkBlue py-2 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50"
+                           >
+                             {reelActionLoading ? 'Saving...' : 'Save'}
+                           </button>
+                           <button
+                             disabled={reelActionLoading}
+                             onClick={() => closeEditReel()}
+                             className="flex-1 bg-white/10 text-white py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white/20 disabled:opacity-50"
                            >
                              Cancel
                            </button>
-                           <button
-                             onClick={() => saveEditedReel(reel._id || reel.id)}
-                             disabled={reelActionLoading || Boolean(reelEditError)}
-                             className="px-3 py-2 rounded-xl border border-devotion-gold/40 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
-                           >
-                             Save
-                           </button>
                          </div>
                        </div>
+                     ) : (
+                       <>
+                         <div className="flex justify-between items-start mb-2">
+                           <h4 className="text-white font-bold text-lg line-clamp-1 flex-1">{reel.title}</h4>
+                           <div className="flex gap-2 ml-2">
+                             <button 
+                               onClick={() => openEditReel(reel)}
+                               className="text-gray-400 hover:text-white transition-colors"
+                             >
+                               <Edit2 className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={() => deleteReel(reel.id || reel._id)}
+                               disabled={reelActionLoading}
+                               className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </button>
+                           </div>
+                         </div>
+                         <p className="text-sm text-gray-300 line-clamp-2 mb-3">{reel.description || 'No description'}</p>
+                         <div className="flex items-center justify-between">
+                           <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${reel.moderationStatus === 'approved' ? 'bg-green-500/20 text-green-400' : reel.moderationStatus === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                             {reel.moderationStatus || 'pending'}
+                           </span>
+                           <span className="text-[10px] text-gray-400 uppercase tracking-widest">
+                             ❤ {reel.likesCount || 0} • 💬 {reel.commentsCount || 0}
+                           </span>
+                         </div>
+                         {reel.moderationStatus === 'approved' && (
+                           <div className="mt-3 text-[10px] text-green-400 bg-green-500/10 p-2 rounded-lg border border-green-500/20">
+                             Approved: Your reel is now visible in public spiritual reels.
+                           </div>
+                         )}
+                         {reel.moderationStatus === 'rejected' && (
+                           <div className="mt-3 text-[10px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                             Rejected: Did not meet community guidelines.
+                           </div>
+                         )}
+                       </>
                      )}
                    </div>
                  ))}
                </div>
              )}
-          </section>
-
-          {/* Settings Section (Insta style information gathering) */}
-          <section className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-white/10 p-10 shadow-2xl">
-             <div className="flex items-center gap-4 mb-8">
-                <Settings className="text-gray-400 w-8 h-8" />
-                <h3 className="text-3xl font-serif font-bold text-white uppercase tracking-tighter">Personalize Path</h3>
-             </div>
-
-             <div className="space-y-8">
-                <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-colors">
-                   <div className="flex items-center gap-6">
-                      <div className="p-4 bg-blue-500/10 rounded-xl"><Bell className="text-blue-400" /></div>
-                      <div>
-                         <h5 className="text-lg font-bold text-white">Daily Wisdom Alerts</h5>
-                         <p className="text-sm text-gray-500">Get notified when Today's Sloka is ready.</p>
-                      </div>
-                   </div>
-                   <button
-                    onClick={toggleDailyAlerts}
-                    className={`w-14 h-8 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-devotion-gold' : 'bg-gray-700'}`}
-                    aria-label="Toggle daily wisdom alerts"
-                   >
-                     <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${notificationsEnabled ? 'left-7' : 'left-1'}`}></div>
-                   </button>
-                </div>
-
-                <div className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-colors">
-                   <div className="flex items-center gap-6">
-                      <div className="p-4 bg-green-500/10 rounded-xl"><Shield className="text-green-400" /></div>
-                      <div>
-                         <h5 className="text-lg font-bold text-white">Spiritual Privacy</h5>
-                         <p className="text-sm text-gray-500">Public means community users can view your seeker profile. Private keeps it hidden.</p>
-                      </div>
-                   </div>
-                   <select
-                     value={privacySetting}
-                     onChange={handlePrivacyChange}
-                     disabled={savingPersonalization}
-                     className="bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold disabled:opacity-60"
-                   >
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
-                   </select>
-                </div>
-
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                   <h5 className="text-lg font-bold text-white mb-4">Wisdom Interests</h5>
-                   <div className="flex flex-wrap gap-3">
-                      {INTEREST_OPTIONS.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => toggleInterest(tag)}
-                          disabled={savingPersonalization}
-                          className={`px-5 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60 ${selectedInterests.includes(tag) ? 'bg-devotion-gold/20 border-devotion-gold/50 text-devotion-gold' : 'bg-white/5 border-white/10 text-gray-400 hover:border-devotion-gold hover:text-devotion-gold'}`}
-                        >
-                           {tag}
-                        </button>
-                      ))}
-                      {selectedInterests
-                        .filter((interest) => !INTEREST_OPTIONS.includes(interest))
-                        .map((interest) => (
-                          <button
-                            key={interest}
-                            onClick={() => toggleInterest(interest)}
-                            disabled={savingPersonalization}
-                            className="px-5 py-2 rounded-xl bg-devotion-gold/15 border border-devotion-gold/40 text-devotion-gold text-[10px] font-black uppercase tracking-widest disabled:opacity-60"
-                          >
-                            {interest}
-                          </button>
-                        ))}
-                   </div>
-                   <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                     <input
-                       value={newInterest}
-                       onChange={(e) => setNewInterest(e.target.value)}
-                       placeholder="Add custom interest"
-                       className="flex-1 bg-devotion-darkBlue text-white border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-devotion-gold"
-                     />
-                     <button
-                       onClick={addCustomInterest}
-                       disabled={savingPersonalization || !String(newInterest || '').trim()}
-                       className="px-5 py-2 rounded-xl bg-devotion-gold/20 border border-devotion-gold/50 text-devotion-gold text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
-                     >
-                       + Add More
-                     </button>
-                   </div>
-                   <p className="mt-3 text-[11px] text-gray-500">
-                     Interests are never auto-selected. Choose only what you want.
-                   </p>
-                   {personalizationStatus && (
-                     <p className="mt-2 text-[11px] text-devotion-gold">{personalizationStatus}</p>
-                   )}
-                </div>
-             </div>
           </section>
 
         </div>

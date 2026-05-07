@@ -191,6 +191,14 @@ app.use('/api/movies', require('./routes/movieRoutes'));
 app.use('/api/quiz', require('./routes/quizRoutes'));
 app.use('/api/forums', require('./routes/forumRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/admin/notifications', require('./routes/adminNotificationRoutes'));
+// Admin manual cache clear
+app.post('/api/admin/clear-cache', require('./middleware/authMiddleware').protect, require('./middleware/authMiddleware').admin, (req, res) => {
+  const { clearCache } = require('./utils/apiCache');
+  clearCache();
+  res.json({ message: 'Global backend cache cleared successfully.' });
+});
+
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/debug', require('./routes/debugRoutes'));
@@ -210,6 +218,10 @@ const initializeApp = async () => {
       .then(async () => {
         try {
           await initializeAdminCredentials();
+          
+          // Initialize Cron Jobs (only run in primary/single process if possible, but safe here)
+          const { initCronJobs } = require('./utils/cronJobs');
+          initCronJobs();
         } catch (error) {
           console.warn('Admin bootstrap skipped:', error.message);
         }

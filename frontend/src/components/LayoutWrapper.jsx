@@ -13,11 +13,8 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <div 
-      className="layout-wrapper w-full relative z-0"
+      className="layout-wrapper w-full relative z-0 flex flex-col flex-1"
       style={{
-        height: '100dvh',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: paddingBottomStyle,
         scrollPaddingBottom: '100px',

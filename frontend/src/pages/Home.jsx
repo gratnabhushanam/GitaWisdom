@@ -1,43 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Flame, Trophy, Award, ArrowRight, Book, Sparkles, Star, Heart } from 'lucide-react';
+import { Play, Flame, Trophy, Award, ArrowRight, Book, Sparkles, Heart } from 'lucide-react';
 
-const HOME_BACKGROUND_SCENES = [
-  '/scene-krishna.svg',
-  '/scene-ram.svg',
-  '/scene-hanuman.svg',
-];
+function HomeCard({ to, badge, icon: Icon, title, description, content, isKids }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  React.useEffect(() => {
+    setIsDesktop(window.innerWidth > 768);
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleMouseMove = (e) => {
+    if (!isDesktop) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
+    setMousePos({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseEnter = () => setIsHovered(true);
+  
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setMousePos({ x: 0, y: 0 });
+  };
+
+  return (
+    <Link 
+      to={to} 
+      className="block group preserve-3d transition-transform duration-300 ease-out h-full"
+      style={{ 
+        transform: isHovered && isDesktop ? `perspective(1000px) rotateX(${mousePos.x}deg) rotateY(${mousePos.y}deg) scale3d(1.02, 1.02, 1.02)` : 'perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        zIndex: isHovered ? 50 : 1
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] p-10 border border-devotion-gold/30 shadow-2xl relative h-full transition-all duration-500 group-hover:border-devotion-gold/60 group-hover:shadow-[0_20px_60px_rgba(255,215,0,0.15)] flex flex-col items-center">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-2 rounded-full font-black text-xs tracking-[0.2em] shadow-xl uppercase">
+          {badge}
+        </div>
+        <div className="mt-6 text-center flex flex-col items-center w-full">
+          <div className="w-20 h-20 bg-devotion-gold/10 rounded-full flex items-center justify-center mb-8 border border-devotion-gold/20 group-hover:scale-110 transition-transform">
+            <Icon className="w-10 h-10 text-devotion-gold" fill={isKids ? "currentColor" : "none"} />
+          </div>
+          
+          {content ? (
+            <>
+              <p className="text-gray-200 font-serif leading-relaxed text-xl mb-8 italic opacity-90">
+                {content}
+              </p>
+              <div className="text-devotion-gold font-black text-xs tracking-widest border-b-2 border-devotion-gold/0 group-hover:border-devotion-gold/100 inline-block pb-1 transition-all">
+                EXPLORE WISDOM
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-3xl font-serif font-black text-devotion-gold mb-4 uppercase tracking-tighter">{title}</h3>
+              <p className="text-gray-300 text-lg font-light leading-relaxed">{description}</p>
+            </>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
   const [user] = useState(() => {
     const userData = localStorage.getItem('user');
     return userData ? JSON.parse(userData) : null;
   });
-  const [bgIndex, setBgIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % HOME_BACKGROUND_SCENES.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   return (
-    <div className="min-h-screen text-white relative overflow-hidden">
-      {HOME_BACKGROUND_SCENES.map((scene, index) => (
-        <div
-          key={scene}
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[1400ms] ${index === bgIndex ? 'opacity-100' : 'opacity-0'}`}
-          style={{ backgroundImage: `url('${scene}')` }}
-          aria-hidden="true"
-        />
-      ))}
-
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,rgba(6,16,30,0.5),rgba(6,16,30,0.72)),radial-gradient(circle_at_top,rgba(230,195,138,0.12),transparent_34%)]"></div>
+    <div className="min-h-screen text-white relative overflow-hidden bg-[#06101E]">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(230,195,138,0.12),transparent_34%)]"></div>
       
       {/* Hero Section */}
-        <div className="relative z-10 min-h-[80vh] sm:min-h-[85vh] flex flex-col items-center justify-center pt-20 sm:pt-28 pb-6 sm:pb-10 px-4">
+        <div className="relative z-10 min-h-[80vh] sm:min-h-[85vh] landscape:min-h-[120vh] flex flex-col items-center justify-center pt-20 sm:pt-28 pb-6 sm:pb-10 px-4">
         
         {/* Krishna Line Art Decorative Element */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl opacity-[0.02] pointer-events-none select-none animate-float">
@@ -103,59 +152,15 @@ export default function Home() {
            <div className="h-px w-24 bg-gradient-to-l from-transparent to-devotion-gold"></div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
-          
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 landscape:grid-cols-3 gap-6 sm:gap-10">
           {/* Daily Quick Guide / Sloka styling */}
-          <Link to="/sloka" className="block group">
-            <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] p-10 border border-devotion-gold/30 shadow-2xl relative h-full transition-all duration-500 hover:-translate-y-3 hover:border-devotion-gold/60 group-hover:shadow-[0_20px_60px_rgba(255,215,0,0.15)]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-2 rounded-full font-black text-xs tracking-[0.2em] shadow-xl uppercase">
-                DAILY SLOKA
-              </div>
-              <div className="mt-6 text-center">
-                <div className="w-20 h-20 mx-auto bg-devotion-gold/10 rounded-full flex items-center justify-center mb-8 border border-devotion-gold/20 group-hover:scale-110 transition-transform">
-                  <Book className="w-10 h-10 text-devotion-gold" />
-                </div>
-                <p className="text-gray-200 font-serif leading-relaxed text-xl mb-8 italic opacity-90">
-                  "You have a right to perform your duty, but not to the fruits."
-                </p>
-                <div className="text-devotion-gold font-black text-xs tracking-widest border-b-2 border-devotion-gold/0 group-hover:border-devotion-gold/100 inline-block pb-1 transition-all">
-                  EXPLORE WISDOM
-                </div>
-              </div>
-            </div>
-          </Link>
-
+          <HomeCard to="/sloka" badge="DAILY SLOKA" icon={Book} content={`"You have a right to perform your duty, but not to the fruits."`} />
+          
           {/* Student Guide style */}
-          <Link to="/mentor" className="block group">
-            <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] p-10 border border-devotion-gold/30 shadow-2xl relative h-full transition-all duration-500 hover:-translate-y-3 hover:border-devotion-gold/60 group-hover:shadow-[0_20px_60px_rgba(255,215,0,0.15)]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-2 rounded-full font-black text-xs tracking-[0.2em] shadow-xl uppercase">
-                GITA MENTOR
-              </div>
-              <div className="mt-6 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-devotion-gold/10 rounded-full flex items-center justify-center mb-8 border border-devotion-gold/20 group-hover:scale-110 transition-transform">
-                  <Heart className="w-10 h-10 text-devotion-gold" />
-                </div>
-                <h3 className="text-3xl font-serif font-black text-devotion-gold mb-4 uppercase tracking-tighter">Student Mode</h3>
-                <p className="text-gray-300 text-lg font-light leading-relaxed">Krishna's solutions for stress, fear, and focus.</p>
-              </div>
-            </div>
-          </Link>
-
+          <HomeCard to="/mentor" badge="GITA MENTOR" icon={Heart} title="Student Mode" description="Krishna's solutions for stress, fear, and focus." />
+          
           {/* Kids Mode style */}
-          <Link to="/kids" className="block group">
-            <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] p-10 border border-devotion-gold/30 shadow-2xl relative h-full transition-all duration-500 hover:-translate-y-3 hover:border-devotion-gold/60 group-hover:shadow-[0_20px_60px_rgba(255,215,0,0.15)]">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-devotion-gold to-[#FFB800] text-devotion-darkBlue px-8 py-2 rounded-full font-black text-xs tracking-[0.2em] shadow-xl uppercase">
-                KIDS FUN!
-              </div>
-              <div className="mt-6 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-devotion-gold/10 rounded-full flex items-center justify-center mb-8 border border-devotion-gold/20 group-hover:scale-110 transition-transform">
-                  <Play className="w-10 h-10 text-devotion-gold" fill="currentColor" />
-                </div>
-                <h3 className="text-3xl font-serif font-black text-devotion-gold mb-4 uppercase tracking-tighter">Animated Stories</h3>
-                <p className="text-gray-300 text-lg font-light leading-relaxed">Watch & Learn with Krishna! Cartoon adventures for little heroes.</p>
-              </div>
-            </div>
-          </Link>
+          <HomeCard to="/kids" badge="KIDS FUN!" icon={Play} title="Animated Stories" description="Watch & Learn with Krishna! Cartoon adventures for little heroes." isKids />
 
         </div>
       </div>

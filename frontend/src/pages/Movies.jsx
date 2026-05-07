@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Film, Calendar, History, Play, X, ArrowRight, Star, Sparkles } from 'lucide-react';
+import { Film, Calendar, History, Play, X, ArrowRight, Star, Sparkles, Heart } from 'lucide-react';
 import MediaPlayerHLS from '../components/MediaPlayerHLS';
 
 export default function Movies() {
@@ -45,25 +45,47 @@ export default function Movies() {
   return (
     <div className="min-h-screen pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#050B14] text-white">
       
-      {/* Cinematic Background Decor - Animated Floating Galaxy */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-         {/* Stardust universe texture overlay */}
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.15] mix-blend-screen animate-[pulse_8s_ease-in-out_infinite]"></div>
-         
-         {/* Website Theme Floating Glows (Devotion Gold & Deep Azure) */}
-         <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[100%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#0A1929]/60 via-[#020617]/10 to-transparent blur-[100px] rounded-full animate-[spin_60s_linear_infinite] origin-center opacity-90"></div>
-         
-         <div className="absolute bottom-[-30%] right-[-20%] w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-devotion-gold/10 via-[#0A1929]/20 to-transparent blur-[150px] rounded-full animate-[spin_90s_linear_infinite_reverse] origin-center opacity-80"></div>
-         
-         {/* Spiritual Devotion Gold Aura (Horizon/Center) */}
-         <div className="absolute top-[20%] left-[50%] -translate-x-[50%] w-[150vw] h-[80vh] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#FACC15]/15 via-[#B45309]/5 to-transparent blur-[120px] animate-[pulse_12s_ease-in-out_infinite]"></div>
+      <style>{`
+        @keyframes sparkle-bg {
+          0%, 100% { opacity: 0.18; }
+          50% { opacity: 0.32; }
+        }
+        .animate-sparkle-bg {
+          background: repeating-radial-gradient(circle at 60% 30%, #FFD70044 0 2px, transparent 3px 100px), repeating-radial-gradient(circle at 20% 80%, #FFD70033 0 1.5px, transparent 2.5px 100px);
+          animation: sparkle-bg 3.5s ease-in-out infinite;
+        }
+        @keyframes float-streak {
+          0% { transform: translate(-100px, 100px) rotate(45deg); opacity: 0; }
+          50% { opacity: 0.4; }
+          100% { transform: translate(100vw, -100vh) rotate(45deg); opacity: 0; }
+        }
+        .light-streak {
+          position: absolute;
+          width: 300px;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.6), transparent);
+          animation: float-streak 8s linear infinite;
+          filter: blur(4px);
+          pointer-events: none;
+        }
+      `}</style>
 
-         {/* Subtle temple/krishna background blur behind poster */}
-         <div 
-           className="absolute top-0 right-0 w-full lg:w-3/4 h-[90vh] opacity-[0.06] mix-blend-screen bg-cover bg-right-top blur-[3px] animate-float" 
-           style={{ backgroundImage: `url('/scene-krishna.svg')` }}
-         ></div>
+      {/* Cinematic Deep Dark Background */}
+      <div className="absolute inset-0 bg-[#020610] z-0"></div>
+      
+      {/* Sacred Geometry & Radial Glows */}
+      <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_top_right,rgba(255,159,28,0.15),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(0,50,100,0.4),transparent_50%)]"></div>
+      
+      {/* Subtle Om Watermark */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden opacity-[0.03]">
+         <span className="text-[60vw] font-black text-white mix-blend-overlay">ॐ</span>
       </div>
+
+      {/* Sparkle Particles & Light Streaks */}
+      <div className="pointer-events-none absolute inset-0 z-10 animate-sparkle-bg" />
+      <div className="light-streak" style={{ top: '80%', left: '-10%', animationDelay: '0s' }}></div>
+      <div className="light-streak" style={{ top: '40%', left: '-20%', animationDelay: '3s' }}></div>
+      <div className="light-streak" style={{ top: '100%', left: '30%', animationDelay: '5s' }}></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         
@@ -80,65 +102,13 @@ export default function Movies() {
 
         {/* Cinematic Movie List - Premium Stream Cards */}
         <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 pb-20">
-          {movies.map((movie) => (
-            <div 
-              key={movie._id}
-              className="flex flex-col p-4 md:p-5 rounded-[20px] bg-gradient-to-br from-[#F5E6C8] to-[#E6C068] border border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.25)] transition-all duration-500 transform hover:scale-[1.08] hover:border-[#FFD700] hover:shadow-[0_15px_35px_rgba(255,215,0,0.3)] hover:-translate-y-2 cursor-pointer group relative overflow-hidden"
-              onClick={() => setSelectedMovie(movie)}
-            >
-              {/* Subtle inner glow and shimmer */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/50 to-white/0 opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-in-out w-[200%] -translate-x-[100%] group-hover:translate-x-[50%] pointer-events-none z-20"></div>
-              
-              <div className="absolute inset-0 shadow-[inset_0_0_30px_rgba(255,255,255,0.7)] rounded-[20px] pointer-events-none"></div>
-
-              {/* Thumbnail Top */}
-              <div className="relative w-full aspect-[16/9] rounded-[14px] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.15)] mb-5 border border-black/5 z-10">
-                   <img 
-                     src={movie.thumbnail || 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} 
-                     alt={movie.title}
-                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                     onError={(e) => {
-                       e.target.src = 'https://images.unsplash.com/photo-1485846234645-a62644ef7467?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-                     }}
-                   />
-                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/30 opacity-70 group-hover:opacity-30 transition-colors"></div>
-                   
-                   <div className="absolute top-3 left-3 bg-white/90 text-[#020617] px-3 py-1 rounded font-black text-[10px] tracking-widest uppercase shadow-md backdrop-blur-md">
-                      {movie.releaseYear || 'NEW'}
-                   </div>
-                   
-                   {/* Play Button overlay */}
-                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100">
-                      <div className="w-14 h-14 bg-white/95 rounded-full flex items-center justify-center text-gray-900 shadow-[0_0_20px_rgba(255,255,255,0.8)] backdrop-blur-md">
-                         <Play className="w-6 h-6 fill-current ml-1" />
-                      </div>
-                   </div>
-              </div>
-
-              {/* Content Bottom */}
-              <div className="relative z-10 flex flex-col flex-grow px-2">
-                <h3 className="text-xl md:text-2xl font-black text-[#020617] mb-2 leading-tight uppercase font-serif tracking-wide drop-shadow-sm line-clamp-1">
-                  {movie.title}
-                </h3>
-                
-                <p className="text-gray-600 font-medium text-xs md:text-sm mb-6 line-clamp-2 leading-relaxed">
-                  {movie.description || movie.ownerHistory}
-                </p>
-                
-                <div className="mt-auto flex items-center justify-between pt-3 border-t border-black/10">
-                  <div className="flex gap-1.5">
-                     {(movie.tags || []).slice(0,2).map(tag => (
-                       <span key={tag} className="px-2 py-1 bg-[#020617]/5 rounded text-[#020617]/70 text-[8px] font-black uppercase tracking-widest border border-[#020617]/10">
-                         {tag}
-                       </span>
-                     ))}
-                  </div>
-                  <button className="bg-[#0F2027] text-[#FFD700] px-5 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 shadow-lg group-hover:shadow-[0_5px_15px_rgba(0,0,0,0.3)] transition-all active:scale-95 group-hover:-translate-y-1 hover:bg-[#1A3644]">
-                    Watch <Play className="w-3 h-3 fill-current" />
-                  </button>
-                </div>
-              </div>
-            </div>
+          {movies.map((movie, index) => (
+            <TeaserCard
+              key={movie._id || movie.id || index}
+              video={movie}
+              index={index}
+              onSelect={setSelectedMovie}
+            />
           ))}
         </div>
 
@@ -212,6 +182,157 @@ export default function Movies() {
         </div>
       )}
 
+    </div>
+  );
+}
+
+function TeaserCard({ video, isFavorite = () => false, toggleFavorite = () => {}, onSelect, index }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    setIsDesktop(window.innerWidth > 768);
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleMouseMove = (e) => {
+    if (!isDesktop) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10; // max 10 deg
+    const rotateY = ((x - centerX) / centerX) * 10;
+    setMousePos({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (isDesktop) {
+      hoverTimeoutRef.current = setTimeout(() => setShowVideo(true), 600); // 600ms delay for auto-play
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setShowVideo(false);
+    clearTimeout(hoverTimeoutRef.current);
+    setMousePos({ x: 0, y: 0 });
+  };
+
+  const extractYoutubeId = (url) => { 
+    if (!url) return null;
+    const match = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/); 
+    return match ? match[1] : null; 
+  };
+  
+  const videoUrl = video.videoUrl || video.youtubeUrl || video.url || '';
+  const ytId = extractYoutubeId(videoUrl);
+  // Prefer provided thumbnail, fallback to YT maxresdefault, then to placeholder
+  const thumbUrl = video.thumbnail || video.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : '/scene-krishna.svg');
+  // Simple logic to show 'New' badge for first two items
+  const isNew = index < 2;
+
+  return (
+    <div 
+      className="relative preserve-3d transition-transform duration-300 ease-out cursor-pointer h-[480px] landscape:h-[340px] md:landscape:h-[480px]"
+      style={{ 
+        transform: isHovered && isDesktop ? `perspective(1000px) rotateX(${mousePos.x}deg) rotateY(${mousePos.y}deg) scale3d(1.02, 1.02, 1.02)` : 'perspective(1000px) rotateX(0deg) rotateY(0deg)',
+        zIndex: isHovered ? 50 : 1
+      }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={() => onSelect(video)}
+    >
+      {/* Golden Glowing Border Effect */}
+      <div 
+        className="absolute -inset-1 bg-gradient-to-r from-devotion-gold via-[#FF9F1C] to-devotion-gold rounded-[2.5rem] blur-md transition-opacity duration-500 pointer-events-none" 
+        style={{ opacity: isHovered ? 0.6 : 0 }}
+      ></div>
+      
+      {/* Main Card Container */}
+      <div className="relative h-full w-full bg-[#0A1A2F] rounded-[2.5rem] border border-devotion-gold/30 overflow-hidden shadow-2xl backface-hidden flex flex-col group">
+        
+        {/* Thumbnail or Video Background */}
+        <div className="absolute inset-0 z-0 bg-black">
+          <img 
+            src={thumbUrl} 
+            alt={video.title}
+            className={`w-full h-full object-cover opacity-80 transition-transform duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
+          />
+          
+          {showVideo && ytId && (
+            <div className="absolute inset-0 z-10 bg-black animate-fade-in-up">
+              <iframe
+                src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&loop=1&playlist=${ytId}`}
+                className="w-full h-[150%] -translate-y-[15%] object-cover pointer-events-none opacity-80"
+                allow="autoplay; encrypted-media"
+                frameBorder="0"
+                title="Teaser Preview"
+              />
+            </div>
+          )}
+          
+          {/* Gradient Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#06101E] via-[#06101E]/60 to-transparent z-20 transition-opacity duration-500 group-hover:opacity-90"></div>
+        </div>
+
+        {/* Shimmer Light Sweep */}
+        {isHovered && (
+          <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[2.5rem]">
+             <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+          </div>
+        )}
+
+        {/* Top Badges */}
+        <div className="absolute top-6 left-0 flex justify-between w-full px-6 z-30 translate-z-20">
+          <div className="flex gap-2">
+            {isNew && (
+              <span className="bg-gradient-to-r from-red-600 to-orange-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                New
+              </span>
+            )}
+            {video.duration && (
+              <span className="bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full">
+                {video.duration}
+              </span>
+            )}
+          </div>
+          <button
+            className={`flex items-center justify-center w-10 h-10 rounded-full border border-white/20 backdrop-blur-md transition-all ${isFavorite(video) ? 'bg-devotion-gold/20 text-devotion-gold border-devotion-gold' : 'bg-black/40 text-white/80 hover:bg-white/20'}`}
+            title={isFavorite(video) ? 'Remove from favorites' : 'Add to favorites'}
+            onClick={e => { e.stopPropagation(); toggleFavorite(video); }}
+          >
+            <Heart className={`w-5 h-5 ${isFavorite(video) ? 'fill-devotion-gold stroke-devotion-gold' : 'fill-none stroke-current'}`} />
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="mt-auto p-8 relative z-30 translate-z-30 flex flex-col items-center text-center">
+          <div className={`w-16 h-16 landscape:w-12 landscape:h-12 md:landscape:w-16 md:landscape:h-16 bg-devotion-gold/20 backdrop-blur-lg rounded-full flex items-center justify-center border border-devotion-gold/40 mb-6 landscape:mb-2 md:landscape:mb-6 transition-all duration-500 shadow-[0_0_30px_rgba(255,215,0,0.3)] ${isHovered ? 'scale-110 bg-devotion-gold text-devotion-darkBlue shadow-[0_0_50px_rgba(255,215,0,0.6)]' : 'text-devotion-gold'}`}>
+             <Play className="w-8 h-8 landscape:w-6 landscape:h-6 md:landscape:w-8 md:landscape:h-8 ml-1 fill-current" />
+          </div>
+          
+          <h3 className="text-2xl md:text-3xl landscape:text-xl md:landscape:text-3xl font-serif font-black text-white mb-3 landscape:mb-1 md:landscape:mb-3 leading-tight drop-shadow-xl tracking-tight">
+            {video.chapter ? `Ch ${video.chapter}: ` : ''}{video.title}
+          </h3>
+          
+          <p className="text-gray-300 font-light text-sm landscape:text-xs md:landscape:text-sm mb-6 landscape:mb-2 md:landscape:mb-6 line-clamp-2 landscape:line-clamp-1 md:landscape:line-clamp-2 leading-relaxed opacity-80">
+            {video.description || "Divine cinematic adventure awaits!"}
+          </p>
+
+          <button className={`w-full py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-300 shadow-2xl ${isHovered ? 'bg-gradient-to-r from-devotion-gold to-[#FF9F1C] text-devotion-darkBlue scale-105' : 'bg-white/10 border border-white/20 text-white backdrop-blur-md'}`}>
+            Watch Now
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

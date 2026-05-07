@@ -153,3 +153,67 @@ export const enableBackgroundSync = async () => {
     return false;
   }
 };
+
+const urlBase64ToUint8Array = (base64String) => {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
+
+// Add Web Push subscription
+export const subscribeUserToPush = async () => {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.warn('Push messaging is not supported');
+    return false;
+  }
+  
+  try {
+    const permission = await requestNotificationPermission();
+    if (permission !== 'granted') {
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    
+    // Check if already subscribed
+    let subscription = await registration.pushManager.getSubscription();
+    
+    if (!subscription) {
+      // Subscribe using the public VAPID key
+      // Ideally fetched from backend, but hardcoded here based on the env
+      const publicVapidKey = 'BDMaeaDKARXaDrXdmeBkdcq4880r8vx3QTqj114DTOBqgddw9xOJC3gL73-fzce95JLRo__t2GYNQrl1ctK1LIk';
+      
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+      });
+    }
+
+    // Send subscription to backend
+    const token = localStorage.getItem('token');
+    if (token) {
+      await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ subscription })
+      });
+      return true;
+    }
+  } catch (err) {
+    console.error('Failed to subscribe to push notifications:', err);
+    return false;
+  }
+  return false;
+};

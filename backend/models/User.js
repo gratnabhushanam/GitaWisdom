@@ -55,6 +55,10 @@ const User = sequelize.define('User', {
       interests: [],
     },
   },
+  pushSubscriptions: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+  },
   benefits: {
     type: DataTypes.JSON, // To store points, badges
     defaultValue: {

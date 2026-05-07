@@ -1,163 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import React from 'react';
 import { Users, Plus, MessageCircle, Heart, Search, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSatsangs } from '../hooks/useSatsangs';
 
 export default function Satsangs() {
-  const { user, setUser } = useAuth();
   const navigate = useNavigate();
-  const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeGroupId, setActiveGroupId] = useState(null);
-  const [activeGroupPosts, setActiveGroupPosts] = useState([]);
-  const [postContent, setPostContent] = useState('');
-  const [newGroupForm, setNewGroupForm] = useState({ name: '', description: '', category: 'General' });
-  const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
-  const [commentInputs, setCommentInputs] = useState({});
-
-  useEffect(() => {
-    const fetchGroups = async () => {
-      try {
-        const { data } = await axios.get('/api/forums/groups');
-        setGroups(data);
-        if (data.length > 0 && !activeGroupId) {
-          setActiveGroupId(data[0]._id);
-        }
-      } catch (error) {
-        console.error('Failed to fetch groups', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchGroups();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (activeGroupId) fetchPosts(activeGroupId);
-  }, [activeGroupId]);
-
-  const fetchPosts = async (groupId) => {
-    try {
-      const { data } = await axios.get(`/api/forums/groups/${groupId}/posts`);
-      setActiveGroupPosts(data);
-    } catch (error) {
-      console.error('Failed to fetch posts', error);
-    }
-  };
-
-  const handleCreateGroup = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.post('/api/forums/groups', newGroupForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setGroups([data, ...groups]);
-      setShowCreateModal(false);
-      setActiveGroupId(data._id);
-      setNewGroupForm({ name: '', description: '', category: 'General' });
-    } catch (error) {
-      console.error('Group creation error:', error);
-      alert('Failed to create group');
-    }
-  };
-
-  const handleDeleteGroup = async (e, groupId) => {
-    e.stopPropagation(); // prevent setting active group id
-    if (!window.confirm('Are you sure you want to delete this community?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`/api/forums/groups/${groupId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setGroups(groups.filter(g => g._id !== groupId));
-      if (activeGroupId === groupId) {
-        setActiveGroupId(groups.find(g => g._id !== groupId)?._id || null);
-      }
-    } catch (error) {
-      console.error('Group deletion error:', error);
-      alert('Failed to delete group');
-    }
-  };
-
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    if (!postContent.trim() || !activeGroupId) return;
-    try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.post(`/api/forums/groups/${activeGroupId}/posts`, {
-        content: postContent
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActiveGroupPosts([data, ...activeGroupPosts]);
-      setPostContent('');
-    } catch (error) {
-      console.error('Post creation error:', error);
-      alert('Failed to post');
-    }
-  };
-
-  const handleLike = async (postId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.patch(`/api/forums/posts/${postId}/like`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
-    } catch (error) {
-      console.error('Like error:', error);
-      alert('Must be logged in to like');
-    }
-  };
-
-  const handleCommentSubmit = async (postId) => {
-    const text = commentInputs[postId]?.trim();
-    if (!text) return;
-    try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.post(`/api/forums/posts/${postId}/comment`, { text }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
-      setCommentInputs({ ...commentInputs, [postId]: '' });
-      try {
-        const pointsRes = await axios.post('/api/auth/profile/points', { points: 5 }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (pointsRes.data.user) {
-          setUser(pointsRes.data.user);
-        }
-      } catch (err) {}
-    } catch (error) {
-      console.error('Comment error', error);
-      alert('Failed to post comment');
-    }
-  };
-
-  const handleDeleteComment = async (postId, commentId) => {
-    if (!window.confirm('Delete comment?')) return;
-    try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.delete(`/api/forums/posts/${postId}/comment/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setActiveGroupPosts((prev) => prev.map((p) => p._id === postId ? data : p));
-    } catch (error) {
-      console.error('Delete comment error', error);
-      alert('Failed to delete comment');
-    }
-  };
-
-  const activeGroup = groups.find(g => g._id === activeGroupId);
-
-  const getInitials = (name) => {
-    if (!name) return '?';
-    return name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
-  };
+  const {
+    user,
+    groups,
+    loading,
+    showCreateModal,
+    setShowCreateModal,
+    activeGroupId,
+    setActiveGroupId,
+    activeGroupPosts,
+    postContent,
+    setPostContent,
+    newGroupForm,
+    setNewGroupForm,
+    activeCommentsPostId,
+    setActiveCommentsPostId,
+    commentInputs,
+    setCommentInputs,
+    handleCreateGroup,
+    handleDeleteGroup,
+    handleCreatePost,
+    handleLike,
+    handleCommentSubmit,
+    handleDeleteComment,
+    handleDeletePost,
+    activeGroup,
+    getInitials
+  } = useSatsangs();
 
   return (
     <div className="min-h-screen pt-28 pb-12 px-4 relative bg-[#06101E] text-white">
@@ -178,9 +52,9 @@ export default function Satsangs() {
               {user && (
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-devotion-gold/10 text-devotion-gold hover:bg-devotion-gold/20 p-2 rounded-full transition-colors"
+                  className="bg-devotion-gold text-devotion-darkBlue hover:bg-yellow-400 font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3 h-3" /> Create
                 </button>
               )}
             </div>
@@ -204,7 +78,7 @@ export default function Satsangs() {
                   >
                      <h4 className={`font-bold ${activeGroupId === group._id ? 'text-devotion-gold' : 'text-white'}`}>{group.name}</h4>
                      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{group.category}</p>
-                     {user?.role === 'admin' && (
+                     {(user?.role === 'admin' || (user && group.createdBy && String(user.id || user._id) === String(group.createdBy))) && (
                         <button
                           onClick={(e) => handleDeleteGroup(e, group._id)}
                           className="mt-3 inline-flex items-center gap-1.5 text-[10px] text-red-400 hover:text-red-300 uppercase font-black tracking-widest bg-red-400/10 px-2 py-1 rounded-md transition-colors"
@@ -258,19 +132,30 @@ export default function Satsangs() {
                      ) : (
                        activeGroupPosts.map(post => (
                          <div key={post._id} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-                            <div className="flex items-center gap-3 mb-4">
-                               {post.authorImage ? (
-                                 <img src={post.authorImage} alt="User" className="w-10 h-10 rounded-full object-cover border border-devotion-gold/30" />
-                               ) : (
-                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center font-bold text-xs uppercase text-white border border-gray-600">
-                                   {getInitials(post.authorName)}
-                                 </div>
-                               )}
-                               <div>
-                                 <p className="font-bold text-white text-sm">{post.authorName}</p>
-                                 <p className="text-[10px] text-gray-500 uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString()}</p>
+                             <div className="flex justify-between items-start mb-4">
+                               <div className="flex items-center gap-3">
+                                  {post.authorImage ? (
+                                    <img src={post.authorImage} alt="User" className="w-10 h-10 rounded-full object-cover border border-devotion-gold/30" />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center font-bold text-xs uppercase text-white border border-gray-600">
+                                      {getInitials(post.authorName)}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-bold text-white text-sm">{post.authorName}</p>
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString()}</p>
+                                  </div>
                                </div>
-                            </div>
+                               {(user?.role === 'admin' || String(post.authorId) === String(user?.id || user?._id)) && (
+                                  <button
+                                    onClick={() => handleDeletePost(post._id)}
+                                    className="text-red-400 hover:text-red-300 bg-red-400/10 p-2 rounded-lg transition-colors"
+                                    title="Delete post"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                               )}
+                             </div>
                             
                             <p className="text-gray-200 mb-6 whitespace-pre-wrap">{post.content}</p>
                             

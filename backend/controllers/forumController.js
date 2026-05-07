@@ -36,13 +36,19 @@ exports.deleteGroup = async (req, res) => {
     const { groupId } = req.params;
     if (!useMongoStore()) return res.status(400).json({ message: 'MongoDB required for forums' });
 
-    // Ensure the sender is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Only admins can delete communities' });
-    }
-
     const group = await GroupMongo.findById(groupId);
     if (!group) return res.status(404).json({ message: 'Community not found' });
+
+    console.log('User attempting to delete group:', req.user);
+    console.log('Group createdBy:', group.createdBy);
+
+    // Ensure the sender is admin or creator
+    if (req.user.role !== 'admin' && String(group.createdBy) !== String(req.user.id || req.user._id)) {
+      console.log('Delete rejected: sender is not admin and not creator');
+      return res.status(403).json({ message: 'Only admins or creators can delete communities' });
+    }
+
+    console.log('Proceeding to delete group:', group._id);
 
     await group.deleteOne();
     // Also delete associated posts
@@ -50,6 +56,7 @@ exports.deleteGroup = async (req, res) => {
 
     res.json({ message: 'Community deleted successfully' });
   } catch (err) {
+    console.error('Error deleting group:', err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -81,6 +88,25 @@ exports.createPost = async (req, res) => {
       authorImage: user.profilePicture
     });
     res.status(201).json(newPost);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.deletePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    if (!useMongoStore()) return res.status(400).json({ message: 'MongoDB required' });
+
+    const post = await PostMongo.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    if (String(post.authorId) !== String(req.user.id || req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not allowed to delete this post' });
+    }
+
+    await post.deleteOne();
+    res.json({ message: 'Post deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

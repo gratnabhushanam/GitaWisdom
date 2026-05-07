@@ -59,8 +59,8 @@ exports.chatWithAI = async (req, res) => {
 
 exports.generateTTS = async (req, res) => {
   try {
-    const { text, voiceType } = req.body;
-    const apiKey = process.env.ELEVENLABS_API_KEY || '';
+    const { text, voiceType, customAiKey } = req.body;
+    const apiKey = customAiKey || process.env.ELEVENLABS_API_KEY || '';
 
     if (!apiKey) {
       return res.status(501).json({ message: 'ElevenLabs API Key not configured. Using browser fallback.' });

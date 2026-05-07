@@ -1,76 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Book, Menu, X, BrainCircuit, User, Star, Zap, Heart, Search, Film, Shield, Users, Bell, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useNotifications } from '../hooks/useNotifications';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [showInstallModal, setShowInstallModal] = useState(false);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      setShowInstallModal(true);
-      return;
-    }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstallable(false);
-    }
-    setDeferredPrompt(null);
-  };
-
-  useEffect(() => {
-    if (user) {
-      const fetchNotifications = async () => {
-        try {
-          const { data } = await axios.get('/api/notifications', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          setNotifications(Array.isArray(data) ? data : []);
-        } catch (err) {
-           console.error('Failed to fetch notifications:', err);
-        }
-      };
-      fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const unreadCount = notifications.filter(n => !n.isRead).length || notifications.filter(n => !n.read).length;
-
-  const handleMarkAsRead = async () => {
-    try {
-      await axios.post('/api/notifications/read-all', {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setNotifications(notifications.map(n => ({...n, isRead: true, read: true})));
-    } catch (err) {
-      console.error('Failed to mark as read:', err);
-    }
-  };
+  
+  const { isInstallable, showInstallModal, setShowInstallModal, handleInstallClick } = useInstallPrompt();
+  const { notifications, showNotifications, setShowNotifications, unreadCount, handleMarkAsRead } = useNotifications(user);
 
   const getInitials = (name) => {
     if (!name) return 'S';
@@ -162,7 +103,7 @@ export default function Navbar() {
                                     <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!n.isRead && !n.read ? 'bg-devotion-gold' : 'bg-gray-600'}`}></div>
                                     <div className="flex-1 min-w-0">
                                        {n.title && <p className="text-xs font-bold text-white mb-0.5 truncate">{n.title}</p>}
-                                       <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{n.message || n.text}</p>
+                                       <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{n.body || n.message || n.text}</p>
                                     </div>
                                  </div>
                                ))
@@ -207,7 +148,7 @@ export default function Navbar() {
                     </button>
 
                     {showNotifications && (
-                      <div className="fixed top-14 left-4 right-4 sm:absolute sm:right-0 sm:left-auto sm:mt-3 sm:w-80 bg-[#081426] border border-devotion-gold/30 rounded-2xl shadow-2xl overflow-hidden py-2" style={{ zIndex: 9999 }}>
+                      <div className="fixed top-14 left-4 right-4 sm:absolute sm:right-0 sm:left-auto sm:mt-3 sm:w-80 bg-[#081426] border border-devotion-gold/30 rounded-2xl shadow-2xl overflow-hidden py-2 z-[9999]">
                          <div className="px-4 py-2 flex justify-between items-center border-b border-white/5 mb-2">
                             <span className="text-xs font-bold text-white uppercase tracking-widest">Notifications</span>
                             {unreadCount > 0 && (

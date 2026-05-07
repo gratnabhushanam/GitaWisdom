@@ -22,10 +22,36 @@ async function sendEmail({ to, subject, html, text }) {
   });
 }
 
-// Placeholder for push notification (OneSignal, FCM, or webpush)
-async function sendPush({ to, title, body, data }) {
-  // Integrate with push provider here
-  // Example: OneSignal/FCM/webpush
+const webpush = require('web-push');
+
+// Configure web-push with VAPID details
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+const vapidEmail = process.env.VAPID_EMAIL || 'mailto:support@gitawisdom.org';
+
+if (publicVapidKey && privateVapidKey) {
+  webpush.setVapidDetails(vapidEmail, publicVapidKey, privateVapidKey);
+}
+
+// Send Native Web Push notification
+async function sendPush({ subscription, title, body, data }) {
+  if (!subscription || !publicVapidKey || !privateVapidKey) return;
+  
+  const payload = JSON.stringify({
+    title,
+    body,
+    icon: '/logo.png', // Assuming logo.png exists in public folder
+    badge: '/icon-192x192.png',
+    data: data || {},
+  });
+
+  try {
+    await webpush.sendNotification(subscription, payload);
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+    // If the subscription is invalid/expired (HTTP 410), we could ideally remove it from the DB here
+    throw error;
+  }
 }
 
 // In-app notification (DB insert)

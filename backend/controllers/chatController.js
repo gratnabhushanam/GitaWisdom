@@ -104,7 +104,7 @@ function getOfflineWisdom(message) {
 
 exports.chatMentor = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, customAiKey } = req.body;
     
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ reply: 'Message is required and must be text.' });
@@ -119,14 +119,15 @@ exports.chatMentor = async (req, res) => {
       return res.status(400).json({ reply: 'The burden of words is too heavy. Please keep your message under 500 characters.' });
     }
 
-    // Try DeepSeek AI first (if key has balance)
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    // Try DeepSeek AI or Custom AI Key first (if key has balance)
+    const apiKey = customAiKey || process.env.DEEPSEEK_API_KEY;
 
     if (apiKey) {
       try {
+        const isCustomKey = Boolean(customAiKey);
         const openai = new OpenAI({
           apiKey,
-          baseURL: 'https://api.deepseek.com',
+          baseURL: isCustomKey && !customAiKey.startsWith('sk-') ? undefined : 'https://api.deepseek.com',
         });
 
         const completion = await openai.chat.completions.create({
