@@ -14,12 +14,8 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         rollupOptions: {
-          onwarn(warning, warn) {
-            if (warning.message?.includes('inlineDynamicImports')) return;
-            warn(warning);
-          },
           output: {
-            // Ensure no conflicting options here
+            codeSplitting: false
           }
         }
       },
@@ -51,11 +47,8 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 700,
     rollupOptions: {
-      onwarn(warning, warn) {
-        if (warning.message?.includes('inlineDynamicImports')) return;
-        warn(warning);
-      },
       output: {
+        codeSplitting: false,
         manualChunks: (id) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'react-vendor';
