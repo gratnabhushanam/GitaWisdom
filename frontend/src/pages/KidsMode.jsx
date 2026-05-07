@@ -37,7 +37,7 @@ export default function KidsMode() {
     }, [location]);
 
     return (
-      <div className="min-h-screen bg-[#020610] pt-20 landscape:pt-14 md:pt-28 pb-12 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative pl-safe pr-safe">
+      <div className="min-h-[100dvh] bg-[#020610] pt-20 landscape:pt-14 md:pt-28 pb-32 px-4 sm:px-6 lg:px-8 text-white overflow-y-auto overflow-x-hidden relative pl-safe pr-safe">
         <style>{`
           @keyframes float-krishna { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
           .animate-float-krishna { animation: float-krishna 6s ease-in-out infinite; }

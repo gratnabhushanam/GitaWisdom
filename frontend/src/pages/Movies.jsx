@@ -37,7 +37,7 @@ export default function Movies() {
   );
 
   return (
-    <div className="min-h-screen pt-20 landscape:pt-14 md:pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#050B14] text-white pl-safe pr-safe">
+    <div className="min-h-[100dvh] bg-[#050B14] pt-20 landscape:pt-14 md:pt-28 pb-32 px-4 sm:px-6 lg:px-8 relative overflow-y-auto overflow-x-hidden text-white pl-safe pr-safe">
       <style>{`
         @keyframes sparkle-bg { 0%,100%{opacity:.15} 50%{opacity:.25} }
         .animate-sparkle-bg {

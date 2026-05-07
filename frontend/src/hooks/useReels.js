@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ENV } from '../config/env';
+import { useNotifications } from './useNotifications';
 
 const SAVED_REELS_KEY = 'saved_reels_v1';
 const REELS_SOUND_PREF_KEY = 'reels_sound_enabled_v1';
@@ -25,9 +26,12 @@ export const useReels = () => {
   const [savedReelMap, setSavedReelMap] = useState({});
   const [selectedCommentProfile, setSelectedCommentProfile] = useState(null);
   const [activeReelId, setActiveReelId] = useState('');
+  const [viewMode, setViewMode] = useState('scroll'); // 'scroll' or 'grid'
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [likePopReelId, setLikePopReelId] = useState('');
   const [pausedReelId, setPausedReelId] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { notifications, unreadCount, handleMarkAsRead } = useNotifications(user);
   
   const reelsFeedRef = useRef(null);
   const likePopTimerRef = useRef(null);
@@ -105,6 +109,13 @@ export const useReels = () => {
     }
   };
 
+  // Cycle background scenes as active reel changes
+  useEffect(() => {
+    if (activeReelId) {
+      setBgIndex(prev => (prev + 1) % 3); // Cycle through 3 scenes
+    }
+  }, [activeReelId]);
+
   useEffect(() => {
     fetchReels();
     
@@ -179,14 +190,46 @@ export const useReels = () => {
       }, 300);
     }
   };
+  const handleCommentSubmit = async (reelId) => {
+    const text = commentInputs[reelId];
+    if (!text?.trim() || !user) return;
+
+    setSubmittingCommentId(reelId);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${ENV.API_BASE_URL}/api/videos/user-reels/${reelId}/comment`, { text }, {
+        headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
+      });
+      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data.reel : r)));
+      setCommentInputs(prev => ({ ...prev, [reelId]: '' }));
+    } catch (e) {
+      console.error('Comment error:', e);
+      alert('Failed to post reflection. Please try again.');
+    } finally {
+      setSubmittingCommentId(null);
+    }
+  };
+
+  const handleDeleteComment = async (reelId, commentId) => {
+    if (!window.confirm('Delete this reflection?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.delete(`${ENV.API_BASE_URL}/api/videos/user-reels/${reelId}/comment/${commentId}`, {
+        headers: { Authorization: `Bearer ${token}`, 'x-api-key': ENV.API_KEY }
+      });
+      setReels(prev => prev.map(r => (String(r._id || r.id) === String(reelId) ? res.data.reel : r)));
+    } catch (e) { console.error(e); }
+  };
 
   return {
     user, reels, pendingReels, loading, error, commentInputs, setCommentInputs,
     submittingCommentId, moderatingId, bgIndex, expandedCommentReel, setExpandedCommentReel,
     savedReelMap, selectedCommentProfile, setSelectedCommentProfile, activeReelId,
+    viewMode, setViewMode,
     soundEnabled, setSoundEnabled, likePopReelId, pausedReelId, reelsFeedRef,
+    showNotifications, setShowNotifications, unreadCount, handleMarkAsRead, notifications,
     canViewCommenterProfile, handleToggleLike, setActiveReelId, setPausedReelId,
-    handleVideoSurfaceTap, fetchReels,
+    handleVideoSurfaceTap, fetchReels, handleCommentSubmit, handleDeleteComment,
     handleShare: async (reel) => {
       try {
         const text = `${reel.title}\n${reel.description || ''}`;
