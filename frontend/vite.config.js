@@ -13,14 +13,17 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // Explicitly override deprecated options to silence Vite 8/Rollup 4 warnings
+        // The plugin internally builds the service worker using Rollup.
+        // We use onwarn to silence the deprecation warning that persists in Vite 8.
         rollupOptions: {
+          onwarn(warning, warn) {
+            if (warning.code === 'DEPRECATED_FEATURE' && warning.message.includes('inlineDynamicImports')) {
+              return;
+            }
+            warn(warning);
+          },
           output: {
-            // New flag replacing inlineDynamicImports
-            codeSplitting: false,
-            // Setting this to false might prevent the plugin's internal default 'true' from triggering the warning
-            // Or at least show that we are explicitly handling it.
-            inlineDynamicImports: false
+            codeSplitting: false
           }
         }
       },
@@ -52,6 +55,13 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 700,
     rollupOptions: {
+      onwarn(warning, warn) {
+        // Also silence here for the main build just in case
+        if (warning.code === 'DEPRECATED_FEATURE' && warning.message.includes('inlineDynamicImports')) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
