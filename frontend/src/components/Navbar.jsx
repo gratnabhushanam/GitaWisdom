@@ -18,22 +18,22 @@ function NotificationItem({ n }) {
   const timeAgo = n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
 
   return (
-    <div className={`flex items-start gap-4 p-4 rounded-2xl mb-2 border transition-all duration-300 group cursor-pointer ${isUnread ? `${bg} ${border} shadow-lg` : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}>
-      <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border transition-transform group-hover:scale-110 ${isUnread ? `${bg} ${border}` : 'bg-white/5 border-white/10'}`}>
-        <Icon className={`w-5 h-5 ${isUnread ? color : 'text-gray-500'}`} />
+    <div className={`flex items-start gap-4 p-5 rounded-[1.8rem] mb-3 border transition-all duration-300 group cursor-pointer ${isUnread ? `${bg} ${border} shadow-xl scale-[1.01]` : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06]'}`}>
+      <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform group-hover:scale-110 ${isUnread ? `${bg} ${border} shadow-inner` : 'bg-white/5 border-white/10'}`}>
+        <Icon className={`w-6 h-6 ${isUnread ? color : 'text-gray-500'}`} />
       </div>
-      <div className="flex-1 min-w-0">
-        {n.title && (
-          <p className={`text-sm font-black mb-1 leading-snug tracking-tight ${isUnread ? 'text-white' : 'text-gray-400'}`}>
-            {n.title}
+      <div className="flex-1 min-w-0 pt-0.5">
+        <div className="flex justify-between items-start mb-1.5">
+          <p className={`text-[13px] font-black leading-tight tracking-tight uppercase ${isUnread ? 'text-white' : 'text-gray-400'}`}>
+            {n.title || 'Divine Update'}
           </p>
-        )}
-        <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-2 font-medium">
+          {timeAgo && <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest whitespace-nowrap ml-2">{timeAgo}</p>}
+        </div>
+        <p className={`text-xs leading-relaxed font-medium ${isUnread ? 'text-gray-200' : 'text-gray-500'}`}>
           {n.body || n.message || n.text}
         </p>
-        <div className="flex items-center justify-between mt-2">
-           {timeAgo && <p className="text-[9px] text-gray-700 font-black uppercase tracking-widest">{timeAgo}</p>}
-           {isUnread && <div className="w-1.5 h-1.5 bg-devotion-gold rounded-full shadow-[0_0_8px_rgba(255,215,0,0.8)] animate-pulse" />}
+        <div className="flex items-center justify-end mt-3">
+           {isUnread && <div className="w-2 h-2 bg-devotion-gold rounded-full shadow-[0_0_12px_rgba(255,215,0,1)] animate-pulse" />}
         </div>
       </div>
     </div>
