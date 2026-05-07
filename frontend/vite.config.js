@@ -13,10 +13,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // Address deprecation warning in newer Vite versions
+        // Explicitly override deprecated options to silence Vite 8/Rollup 4 warnings
         rollupOptions: {
           output: {
-            codeSplitting: false
+            // New flag replacing inlineDynamicImports
+            codeSplitting: false,
+            // Setting this to false might prevent the plugin's internal default 'true' from triggering the warning
+            // Or at least show that we are explicitly handling it.
+            inlineDynamicImports: false
           }
         }
       },
