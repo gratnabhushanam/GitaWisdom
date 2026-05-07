@@ -12,7 +12,13 @@ export default defineConfig({
       filename: 'sw.js',
       registerType: 'autoUpdate',
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Address deprecation warning in newer Vite versions
+        rollupOptions: {
+          output: {
+            codeSplitting: false
+          }
+        }
       },
       includeAssets: ['logo-om-v2.png', 'screenshot-640x480.png', 'screenshot-1280x800.png'],
       manifest: {
@@ -41,7 +47,7 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 700,
-    rolldownOptions: {
+    rollupOptions: {
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
