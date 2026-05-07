@@ -13,17 +13,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // The plugin internally builds the service worker using Rollup.
-        // We use onwarn to silence the deprecation warning that persists in Vite 8.
         rollupOptions: {
           onwarn(warning, warn) {
-            if (warning.code === 'DEPRECATED_FEATURE' && warning.message.includes('inlineDynamicImports')) {
-              return;
-            }
+            if (warning.message?.includes('inlineDynamicImports')) return;
             warn(warning);
           },
           output: {
-            codeSplitting: false
+            // Ensure no conflicting options here
           }
         }
       },
@@ -56,10 +52,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       onwarn(warning, warn) {
-        // Also silence here for the main build just in case
-        if (warning.code === 'DEPRECATED_FEATURE' && warning.message.includes('inlineDynamicImports')) {
-          return;
-        }
+        if (warning.message?.includes('inlineDynamicImports')) return;
         warn(warning);
       },
       output: {
