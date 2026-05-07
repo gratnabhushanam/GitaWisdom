@@ -25,9 +25,14 @@ export default function Reels() {
     const container = reelsFeedRef.current;
     if (!container || !reels.length) return;
 
+    // Force first reel active if none selected
+    if (!activeReelId && reels.length > 0) {
+      setActiveReelId(String(reels[0]._id || reels[0].id));
+    }
+
     const observerOptions = {
-      root: null, // Use viewport for maximum mobile compatibility
-      threshold: 0.6, // Fire when 60% of reel is visible
+      root: null,
+      threshold: 0.3, // More lenient for mobile headers/navs
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -175,7 +180,7 @@ export default function Reels() {
               {/* Interaction Overlay */}
               <button
                 type="button"
-                onPointerUp={() => handleVideoSurfaceTap(reel, reelId)}
+                onClick={() => handleVideoSurfaceTap(reel, reelId)}
                 className="absolute inset-0 z-[15] cursor-pointer"
                 aria-label="Toggle Playback"
               />
