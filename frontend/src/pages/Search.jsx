@@ -141,9 +141,9 @@ export default function Search() {
   };
 
   return (
-     <div className="min-h-screen pt-28 pb-12 px-4 relative bg-[#06101E] text-white overflow-hidden">
+     <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 sm:px-6 tv:px-16 relative bg-[#06101E] text-white overflow-hidden">
        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.2),transparent_28%)]"></div>
-       <div className="max-w-6xl mx-auto relative z-10">
+       <div className="max-w-6xl tv:max-w-[1600px] mx-auto relative z-10">
           
           {/* Search Header */}
           <div className="relative mb-12">
@@ -152,7 +152,7 @@ export default function Search() {
              </div>
              <input 
                type="text" 
-               className="w-full bg-white/5 backdrop-blur-md border-2 border-devotion-gold/30 rounded-3xl py-6 pl-16 pr-6 text-2xl font-light text-white placeholder:text-gray-500 focus:border-devotion-gold focus:outline-none transition-all shadow-2xl"
+               className="w-full bg-white/5 backdrop-blur-md border-2 border-devotion-gold/30 rounded-3xl py-5 sm:py-6 tv:py-8 pl-16 tv:pl-20 pr-6 text-xl sm:text-2xl tv:text-3xl font-light text-white placeholder:text-gray-500 focus:border-devotion-gold focus:outline-none transition-all shadow-2xl"
                placeholder="Search stress, anger, motivation..."
                value={query}
                onChange={(e) => setQuery(e.target.value)}
@@ -212,7 +212,7 @@ export default function Search() {
                        <h3 className="text-purple-400 font-black uppercase tracking-widest text-xs mb-6 flex items-center gap-4">
                          <span className="w-8 h-px bg-purple-400/30"></span> Reels ({results.reels.length})
                      </h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 tv:grid-cols-4 gap-4 sm:gap-6 tv:gap-8">
                         {results.reels.map(r => <ResultCard key={r._id} item={r} type="reel" onOpen={() => openResult(r, 'reel')} />)}
                      </div>
                   </section>

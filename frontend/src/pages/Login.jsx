@@ -36,8 +36,8 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page flex min-h-screen items-center px-4 py-8 sm:px-6 lg:px-8">
-      <div className="auth-stage mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+    <div className="auth-page flex min-h-screen items-center px-4 py-8 sm:px-6 lg:px-8 tv:px-24">
+      <div className="auth-stage mx-auto grid w-full max-w-6xl tv:max-w-[1400px] gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8 tv:gap-16">
         
         {/* Left Visual Stage */}
         <section className="auth-hero rounded-[2rem] p-6 sm:p-8 lg:p-10">
@@ -49,7 +49,7 @@ export default function Login() {
               </div>
 
               <div className="max-w-2xl space-y-5">
-                <h1 className="text-5xl font-serif font-black uppercase leading-none tracking-tight text-[#f7d77d] sm:text-7xl">
+                <h1 className="text-4xl sm:text-5xl tv:text-7xl font-serif font-black uppercase leading-none tracking-tight text-[#f7d77d]">
                   Gita Wisdom
                 </h1>
                 <p className="auth-quote max-w-xl text-lg leading-relaxed sm:text-xl">
@@ -86,7 +86,7 @@ export default function Login() {
             <div className="mb-8 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[0.7rem] font-bold uppercase tracking-[0.32em] text-[#f7d77d]/85">Secure Portal</p>
-                <h2 className="mt-2 text-3xl font-serif font-black uppercase tracking-tight text-white">Sign In</h2>
+                <h2 className="mt-2 text-2xl sm:text-3xl tv:text-5xl font-serif font-black uppercase tracking-tight text-white">Sign In</h2>
               </div>
               <Link to="/home" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80 transition-colors hover:text-[#f7d77d]">
                 Home
@@ -155,7 +155,7 @@ export default function Login() {
                       </Link>
                     </div>
 
-                    <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5">
+                    <button type="submit" disabled={loading} className="auth-button mt-4 w-full px-5 py-3.5 tv:py-5 tv:text-xl">
                         {loading ? 'Please wait...' : 'Sign In'}
                     </button>
                 </form>

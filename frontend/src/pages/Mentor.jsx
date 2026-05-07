@@ -49,17 +49,17 @@ export default function Mentor() {
   ];
 
   return (
-    <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 relative bg-[#06101E] text-white overflow-hidden">
+    <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 sm:px-6 lg:px-8 tv:px-16 relative bg-[#06101E] text-white overflow-hidden">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.2),transparent_30%)]"></div>
-      <div className="max-w-5xl mx-auto relative z-10">
-        <div className="text-center mb-14 animate-fade-in-up">
-          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-6">
+      <div className="max-w-5xl tv:max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-10 sm:mb-14 animate-fade-in-up">
+          <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] tv:text-sm font-black tracking-[0.4em] uppercase mb-6">
             Divine Guidance
           </div>
-          <h1 className="text-5xl md:text-7xl font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl tv:text-[10rem] font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase leading-none">
             Gita Mentor
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto mb-6">Seeking guidance in Lord Krishna's eternal words.</p>
+          <p className="text-base sm:text-lg md:text-xl tv:text-3xl text-gray-300 font-light font-serif italic max-w-2xl tv:max-w-4xl mx-auto mb-6">Seeking guidance in Lord Krishna's eternal words.</p>
         </div>
 
         {/* Tab Switcher */}
@@ -89,7 +89,7 @@ export default function Mentor() {
         </div>
 
         {activeTab === 'ai' ? (
-          <div className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] p-6 md:p-10 border border-cyan-500/30 shadow-[0_0_80px_rgba(34,211,238,0.15)] animate-fade-in-up flex flex-col h-[600px]">
+          <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] p-4 sm:p-6 md:p-10 border border-cyan-500/30 shadow-[0_0_80px_rgba(34,211,238,0.15)] animate-fade-in-up flex flex-col h-[60vh] md:h-[600px] tv:h-[800px]">
             <div className="flex-1 overflow-y-auto w-full pr-4 space-y-6 no-scrollbar">
               {chatMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center opacity-70">
@@ -156,17 +156,17 @@ export default function Mentor() {
         ) : (
           <>
             {/* Problem Selection */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-16">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6 tv:gap-10 mb-16">
           {problems.map(problem => (
             <button
               key={problem.id}
               onClick={() => fetchSolution(problem.id)}
-              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-[2rem] transition-all duration-500 transform active:scale-95 border ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 tv:p-12 rounded-[2rem] tv:rounded-[3rem] transition-all duration-500 transform active:scale-95 border tv-focusable ${selectedProblem === problem.id ? 'bg-gradient-to-br ' + problem.color + ' text-white scale-[1.03] shadow-[0_0_40px_rgba(255,215,0,0.18)] border-white/30' : 'bg-glass-gradient backdrop-blur-3xl text-gray-300 hover:text-devotion-gold border-white/5 hover:border-devotion-gold/40 shadow-xl'}`}
             >
               <div className={`mb-4 transition-all duration-500 ${selectedProblem === problem.id ? 'text-white scale-125' : 'text-devotion-gold'}`}>
-                {problem.icon}
+                {React.cloneElement(problem.icon, { className: 'w-8 h-8 tv:w-14 tv:h-14' })}
               </div>
-              <span className="font-black text-[10px] uppercase tracking-[0.2em]">{problem.name}</span>
+              <span className="font-black text-[10px] tv:text-base uppercase tracking-[0.2em]">{problem.name}</span>
             </button>
           ))}
         </div>

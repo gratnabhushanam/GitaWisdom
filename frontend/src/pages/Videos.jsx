@@ -48,13 +48,13 @@ export default function Videos() {
     : videos.filter((item) => String(item.collectionTitle || 'Bhagavad Gita').trim() === selectedCollection);
 
   return (
-    <div className="min-h-screen bg-[#06101E] pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-4 cursor-default">
+    <div className="min-h-screen bg-[#06101E] pt-20 sm:pt-24 tv:pt-36 pb-16 sm:pb-12 px-4 sm:px-6 lg:px-8 tv:px-16">
+      <div className="max-w-7xl tv:max-w-[1800px] mx-auto">
+        <div className="text-center mb-10 sm:mb-16">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-8xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-4 cursor-default">
             Divine Discourses
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">Watch insightful explanations and stories from the Bhagavad Gita by realized souls.</p>
+          <p className="text-gray-400 text-base sm:text-lg tv:text-2xl max-w-2xl tv:max-w-4xl mx-auto">Watch insightful explanations and stories from the Bhagavad Gita by realized souls.</p>
         </div>
 
         {loading ? (
@@ -81,7 +81,7 @@ export default function Videos() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 landscape:grid-cols-2 lg:grid-cols-3 tv:grid-cols-4 gap-5 sm:gap-8 tv:gap-10">
             {filteredVideos.map(video => (
               <button
                 key={video._id}

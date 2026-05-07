@@ -12,6 +12,7 @@ export default {
           'lg': '1024px',  // Desktop
           'xl': '1280px',  // Large desktop
           '2xl': '1536px', // Extra large desktop
+          'tv': '1920px',  // Smart TV / 4K displays
         },
     extend: {
       colors: {

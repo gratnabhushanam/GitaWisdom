@@ -18,6 +18,7 @@ const Videos = lazy(() => import('./pages/Videos'));
 const Sloka = lazy(() => import('./pages/Sloka'));
 const About = lazy(() => import('./pages/About'));
 const Quiz = lazy(() => import('./pages/Quiz'));
+const QuizList = lazy(() => import('./pages/QuizList'));
 const StudentGuide = lazy(() => import('./pages/StudentGuide'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -88,6 +89,7 @@ function AppShell() {
                 <Route path="/about" element={user ? <About /> : <Navigate to="/login" replace />} />
                 <Route path="/install" element={<InstallApp />} />
                 <Route path="/quiz" element={user ? <Quiz /> : <Navigate to="/login" replace />} />
+                <Route path="/quizzes" element={user ? <QuizList /> : <Navigate to="/login" replace />} />
                 <Route path="/student" element={user ? <StudentGuide /> : <Navigate to="/login" replace />} />
                 <Route path="/mentor" element={user ? <Mentor /> : <Navigate to="/login" replace />} />
                 <Route path="/satsangs" element={user ? <Satsangs /> : <Navigate to="/login" replace />} />

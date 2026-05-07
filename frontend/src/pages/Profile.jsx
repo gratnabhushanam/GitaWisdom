@@ -480,16 +480,18 @@ export default function Profile() {
   );
 
   return (
-    <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 sm:px-6 lg:px-8 tv:px-16 relative bg-[#06101E] text-white">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.06),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.15),transparent_30%)]"></div>
+      
+      <div className="max-w-7xl tv:max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-3 tv:grid-cols-4 gap-10 tv:gap-16 relative z-10">
         
         {/* Profile Card */}
         <div className="lg:col-span-1">
-          <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2.5rem] border border-devotion-gold/20 overflow-hidden shadow-2xl sticky top-28">
-            <div className="h-32 bg-gradient-to-r from-devotion-darkBlue to-devotion-maroon relative">
-               <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+          <div className="bg-glass-premium rounded-[2.5rem] tv:rounded-[3.5rem] border border-devotion-gold/20 overflow-hidden shadow-2xl sticky top-20 sm:top-28 tv:top-36">
+            <div className="h-32 sm:h-40 tv:h-56 bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] relative">
+               <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
                   <div className="relative group">
-                     <div className="w-32 h-32 rounded-full border-4 border-devotion-gold shadow-2xl overflow-hidden bg-devotion-maroon flex items-center justify-center">
+                     <div className="w-32 h-32 sm:w-40 sm:h-40 tv:w-56 tv:h-56 rounded-full border-4 tv:border-8 border-[#06101E] shadow-2xl overflow-hidden bg-devotion-maroon flex items-center justify-center">
                         {formData.profilePicture ? (
                           <img 
                             src={formData.profilePicture} 

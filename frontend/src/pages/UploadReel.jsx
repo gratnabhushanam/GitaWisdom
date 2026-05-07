@@ -142,27 +142,27 @@ export default function UploadReel() {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-12 px-4 relative overflow-hidden">
+    <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 sm:px-8 tv:px-16 relative overflow-hidden bg-[#06101E] text-white">
       
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-devotion-gold/5 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
       
-      <div className="max-w-4xl mx-auto relative z-10">
+      <div className="max-w-4xl tv:max-w-6xl mx-auto relative z-10">
         
-        <Link to="/reels" className="inline-flex items-center gap-2 text-gray-400 hover:text-devotion-gold mb-10 transition-colors group">
-           <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> Back to Reels
+        <Link to="/reels" className="inline-flex items-center gap-2 text-gray-400 hover:text-devotion-gold mb-10 transition-colors group tv:text-2xl">
+           <ArrowLeft className="w-5 h-5 tv:w-8 tv:h-8 group-hover:-translate-x-1 transition-transform" /> Back to Reels
         </Link>
 
-        <div className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] border border-devotion-gold/20 p-10 md:p-16 shadow-2xl relative">
+        <div className="bg-glass-premium rounded-[2.5rem] tv:rounded-[3.5rem] border border-devotion-gold/20 p-8 md:p-16 tv:p-24 shadow-2xl relative animate-fade-in-up">
            
            <div className="text-center mb-12">
-              <div className="w-20 h-20 bg-devotion-gold/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-devotion-gold/20">
-                 <Upload className="text-devotion-gold w-10 h-10" />
+              <div className="w-20 h-20 tv:w-32 tv:h-32 bg-devotion-gold/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-devotion-gold/20 shadow-[0_0_40px_rgba(255,215,0,0.1)]">
+                 <Upload className="text-devotion-gold w-10 h-10 tv:w-16 tv:h-16" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-serif font-black text-white mb-4 uppercase tracking-tighter">
+              <h1 className="text-4xl md:text-5xl tv:text-8xl font-serif font-black text-white mb-4 uppercase tracking-tighter leading-none">
                 Share <span className="text-devotion-gold">Wisdom</span>
               </h1>
-              <p className="text-gray-400 font-serif italic">Spread Lord Krishna's light through your short videos.</p>
+              <p className="text-gray-400 tv:text-2xl font-serif italic">Spread Lord Krishna's light through your short videos.</p>
            </div>
 
            {success ? (

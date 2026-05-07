@@ -1,20 +1,30 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Film, BookOpen, User } from 'lucide-react';
+import { Home, Film, BookOpen, User, Star } from 'lucide-react';
 
 export default function BottomNav() {
   const location = useLocation();
 
   const navItems = [
-    { name: 'Home', path: '/home', icon: Home },
-    { name: 'Reels', path: '/reels', icon: Film },
-    { name: 'Slokas', path: '/daily-sloka', icon: BookOpen },
-    { name: 'Profile', path: '/profile', icon: User },
+    { name: 'Home',    path: '/home',        icon: Home     },
+    { name: 'Reels',   path: '/reels',       icon: Film     },
+    { name: 'Kids',    path: '/kids',        icon: Star     },
+    { name: 'Slokas',  path: '/daily-sloka', icon: BookOpen },
+    { name: 'Profile', path: '/profile',     icon: User     },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 w-full bg-black/95 backdrop-blur-md border-t border-white/10 pb-safe z-50">
-      <div className="flex justify-around items-center h-16 px-2">
+    /* Hidden on desktop & TV, shown on mobile/tablet in portrait */
+    <nav className="
+      md:hidden tv:hidden
+      fixed bottom-0 left-0 w-full z-50
+      bg-[#060F1B]/95 backdrop-blur-xl
+      border-t border-devotion-gold/10
+      shadow-[0_-8px_30px_rgba(0,0,0,0.5)]
+      pb-safe
+      landscape:hidden
+    ">
+      <div className="flex justify-around items-center h-[60px] px-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname.startsWith(item.path);
@@ -22,12 +32,24 @@ export default function BottomNav() {
             <NavLink
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                isActive ? 'text-[#D39A4A]' : 'text-gray-400 hover:text-white'
+              className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200 ${
+                isActive ? 'text-devotion-gold' : 'text-gray-500 hover:text-white'
               }`}
             >
-              <Icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} strokeWidth={isActive ? 2 : 1.5} />
-              <span className="text-[10px] font-medium tracking-wide">{item.name}</span>
+              {/* Active pill indicator */}
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-devotion-gold rounded-full" />
+              )}
+              <div className={`relative p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-devotion-gold/15' : ''}`}>
+                <Icon
+                  className={`w-5 h-5 transition-all duration-200 ${isActive ? 'scale-110' : ''}`}
+                  strokeWidth={isActive ? 2.5 : 1.5}
+                  fill={isActive ? 'none' : 'none'}
+                />
+              </div>
+              <span className={`text-[9px] font-bold tracking-wider uppercase transition-all ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                {item.name}
+              </span>
             </NavLink>
           );
         })}

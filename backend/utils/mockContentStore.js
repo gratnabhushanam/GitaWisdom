@@ -4,10 +4,14 @@ const path = require('path');
 let mockMovies = [];
 let mockStories = [];
 let mockVideos = [];
+let mockQuizSets = [];
+let mockQuizzes = [];
 
 let nextMovieId = 1;
 let nextStoryId = 1;
 let nextVideoId = 1;
+let nextQuizSetId = 1;
+let nextQuizId = 1;
 
 const STORE_FILE = path.join(__dirname, '..', 'data', 'mockContentStore.json');
 
@@ -22,9 +26,14 @@ const loadStore = () => {
     mockMovies = Array.isArray(parsed.mockMovies) ? parsed.mockMovies : [];
     mockStories = Array.isArray(parsed.mockStories) ? parsed.mockStories : [];
     mockVideos = Array.isArray(parsed.mockVideos) ? parsed.mockVideos : [];
+    mockQuizSets = Array.isArray(parsed.mockQuizSets) ? parsed.mockQuizSets : [];
+    mockQuizzes = Array.isArray(parsed.mockQuizzes) ? parsed.mockQuizzes : [];
+    
     nextMovieId = Number(parsed.nextMovieId) || (mockMovies.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1);
     nextStoryId = Number(parsed.nextStoryId) || (mockStories.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1);
     nextVideoId = Number(parsed.nextVideoId) || (mockVideos.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1);
+    nextQuizSetId = Number(parsed.nextQuizSetId) || (mockQuizSets.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1);
+    nextQuizId = Number(parsed.nextQuizId) || (mockQuizzes.reduce((maxId, item) => Math.max(maxId, Number(item.id) || 0), 0) + 1);
   } catch {
     // fall back to in-memory empty store
   }
@@ -36,9 +45,13 @@ const saveStore = () => {
       mockMovies,
       mockStories,
       mockVideos,
+      mockQuizSets,
+      mockQuizzes,
       nextMovieId,
       nextStoryId,
       nextVideoId,
+      nextQuizSetId,
+      nextQuizId,
     };
     // Backup before writing
     try {
@@ -212,10 +225,80 @@ const deleteVideo = (id) => {
   return removed;
 };
 
+// Quiz Mock Functions
+const addQuizSet = (payload) => {
+  const quizSet = {
+    id: nextQuizSetId++,
+    title: payload.title,
+    description: payload.description || '',
+    category: payload.category || 'General',
+    difficulty: payload.difficulty || 'medium',
+    timeLimit: Number(payload.timeLimit) || 0,
+    thumbnail: payload.thumbnail || '',
+    tags: normalizeTags(payload.tags),
+    isPublished: Boolean(payload.isPublished),
+    creatorId: payload.creatorId || null,
+    createdAt: now(),
+    updatedAt: now(),
+  };
+  mockQuizSets.push(quizSet);
+  saveStore();
+  return quizSet;
+};
+
+const listQuizSets = () => {
+  return mockQuizSets.map(qs => ({
+    ...qs,
+    questionCount: mockQuizzes.filter(q => q.quizSetId === qs.id).length
+  }));
+};
+
+const deleteQuizSet = (id) => {
+  const qsId = Number(id);
+  const index = mockQuizSets.findIndex(qs => Number(qs.id) === qsId);
+  if (index === -1) return null;
+  const [removed] = mockQuizSets.splice(index, 1);
+  // Also delete associated questions
+  mockQuizzes = mockQuizzes.filter(q => Number(q.quizSetId) !== qsId);
+  saveStore();
+  return removed;
+};
+
+const addQuizQuestion = (payload) => {
+  const question = {
+    id: nextQuizId++,
+    quizSetId: payload.quizSetId,
+    videoId: payload.videoId || null,
+    questionType: payload.questionType || 'mcq',
+    order: Number(payload.order) || 0,
+    image: payload.image || '',
+    question: payload.question || payload.questionText,
+    options: Array.isArray(payload.options) ? payload.options : [],
+    correct_answer: payload.correct_answer,
+    difficulty: payload.difficulty || 'medium',
+    explanation: payload.explanation || '',
+    createdAt: now(),
+    updatedAt: now(),
+  };
+  mockQuizzes.push(question);
+  saveStore();
+  return question;
+};
+
+const listQuizzesBySet = (quizSetId) => {
+  return mockQuizzes.filter(q => Number(q.quizSetId) === Number(quizSetId)).sort((a, b) => a.order - b.order);
+};
+
+const clearQuizzesBySet = (quizSetId) => {
+  mockQuizzes = mockQuizzes.filter(q => Number(q.quizSetId) !== Number(quizSetId));
+  saveStore();
+};
+
 const getCounts = () => ({
   totalMovies: mockMovies.length,
   totalStories: mockStories.length,
   totalVideos: mockVideos.length,
+  totalQuizSets: mockQuizSets.length,
 });
 
 module.exports = {
@@ -229,5 +312,11 @@ module.exports = {
   addVideo,
   listVideos,
   deleteVideo,
+  addQuizSet,
+  listQuizSets,
+  deleteQuizSet,
+  addQuizQuestion,
+  listQuizzesBySet,
+  clearQuizzesBySet,
   getCounts,
 };

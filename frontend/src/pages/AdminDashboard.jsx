@@ -20,7 +20,7 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [] });
+  const [data, setData] = useState({ users: [], stats: null, movies: [], stories: [], videos: [], quizQuestions: [], quizSets: [] });
   const [pendingUserReels, setPendingUserReels] = useState([]);
   const [pendingContentFilter, setPendingContentFilter] = useState('all');
   const [videoCollectionFilter, setVideoCollectionFilter] = useState('all');
@@ -48,7 +48,7 @@ function AdminDashboardContent() {
     thumbnail: '',
     tags: '',
   });
-  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '' });
+  const [videoForm, setVideoForm] = useState({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '' });
   // Quiz builder state for video upload
   const [videoQuizList, setVideoQuizList] = useState([]);
   const [videoQuizDraft, setVideoQuizDraft] = useState({
@@ -73,6 +73,10 @@ function AdminDashboardContent() {
   const [editingStoryId, setEditingStoryId] = useState(null);
   const [editingMovieId, setEditingMovieId] = useState(null);
   const [editingVideoId, setEditingVideoId] = useState(null);
+  const [editingQuizSetId, setEditingQuizSetId] = useState(null);
+  const [quizSetForm, setQuizSetForm] = useState({
+    title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: []
+  });
   const [broadcastForm, setBroadcastForm] = useState({ title: '', body: '', type: 'system' });
 
   const handleBroadcast = async (e) => {
@@ -194,21 +198,25 @@ function AdminDashboardContent() {
         const { data: stories } = await axios.get('/api/stories', { headers });
         setData(prev => ({ ...prev, stories }));
       } else if (activeTab === 'videos') {
-        const [videosResponse, quizResponse] = await Promise.all([
+        const [videosResponse, quizSetsRes] = await Promise.all([
           axios.get('/api/videos', { headers }),
-          axios.get('/api/quiz/questions', { headers }),
+          axios.get('/api/quiz/admin/sets', { headers }).catch(() => ({ data: [] })),
         ]);
         setData(prev => ({
           ...prev,
           videos: Array.isArray(videosResponse.data) ? videosResponse.data : [],
-          quizQuestions: Array.isArray(quizResponse.data) ? quizResponse.data : [],
+          quizSets: Array.isArray(quizSetsRes.data) ? quizSetsRes.data : [],
         }));
       } else if (activeTab === 'reels') {
         const { data: pendingResponse } = await axios.get(`/api/videos/user-reels/moderation?status=${pendingContentFilter === 'all' ? 'pending' : pendingContentFilter}&contentType=all`, { headers });
         setPendingUserReels(Array.isArray(pendingResponse) ? pendingResponse : []);
+      } else if (activeTab === 'quizzes') {
+        const { data: quizSets } = await axios.get('/api/quiz/admin/sets', { headers });
+        setData(prev => ({ ...prev, quizSets: Array.isArray(quizSets) ? quizSets : [] }));
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to fetch admin data. Please check your connection or try again later.' });
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to fetch admin data';
+      setMessage({ type: 'error', text: `${errorMsg}. Please check your connection or try again later.` });
       console.error('Error fetching admin data:', error);
     }
   };
@@ -259,6 +267,12 @@ function AdminDashboardContent() {
           title: storyForm.title || storyForm[`title${languageKey}`] || storyForm.titleEnglish || storyForm.titleHindi || storyForm.titleTelugu || '',
           summary: storyForm.summary || storyForm[`summary${languageKey}`] || '',
           content: storyForm.content || storyForm[`content${languageKey}`] || '',
+        };
+      } else if (activeTab === 'quizzes') {
+        endpoint = editingQuizSetId ? `/api/quiz/admin/sets/${editingQuizSetId}` : '/api/quiz/admin/sets';
+        payload = {
+          ...quizSetForm,
+          tags: quizSetForm.tags ? quizSetForm.tags.split(',').map(tag => tag.trim()) : [],
         };
       } else if (activeTab === 'videos') {
         if (videosUploadType === 'quiz') {
@@ -339,6 +353,14 @@ function AdminDashboardContent() {
               headers: { Authorization: `Bearer ${token}` }
             });
           }
+        }
+      } else if (activeTab === 'quizzes') {
+        if (editingQuizSetId) {
+          const { data: updatedSet } = await axios.put(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
+          setData(prev => ({ ...prev, quizSets: prev.quizSets.map(q => (q._id === editingQuizSetId) ? updatedSet.quizSet : q) }));
+        } else {
+          const { data: newlyCreated } = await axios.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
+          setData(prev => ({ ...prev, quizSets: [newlyCreated.quizSet, ...prev.quizSets] }));
         }
       } else {
         const { data: newlyCreated } = await axios.post(endpoint, payload, {
@@ -455,7 +477,9 @@ function AdminDashboardContent() {
       thumbnail: '',
       tags: '',
     });
-    setVideoForm({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '' });
+    setVideoForm({ title: '', description: '', videoUrl: '', category: 'reels', collectionTitle: 'Bhagavad Gita', isKids: false, tags: '', quizSetId: '' });
+    setQuizSetForm({ title: '', description: '', category: 'General', difficulty: 'medium', timeLimit: 0, thumbnail: '', tags: '', isPublished: false, questions: [] });
+    setEditingQuizSetId(null);
     setQuizForm({
       questionText: '',
       category: 'Gita Challenge',
@@ -631,6 +655,7 @@ function AdminDashboardContent() {
             { id: 'stories', name: 'Stories', icon: <BookOpen className="w-5 h-5" /> },
             { id: 'videos', name: 'Videos', icon: <Video className="w-5 h-5" /> },
             { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-5 h-5 text-devotion-gold" /> },
+            { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-5 h-5 text-green-400" /> },
             { id: 'users', name: 'Users', icon: <Users className="w-5 h-5" /> },
             { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-5 h-5 text-purple-400" /> },
           ].map(item => (
@@ -675,6 +700,7 @@ function AdminDashboardContent() {
                 { id: 'stories', name: 'Stories', icon: <BookOpen className="w-4 h-4" /> },
                 { id: 'videos', name: 'Videos', icon: <Video className="w-4 h-4" /> },
                 { id: 'reels', name: 'Reels Moderation', icon: <Video className="w-4 h-4 text-devotion-gold" /> },
+                { id: 'quizzes', name: 'Quiz Manager', icon: <Check className="w-4 h-4 text-green-400" /> },
                 { id: 'users', name: 'Users', icon: <Users className="w-4 h-4" /> },
                 { id: 'notifications', name: 'Notifications', icon: <AlertCircle className="w-4 h-4 text-purple-400" /> },
               ].map(item => (
@@ -698,7 +724,7 @@ function AdminDashboardContent() {
       </div>
 
       {/* Admin Content Area */}
-      <div className="flex-1 flex flex-col pt-24 px-4 md:px-10 pb-10 overflow-y-auto">
+      <div className="flex-1 flex flex-col pt-20 sm:pt-24 tv:pt-36 px-4 md:px-10 tv:px-20 pb-10 overflow-y-auto">
          
          {message.text && (
            <div className={`fixed top-28 right-10 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl border backdrop-blur-xl animate-shake shadow-2xl ${message.type === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
@@ -707,15 +733,15 @@ function AdminDashboardContent() {
            </div>
          )}
 
-         <div className="mb-12 flex justify-between items-end">
+         <div className="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
             <div>
-               <h1 className="text-6xl font-serif font-black text-white mb-2 uppercase tracking-tighter">
+               <h1 className="text-4xl sm:text-6xl tv:text-[10rem] font-serif font-black text-white mb-2 uppercase tracking-tighter leading-none">
                  {activeTab} <span className="text-devotion-gold">Center</span>
                </h1>
-               <p className="text-gray-500 text-sm font-serif italic">Managing the divine knowledge base.</p>
+               <p className="text-gray-500 tv:text-3xl text-sm font-serif italic">Managing the divine knowledge base.</p>
             </div>
             
-            {['movies', 'stories', 'videos'].includes(activeTab) && (
+            {['movies', 'stories', 'videos', 'quizzes'].includes(activeTab) && (
               <button
                 onClick={() => {
                   resetForms();
@@ -726,7 +752,7 @@ function AdminDashboardContent() {
                 }}
                 className="bg-devotion-gold text-devotion-darkBlue px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-yellow-400 transition-all flex items-center gap-3 shadow-2xl shadow-devotion-gold/20 transform hover:-translate-y-1 active:scale-95"
               >
-                <Plus className="w-5 h-5" /> Add New {activeTab === 'videos' ? 'Video' : currentContentLabel}
+                <Plus className="w-5 h-5" /> Add New {activeTab === 'videos' ? 'Video' : activeTab === 'quizzes' ? 'Quiz Set' : currentContentLabel}
               </button>
             )}
          </div>
@@ -1196,18 +1222,22 @@ function AdminDashboardContent() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
                         {data.quizQuestions.map((question) => (
-                          <div key={question.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
+                          <div key={question._id || question.id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col">
                             <p className="text-[10px] uppercase tracking-widest text-devotion-gold mb-2">{question.category || 'Gita Challenge'}</p>
-                            <h4 className="text-white font-bold text-lg mb-4">{question.questionText}</h4>
+                            <h4 className="text-white font-bold text-lg mb-4">{question.questionText || question.question}</h4>
                             <ul className="space-y-2 mb-5">
-                              {(question.options || []).map((option, idx) => (
-                                <li key={`${question.id}-${idx}`} className={`text-sm px-3 py-2 rounded-lg border ${option.isCorrect ? 'border-green-500/40 bg-green-500/10 text-green-300' : 'border-white/10 text-gray-300'}`}>
-                                  {option.answerText}
-                                </li>
-                              ))}
+                              {(question.options || []).map((option, idx) => {
+                                const isCorrect = typeof option === 'string' ? option === question.correct_answer : option.isCorrect;
+                                const answerText = typeof option === 'string' ? option : option.answerText;
+                                return (
+                                  <li key={`${question._id || question.id}-${idx}`} className={`text-sm px-3 py-2 rounded-lg border ${isCorrect ? 'border-green-500/40 bg-green-500/10 text-green-300' : 'border-white/10 text-gray-300'}`}>
+                                    {answerText}
+                                  </li>
+                                );
+                              })}
                             </ul>
                             <button
-                              onClick={() => handleDeleteContent('quiz/questions', question.id, question.questionText || 'Question')}
+                              onClick={() => handleDeleteContent('quiz/questions', question._id || question.id, question.questionText || question.question || 'Question')}
                               className="mt-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
                             >
                               <Trash2 className="w-4 h-4" /> Delete
@@ -1304,6 +1334,72 @@ function AdminDashboardContent() {
                                 </button>
                              </div>
                           )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+               </div>
+            )}
+
+            {activeTab === 'quizzes' && (
+               <div className="bg-white/5 border border-white/10 rounded-[3rem] p-12 backdrop-blur-3xl">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="text-3xl font-serif font-black text-white uppercase tracking-tighter">Quiz <span className="text-devotion-gold">Manager</span></h3>
+                     <span className="bg-devotion-gold/10 text-devotion-gold px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border border-devotion-gold/30">Total: {data.quizSets?.length || 0}</span>
+                  </div>
+
+                  {(!data.quizSets || data.quizSets.length === 0) ? (
+                    <p className="text-gray-500 text-center py-12">No Quiz Sets created yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {data.quizSets.map((quizSet) => (
+                        <div key={quizSet._id} className="p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col relative overflow-hidden">
+                          {quizSet.isPublished ? (
+                             <span className="absolute top-4 right-4 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-green-500/30">Published</span>
+                          ) : (
+                             <span className="absolute top-4 right-4 bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-yellow-500/30">Draft</span>
+                          )}
+                          <h4 className="text-white font-bold text-lg mb-2 w-3/4">{quizSet.title}</h4>
+                          <p className="text-xs text-gray-400 mb-3">{quizSet.category} • {quizSet.difficulty} • {quizSet.timeLimit > 0 ? `${quizSet.timeLimit}s timer` : 'No timer'}</p>
+                          <p className="text-sm text-gray-300 line-clamp-2 mb-4">{quizSet.description || 'No description'}</p>
+                          <div className="text-[10px] text-devotion-gold mb-4 font-black uppercase tracking-widest">
+                            {quizSet.questionCount || 0} Questions
+                          </div>
+                          <div className="mt-auto flex gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                   setLoading(true);
+                                   const token = localStorage.getItem('token');
+                                   const res = await axios.get(`/api/quiz/sets/${quizSet._id}`, { headers: { Authorization: `Bearer ${token}` } });
+                                   setQuizSetForm({
+                                      title: quizSet.title,
+                                      description: quizSet.description || '',
+                                      category: quizSet.category || 'General',
+                                      difficulty: quizSet.difficulty || 'medium',
+                                      timeLimit: quizSet.timeLimit || 0,
+                                      thumbnail: quizSet.thumbnail || '',
+                                      tags: quizSet.tags?.join(', ') || '',
+                                      isPublished: quizSet.isPublished || false,
+                                      questions: res.data.questions || []
+                                   });
+                                   setEditingQuizSetId(quizSet._id);
+                                   setShowAddModal(true);
+                                } catch(e) {
+                                   setMessage({ type: 'error', text: 'Failed to load quiz details' });
+                                } finally { setLoading(false); }
+                              }}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-devotion-gold/30 text-devotion-gold hover:text-white hover:bg-devotion-gold/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Pencil className="w-4 h-4" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteContent('quiz/admin/sets', quizSet._id, quizSet.title)}
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all text-[10px] font-black uppercase tracking-widest"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1499,6 +1595,113 @@ function AdminDashboardContent() {
                    </div>
                  )}
 
+                 {/* QUIZ SET FORM */}
+                 {activeTab === 'quizzes' && (
+                   <div className="grid grid-cols-1 gap-10 overflow-x-auto">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Quiz Title</label>
+                           <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.title} onChange={e => setQuizSetForm({...quizSetForm, title: e.target.value})} />
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Category</label>
+                           <input required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.category} onChange={e => setQuizSetForm({...quizSetForm, category: e.target.value})} />
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Difficulty</label>
+                           <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.difficulty} onChange={e => setQuizSetForm({...quizSetForm, difficulty: e.target.value})}>
+                             <option value="easy" className="bg-[#0B1F3A]">Easy</option>
+                             <option value="medium" className="bg-[#0B1F3A]">Medium</option>
+                             <option value="hard" className="bg-[#0B1F3A]">Hard</option>
+                           </select>
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Time Limit (seconds, 0 for no limit)</label>
+                           <input type="number" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.timeLimit} onChange={e => setQuizSetForm({...quizSetForm, timeLimit: Number(e.target.value)})} />
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Thumbnail URL</label>
+                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.thumbnail} onChange={e => setQuizSetForm({...quizSetForm, thumbnail: e.target.value})} />
+                        </div>
+                        <div className="space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Tags (comma separated)</label>
+                           <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.tags} onChange={e => setQuizSetForm({...quizSetForm, tags: e.target.value})} />
+                        </div>
+                        <div className="md:col-span-2 space-y-4">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Description</label>
+                           <textarea rows="3" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none" value={quizSetForm.description} onChange={e => setQuizSetForm({...quizSetForm, description: e.target.value})} />
+                        </div>
+                        <div className="md:col-span-2 flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                           <input type="checkbox" id="isPublished" className="w-5 h-5 accent-devotion-gold" checked={quizSetForm.isPublished} onChange={e => setQuizSetForm({...quizSetForm, isPublished: e.target.checked})} />
+                           <label htmlFor="isPublished" className="text-white font-bold">Publish Quiz Set</label>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-white/10 pt-8">
+                         <div className="flex justify-between items-center mb-6">
+                            <h4 className="text-xl font-bold text-white uppercase tracking-widest">Questions ({quizSetForm.questions.length})</h4>
+                            <button type="button" onClick={() => {
+                               const newQuestion = { questionText: '', options: [{answerText: ''}, {answerText: ''}, {answerText: ''}, {answerText: ''}], correct_answer: '', explanation: '' };
+                               setQuizSetForm({...quizSetForm, questions: [...quizSetForm.questions, newQuestion]});
+                            }} className="bg-white/10 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/20">
+                               + Add Question
+                            </button>
+                         </div>
+                         <div className="space-y-6">
+                           {quizSetForm.questions.map((q, idx) => (
+                              <div key={idx} className="bg-black/30 p-6 rounded-2xl border border-white/5 relative">
+                                 <button type="button" onClick={() => {
+                                    const updated = [...quizSetForm.questions];
+                                    updated.splice(idx, 1);
+                                    setQuizSetForm({...quizSetForm, questions: updated});
+                                 }} className="absolute top-4 right-4 p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                                 <div className="space-y-4 mt-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold">Question {idx + 1}</label>
+                                    <input placeholder="Enter question..." required className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-devotion-gold outline-none" value={q.questionText || q.question || ''} onChange={e => {
+                                       const updated = [...quizSetForm.questions];
+                                       updated[idx].questionText = e.target.value;
+                                       updated[idx].question = e.target.value;
+                                       setQuizSetForm({...quizSetForm, questions: updated});
+                                    }} />
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                       {q.options.map((opt, oIdx) => {
+                                          const optText = typeof opt === 'string' ? opt : opt.answerText;
+                                          return (
+                                          <div key={oIdx} className="flex items-center gap-3">
+                                             <input type="radio" name={`correct_${idx}`} checked={q.correct_answer === optText && optText !== ''} onChange={() => {
+                                                const updated = [...quizSetForm.questions];
+                                                updated[idx].correct_answer = optText;
+                                                setQuizSetForm({...quizSetForm, questions: updated});
+                                             }} className="w-5 h-5 accent-devotion-gold" />
+                                             <input placeholder={`Option ${oIdx + 1}`} required className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-devotion-gold outline-none" value={optText} onChange={e => {
+                                                const updated = [...quizSetForm.questions];
+                                                if (typeof updated[idx].options[oIdx] === 'string') {
+                                                   updated[idx].options[oIdx] = e.target.value;
+                                                } else {
+                                                   updated[idx].options[oIdx].answerText = e.target.value;
+                                                }
+                                                if (q.correct_answer === optText) updated[idx].correct_answer = e.target.value;
+                                                setQuizSetForm({...quizSetForm, questions: updated});
+                                             }} />
+                                          </div>
+                                       )})}
+                                    </div>
+                                    <input placeholder="Explanation (Optional)" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-devotion-gold outline-none mt-2" value={q.explanation || ''} onChange={e => {
+                                       const updated = [...quizSetForm.questions];
+                                       updated[idx].explanation = e.target.value;
+                                       setQuizSetForm({...quizSetForm, questions: updated});
+                                    }} />
+                                 </div>
+                              </div>
+                           ))}
+                         </div>
+                      </div>
+                   </div>
+                 )}
+
                  {/* VIDEO FORM */}
                  {activeTab === 'videos' && videosUploadType === 'video' && (
                    <>
@@ -1584,66 +1787,21 @@ function AdminDashboardContent() {
                          <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold">Show in Kids Mode?</label>
                       </div>
                     </div>
-                   {/* Embedded Quiz Builder for Video */}
-                   {videoForm.category !== 'reels' && (
-                     <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">
-                       <h3 className="text-lg font-black text-devotion-gold mb-2">Related Quizzes (Optional)</h3>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-x-auto">
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Question</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.questionText} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, questionText: e.target.value })} />
-                       </div>
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Correct Option</label>
-                         <select className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.correctOption} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, correctOption: e.target.value })}>
-                           <option value="A">A</option>
-                           <option value="B">B</option>
-                           <option value="C">C</option>
-                           <option value="D">D</option>
-                         </select>
-                       </div>
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Option A</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.optionA} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, optionA: e.target.value })} />
-                       </div>
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Option B</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.optionB} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, optionB: e.target.value })} />
-                       </div>
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Option C</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.optionC} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, optionC: e.target.value })} />
-                       </div>
-                       <div className="space-y-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-devotion-gold ml-2">Option D</label>
-                         <input className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white focus:border-devotion-gold outline-none" value={videoQuizDraft.optionD} onChange={e => setVideoQuizDraft({ ...videoQuizDraft, optionD: e.target.value })} />
-                       </div>
-                     </div>
-                     <button
-                       type="button"
-                       className="mt-4 bg-devotion-gold text-devotion-darkBlue py-2 px-6 rounded-xl font-black text-xs uppercase tracking-widest shadow hover:bg-yellow-400 transition-all"
-                       onClick={() => {
-                         if (!videoQuizDraft.questionText || !videoQuizDraft.optionA || !videoQuizDraft.optionB) return;
-                         setVideoQuizList([...videoQuizList, videoQuizDraft]);
-                         setVideoQuizDraft({ questionText: '', optionA: '', optionB: '', optionC: '', optionD: '', correctOption: 'A' });
-                       }}
-                     >Add Quiz Question</button>
-                     {videoQuizList.length > 0 && (
-                       <div className="mt-6">
-                         <h4 className="font-bold text-devotion-gold mb-2">Quiz Questions Added:</h4>
-                         <ul className="space-y-2">
-                           {videoQuizList.map((quiz, idx) => (
-                             <li key={idx} className="bg-white/5 rounded-xl px-4 py-2 flex flex-col md:flex-row md:items-center md:gap-4">
-                               <span className="flex-1">{quiz.questionText}</span>
-                               <span className="text-xs text-devotion-gold">Correct: {quiz.correctOption}</span>
-                               <button type="button" className="ml-4 text-red-400 hover:text-red-600 font-bold" onClick={() => setVideoQuizList(videoQuizList.filter((_, i) => i !== idx))}>Remove</button>
-                             </li>
-                           ))}
-                         </ul>
-                       </div>
-                     )}
+                   {/* Embedded Quiz Linker for Video */}
+                   <div className="mt-10 bg-[#0B1F3A] rounded-2xl p-6 border border-devotion-gold/30">
+                     <h3 className="text-lg font-black text-devotion-gold mb-2">Link a Quiz Set (Optional)</h3>
+                     <p className="text-sm text-white/70 mb-4">Select a quiz set to automatically trigger after this video ends (specifically for Kids Mode).</p>
+                     <select 
+                       className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-devotion-gold outline-none"
+                       value={videoForm.quizSetId || ''} 
+                       onChange={e => setVideoForm({...videoForm, quizSetId: e.target.value})}
+                     >
+                        <option value="" className="bg-[#0B1F3A]">-- No Quiz Linked --</option>
+                        {data.quizSets && data.quizSets.map(quiz => (
+                          <option key={quiz._id} value={quiz._id} className="bg-[#0B1F3A]">{quiz.title} ({quiz.questionCount} questions)</option>
+                        ))}
+                     </select>
                    </div>
-                   )}
                    </>
                  )}
 

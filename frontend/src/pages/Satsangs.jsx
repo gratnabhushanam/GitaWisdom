@@ -34,16 +34,16 @@ export default function Satsangs() {
   } = useSatsangs();
 
   return (
-    <div className="min-h-screen pt-28 pb-12 px-4 relative bg-[#06101E] text-white">
+    <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-16 sm:pb-12 px-4 sm:px-6 tv:px-16 relative bg-[#06101E] text-white">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.2),transparent_28%)]"></div>
       
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="mb-10 text-center">
-            <h1 className="text-4xl md:text-5xl font-black font-serif text-devotion-gold tracking-tight mb-4">Satsangs</h1>
-            <p className="text-gray-400 font-medium max-w-2xl mx-auto">Join spiritual communities, ask deep questions, and share your wisdom with fellow seekers on the path.</p>
+      <div className="max-w-7xl tv:max-w-[1800px] mx-auto relative z-10">
+        <div className="mb-8 sm:mb-10 text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-7xl font-black font-serif text-devotion-gold tracking-tight mb-4">Satsangs</h1>
+            <p className="text-gray-400 font-medium max-w-2xl tv:max-w-4xl mx-auto text-sm sm:text-base tv:text-xl">Join spiritual communities, ask deep questions, and share your wisdom with fellow seekers on the path.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 tv:grid-cols-5 gap-6 sm:gap-8 tv:gap-12">
           
           {/* Sidebar / Groups List */}
           <div className="lg:col-span-1 border-r border-white/10 pr-0 lg:pr-6">

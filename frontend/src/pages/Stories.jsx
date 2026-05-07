@@ -287,7 +287,7 @@ export default function Stories() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06101E] pt-28 pb-28 px-4 sm:px-6 lg:px-8 text-white overflow-x-hidden relative" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="min-h-screen bg-[#06101E] pt-20 sm:pt-28 tv:pt-36 pb-28 px-4 sm:px-6 lg:px-8 tv:px-16 text-white overflow-x-hidden relative" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
       {CHAPTER_BACKGROUND_SCENES.map((scene, index) => (
         <div
           key={scene.image}
@@ -297,11 +297,11 @@ export default function Stories() {
         />
       ))}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(230,195,138,0.2),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(49,98,126,0.26),transparent_30%),linear-gradient(to_bottom,rgba(6,16,30,0.86),rgba(6,16,30,0.9))]"></div>
-      <div className="max-w-4xl mx-auto relative z-10">
+      <div className="max-w-4xl tv:max-w-5xl mx-auto relative z-10">
         
         <div className="bg-[#0B1F3A]/78 backdrop-blur-3xl py-6 px-8 rounded-t-[2rem] border border-[#D39A4A]/30 shadow-lg text-center relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-devotion-gold to-transparent opacity-50"></div>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-devotion-gold tracking-widest drop-shadow-md uppercase">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl tv:text-7xl font-serif font-bold text-devotion-gold tracking-widest drop-shadow-md uppercase">
             Chapters
           </h1>
           <div className="w-24 h-1 bg-devotion-gold mx-auto mt-4 rounded-full"></div>

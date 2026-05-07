@@ -9,21 +9,60 @@
   .backface-hidden {
     backface-visibility: hidden;
   }
-  .translate-z-10 {
-    transform: translateZ(10px);
+  .translate-z-10 { transform: translateZ(10px); }
+  .translate-z-20 { transform: translateZ(20px); }
+  .translate-z-30 { transform: translateZ(30px); }
+  .translate-z-40 { transform: translateZ(40px); }
+  .translate-z-50 { transform: translateZ(50px); }
+
+  /* Premium Design Tokens */
+  .bg-glass-premium {
+    @apply backdrop-blur-2xl bg-white/5 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.37)];
   }
-  .translate-z-20 {
-    transform: translateZ(20px);
+  .bg-gold-gradient {
+    @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] text-[#06101E];
   }
-  .translate-z-30 {
-    transform: translateZ(30px);
+  .text-gold-gradient {
+    @apply bg-gradient-to-br from-[#B66A2A] via-[#E6C38A] to-[#B66A2A] bg-clip-text text-transparent;
   }
-  .translate-z-40 {
-    transform: translateZ(40px);
+
+  /* Safe area insets for notched phones */
+  .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem); }
+  .pt-safe { padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem); }
+  .pl-safe { padding-left: env(safe-area-inset-left, 0px); }
+  .pr-safe { padding-right: env(safe-area-inset-right, 0px); }
+  .px-safe {
+    padding-left: calc(env(safe-area-inset-left, 0px) + 1rem);
+    padding-right: calc(env(safe-area-inset-right, 0px) + 1rem);
   }
-  .translate-z-50 {
-    transform: translateZ(50px);
+
+  /* Landscape helpers */
+  .landscape-compact-header {
+    @media (orientation: landscape) and (max-width: 1024px) {
+      display: none !important;
+    }
   }
+  .landscape-only {
+    display: none;
+    @media (orientation: landscape) and (max-width: 1024px) {
+      display: flex;
+    }
+  }
+
+  /* TV D-pad navigation focus ring */
+  .tv-focusable {
+    @apply transition-all duration-300;
+  }
+  .tv-focusable:focus-visible {
+    @apply transform scale-[1.05] ring-4 ring-devotion-gold ring-offset-4 ring-offset-[#06101E] z-50;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+    outline: none;
+  }
+
+  /* TV-scale text helpers using fluid clamp */
+  .tv-title { font-size: clamp(2.5rem, 6vw, 8rem); line-height: 1.1; }
+  .tv-body  { font-size: clamp(1rem, 1.8vw, 2rem); line-height: 1.6; }
+  .tv-card  { @apply rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 tv:p-16; }
 }
 
 @layer base {
@@ -32,11 +71,24 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  /* TV: scale base font up for readability from couch distance */
+  @media (min-width: 1920px) {
+    body {
+      font-size: 18px;
+    }
+    h1 { font-size: clamp(3rem, 5vw, 6rem); }
+    h2 { font-size: clamp(2rem, 3.5vw, 4rem); }
+    h3 { font-size: clamp(1.5rem, 2.5vw, 3rem); }
+    button, a {
+      min-height: 52px; /* Easier to focus with remote */
+    }
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', Georgia, serif;
   }
 
-  /* Universal TV spatial navigation and D-Pad focus logic */
+  /* Universal TV spatial navigation and D-Pad focus */
   button:focus-visible, 
   a:focus-visible, 
   [tabindex]:focus-visible {
@@ -46,78 +98,53 @@
 }
 
 /* Custom Scrollbar (Hidden globally) */
-::-webkit-scrollbar {
-  display: none;
-}
-
+::-webkit-scrollbar { display: none; }
 * {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Utilities */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
+/* ─── Animations ─── */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50%       { transform: translateY(-10px); }
 }
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
-}
-
-.animate-fade-in-down {
-  animation: fadeInDown 0.8s ease-out forwards;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
 @keyframes pulseSlow {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.05); }
+  50%       { opacity: 0.85; transform: scale(1.05); }
 }
-
 @keyframes loaderProgress {
-  0% { transform: translateX(-100%); }
-  50% { transform: translateX(0); }
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(0); }
   100% { transform: translateX(100%); }
 }
-
-.animate-pulse-slow {
-  animation: pulseSlow 3s ease-in-out infinite;
+@keyframes shimmer {
+  0%   { transform: translateX(-150%) skewX(-15deg); opacity: 0; }
+  20%  { opacity: 0.5; }
+  80%  { opacity: 0.5; }
+  100% { transform: translateX(200%) skewX(-15deg); opacity: 0; }
 }
 
+.animate-fade-in-up    { animation: fadeInUp 0.8s ease-out forwards; }
+.animate-fade-in-down  { animation: fadeInDown 0.8s ease-out forwards; }
+.animate-float         { animation: float 6s ease-in-out infinite; }
+.animate-pulse-slow    { animation: pulseSlow 3s ease-in-out infinite; }
 .animate-loader-progress {
   width: 50%;
   animation: loaderProgress 2s ease-in-out infinite;
 }
-
-@keyframes shimmer {
-  0% { transform: translateX(-150%) skewX(-15deg); opacity: 0; }
-  20% { opacity: 0.5; }
-  80% { opacity: 0.5; }
-  100% { transform: translateX(200%) skewX(-15deg); opacity: 0; }
-}
-
-.animate-shimmer {
-  animation: shimmer 3s infinite ease-in-out;
-}
+.animate-shimmer { animation: shimmer 3s infinite ease-in-out; }

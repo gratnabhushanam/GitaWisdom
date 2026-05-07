@@ -1,8 +1,15 @@
 const QuizMongo = require('../models/mongo/QuizMongo');
 const UserMongo = require('../models/mongo/UserMongo');
+const { isMockMode } = require('./authController');
+const mockContentStore = require('../utils/mockContentStore');
 
 exports.getAllQuestions = async (req, res) => {
   try {
+    if (isMockMode()) {
+       // Using listQuizSets or similar might not be perfect for legacy, 
+       // but we'll return an empty array or some mock data if needed.
+       return res.status(200).json([]);
+    }
     const quizzes = await QuizMongo.find();
     return res.status(200).json(quizzes);
   } catch (error) {
@@ -15,15 +22,16 @@ exports.getQuizByVideoId = async (req, res) => {
   try {
     const { videoId } = req.params;
     
-    // Safety check because sometimes string videoId fails object validation
     if (!videoId || videoId === 'questions') {
       return res.status(400).json({ message: 'Invalid videoId' });
     }
 
-    // Find quizzes for the specific video
+    if (isMockMode()) {
+       return res.status(200).json([]);
+    }
+
     const quizzes = await QuizMongo.find({ videoId });
     
-    // We omit 'correct_answer' on get to prevent cheating
     const safeQuizzes = quizzes.map(q => {
       const qObj = q.toObject();
       delete qObj.correct_answer;
@@ -39,11 +47,15 @@ exports.getQuizByVideoId = async (req, res) => {
 
 exports.submitQuiz = async (req, res) => {
   try {
-    const { videoId, answers } = req.body; // answers: { quizId: "selected_option" }
+    const { videoId, answers } = req.body;
     const userId = req.user?.id;
 
     if (!videoId || !answers) {
       return res.status(400).json({ message: 'Missing videoId or answers' });
+    }
+
+    if (isMockMode()) {
+       return res.status(200).json({ message: 'Quiz submitted (Mock)', score: 0, total: 0, results: [] });
     }
 
     const quizzes = await QuizMongo.find({ videoId });
@@ -68,7 +80,6 @@ exports.submitQuiz = async (req, res) => {
       });
     });
 
-    // Update user benefits/streak if passed
     if (score > 0 && userId) {
       const user = await UserMongo.findById(userId);
       if (user) {
@@ -95,22 +106,29 @@ exports.submitQuiz = async (req, res) => {
 exports.addQuizQuestion = async (req, res) => {
   try {
     const { videoId, videoUrl, question, questionText, options, correct_answer, category, difficulty } = req.body;
-
-    // Handle AdminDashboard generic payloads
     const resolvedQuestion = question || questionText;
+
+    if (isMockMode()) {
+       const newQuiz = mockContentStore.addQuizQuestion({
+         videoId: videoId || 0,
+         question: resolvedQuestion,
+         options: Array.isArray(options) ? (typeof options[0] === 'object' ? options.map(o => o.answerText) : options) : [],
+         correct_answer: correct_answer,
+         difficulty: difficulty || 'medium'
+       });
+       return res.status(201).json(newQuiz);
+    }
+
     let resolvedVideoId = videoId;
     
-    // If frontend sent a videoUrl instead of an ObjectID, look it up in the database.
     if (!resolvedVideoId && videoUrl) {
-      // It might be a full URL, or an uploads path. Try to parse out the filename or match the DB directly.
       let searchUrl = videoUrl;
       try {
          const parsed = new URL(videoUrl);
          searchUrl = parsed.pathname;
-      } catch (e) {} // Not a valid URL, treat as string
+      } catch (e) {}
       
       const VideoMongo = require('../models/mongo/VideoMongo');
-      // Look for the exact url, or one ending with the filename
       const video = await VideoMongo.findOne({
         $or: [
           { videoUrl: searchUrl },
@@ -125,7 +143,6 @@ exports.addQuizQuestion = async (req, res) => {
       }
     }
 
-    // Process options. Frontend might send [{answerText, isCorrect}] or ['str', 'str']
     let resolvedOptions = options;
     let resolvedCorrectAnswer = correct_answer;
 
@@ -161,6 +178,10 @@ function escapeRegex(text) {
 exports.deleteQuizQuestion = async (req, res) => {
   try {
     const { id } = req.params;
+    if (isMockMode()) {
+       // Mock delete
+       return res.status(200).json({ message: 'Question deleted (Mock)' });
+    }
     await QuizMongo.findByIdAndDelete(id);
     return res.status(200).json({ message: 'Question deleted' });
   } catch (error) {

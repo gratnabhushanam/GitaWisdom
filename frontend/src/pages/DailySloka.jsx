@@ -40,7 +40,7 @@ export default function DailySloka() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-28 pb-12 px-4 flex items-center justify-center bg-[#06101E]">
+      <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 flex items-center justify-center bg-[#06101E]">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-devotion-gold"></div>
       </div>
     );
@@ -48,7 +48,7 @@ export default function DailySloka() {
 
   if (!dailySloka) {
     return (
-      <div className="min-h-screen pt-28 pb-12 px-4 flex items-center justify-center bg-[#06101E]">
+      <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 flex items-center justify-center bg-[#06101E]">
         <p className="text-gray-400 text-lg">Unable to load today's sloka. Please verify API at /api/slokas/daily.</p>
       </div>
     );
@@ -59,19 +59,19 @@ export default function DailySloka() {
   const isCurrentVerseSaved = savedVerses.some((item) => item.verseKey === getVerseKey(dailySloka));
 
   return (
-    <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 relative bg-[#06101E] text-white overflow-hidden">
+    <div className="min-h-screen pt-20 sm:pt-28 tv:pt-36 pb-12 px-4 sm:px-6 lg:px-8 tv:px-16 relative bg-[#06101E] text-white overflow-hidden">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.08),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(122,46,46,0.2),transparent_30%)]"></div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
+      <div className="max-w-4xl tv:max-w-5xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-devotion-gold/30 bg-devotion-gold/10 text-devotion-gold text-[10px] font-black tracking-[0.4em] uppercase mb-6">
             Daily Wisdom
           </div>
-          <h1 className="text-5xl md:text-6xl font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl tv:text-8xl font-serif font-black text-devotion-gold drop-shadow-2xl mb-4 tracking-tight uppercase">
             Daily Sloka
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl tv:text-2xl text-gray-300 font-light font-serif italic max-w-2xl mx-auto">
             A verse from the Bhagavad Gita to guide your day
           </p>
           <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
@@ -122,7 +122,7 @@ export default function DailySloka() {
         </div>
 
         {/* Main Sloka Card */}
-        <div className="bg-glass-gradient backdrop-blur-3xl rounded-[3rem] p-8 md:p-16 border border-devotion-gold/30 shadow-[0_0_100px_rgba(0,0,0,0.4)] mb-12 animate-fade-in-up relative overflow-hidden group">
+        <div className="bg-glass-gradient backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 md:p-16 tv:p-20 border border-devotion-gold/30 shadow-[0_0_100px_rgba(0,0,0,0.4)] mb-12 animate-fade-in-up relative overflow-hidden group">
           <div className="absolute top-0 right-0 opacity-5 text-[15rem] -rotate-12 translate-x-20 translate-y-20 select-none pointer-events-none">🕉️</div>
 
           <div className="relative z-10">

@@ -17,6 +17,7 @@ const VideoMongoSchema = new mongoose.Schema({
   category: { type: String, default: 'reels' },
   collectionTitle: { type: String, default: 'Bhagavad Gita' },
   isKids: { type: Boolean, default: false },
+  quizSetId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuizSetMongo' },
   tags: { type: [String], default: [] },
   isUserReel: { type: Boolean, default: false },
   moderationStatus: { type: String, default: 'approved' },
